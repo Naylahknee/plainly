@@ -1,0 +1,598 @@
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Variables ── */
+:root {
+  --purple:      #6C5CE7;
+  --purple-dark: #5849c4;
+  --ink:         #1C1B22;
+  --canvas:      #FBFAF8;
+  --grey:        #8A8794;
+  --grey-light:  #ECEAF4;
+  --grey-border: #D8D6E3;
+  --success:     #00B894;
+  --error-bg:    #FFF0EE;
+  --error-text:  #C0392B;
+  --radius:      10px;
+  --shadow:      0 2px 16px rgba(108, 92, 231, 0.10);
+}
+
+/* ── Base ── */
+html, body, #root { height: 100%; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Focus ── */
+:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Wordmark ── */
+.wordmark {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 22px;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn-primary:hover { background: var(--purple-dark); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled {
+  background: var(--grey-light);
+  color: var(--grey);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  background: transparent;
+  color: var(--grey);
+  border: 1.5px solid var(--grey-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.btn-ghost:hover { border-color: var(--purple); color: var(--purple); }
+.btn-ghost:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--grey);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 0;
+  transition: color 0.15s;
+}
+.back-btn:hover { color: var(--ink); }
+
+/* ── Form inputs ── */
+.text-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--grey-border);
+  border-radius: var(--radius);
+  font-size: 15px;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.text-input:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
+}
+.text-input::placeholder { color: var(--grey); }
+.text-input:disabled { background: var(--grey-light); cursor: not-allowed; }
+
+/* ── Errors / states ── */
+.error-box {
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid #f5c6c0;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.error-text {
+  color: var(--error-text);
+  font-size: 13px;
+  margin-top: 6px;
+}
+.state-loading {
+  color: var(--grey);
+  font-size: 14px;
+  padding: 32px 0;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  max-width: 420px;
+  margin: 64px auto;
+  text-align: center;
+  color: var(--grey);
+  font-size: 16px;
+  line-height: 1.7;
+  padding: 0 16px;
+}
+
+/* ── Loading screen ── */
+.loading-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--grey);
+}
+.loading-text { font-size: 14px; color: var(--grey); }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 27, 34, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+  backdrop-filter: blur(2px);
+}
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 40px rgba(28, 27, 34, 0.18);
+}
+.modal h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.modal-hint {
+  font-size: 13px;
+  color: var(--grey);
+  margin-bottom: 20px;
+}
+.modal .text-input { margin-bottom: 8px; }
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  top: 72px;
+  right: 20px;
+  z-index: 200;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  animation: slide-in 0.2s ease;
+}
+.toast-success {
+  background: #E8F8F2;
+  color: #006644;
+  border: 1px solid #a3dfc2;
+}
+.toast-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid #f5c6c0;
+  max-width: 360px;
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Top bar (shared header) ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  height: 60px;
+  border-bottom: 1px solid var(--grey-light);
+  background: var(--canvas);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-title {
+  flex: 1;
+  font-weight: 500;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: fit-content;
+}
+
+/* ── Generic page ── */
+.page { display: flex; flex-direction: column; height: 100%; }
+.page-main {
+  flex: 1;
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ── Section header ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.section-header h1 {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+/* ── Project list ── */
+.project-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.project-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid var(--grey-light);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  gap: 16px;
+}
+.project-row:hover {
+  border-color: var(--purple);
+  box-shadow: var(--shadow);
+}
+.project-name {
+  font-weight: 500;
+  font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+.project-time {
+  font-size: 13px;
+  color: var(--grey);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Sign-in page ── */
+.signin-page {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: var(--canvas);
+}
+.signin-card {
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+}
+.signin-card .wordmark {
+  font-size: 32px;
+  margin-bottom: 28px;
+}
+.signin-tagline {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 14px;
+  letter-spacing: -0.5px;
+}
+.signin-sub {
+  font-size: 16px;
+  color: var(--grey);
+  line-height: 1.6;
+  margin-bottom: 36px;
+}
+.signin-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+}
+
+/* ── Files page ── */
+.files-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.files-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── File sidebar ── */
+.file-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--grey-light);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: #fff;
+}
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--grey-light);
+  flex-shrink: 0;
+}
+.sidebar-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--grey);
+}
+.sidebar-new-btn {
+  font-size: 13px;
+  color: var(--purple);
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+.sidebar-new-btn:hover { background: var(--grey-light); }
+.sidebar-state {
+  font-size: 13px;
+  color: var(--grey);
+  padding: 20px 16px;
+  line-height: 1.5;
+}
+.sidebar-error { color: var(--error-text); }
+
+/* ── File list ── */
+.file-list { list-style: none; padding: 8px 0; flex: 1; }
+.file-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink);
+  border-radius: 0;
+  transition: background 0.1s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-item:hover { background: var(--grey-light); }
+.file-item.active {
+  background: var(--grey-light);
+  color: var(--purple);
+  font-weight: 500;
+}
+
+/* ── Editor area ── */
+.editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.editor-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--grey);
+  font-size: 15px;
+  text-align: center;
+  padding: 40px;
+}
+.editor {
+  flex: 1;
+  width: 100%;
+  padding: 28px 32px;
+  border: none;
+  resize: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink);
+  background: var(--canvas);
+  outline: none;
+}
+.editor::placeholder { color: var(--grey); }
+
+/* ── History / Timeline ── */
+.history-main { max-width: 600px; }
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
+}
+.timeline-entry {
+  display: flex;
+  gap: 20px;
+  position: relative;
+}
+.timeline-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 16px;
+  padding-top: 4px;
+}
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--grey-border);
+  border: 2px solid var(--canvas);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.timeline-entry.is-restored .timeline-dot {
+  background: var(--success);
+}
+.timeline-line {
+  width: 2px;
+  background: var(--grey-light);
+  flex: 1;
+  min-height: 20px;
+  margin: 4px 0;
+}
+.timeline-body {
+  padding-bottom: 32px;
+  flex: 1;
+  min-width: 0;
+}
+.timeline-message {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.timeline-meta {
+  font-size: 13px;
+  color: var(--grey);
+  margin-bottom: 10px;
+}
+.restore-btn {
+  background: none;
+  border: 1.5px solid var(--grey-border);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--grey);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  opacity: 0;
+}
+.timeline-entry:hover .restore-btn { opacity: 1; }
+.restore-btn:hover {
+  border-color: var(--purple);
+  color: var(--purple);
+  background: rgba(108, 92, 231, 0.06);
+}
+.restore-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.restored-badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--success);
+  padding: 4px 0;
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .topbar { padding: 0 16px; }
+  .topbar-title { font-size: 14px; }
+  .page-main { padding: 28px 16px 60px; }
+  .section-header h1 { font-size: 22px; }
+
+  .files-layout { flex-direction: column; }
+  .file-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--grey-light);
+    max-height: 200px;
+  }
+  .editor { padding: 20px 16px; font-size: 15px; }
+
+  .modal { padding: 24px 20px; }
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions .btn-primary,
+  .modal-actions .btn-ghost { width: 100%; justify-content: center; }
+
+  .signin-tagline { font-size: 22px; }
+
+  .restore-btn { opacity: 1; }
+
+  .toast { right: 16px; left: 16px; }
+}
+
+@media (max-width: 380px) {
+  .project-time { display: none; }
+}
