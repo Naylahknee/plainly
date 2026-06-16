@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { getRepos, createRepo } from '../api/github'
 import { timeAgo, greeting } from '../utils/time'
 
 export default function Projects({ auth }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [repos, setRepos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -46,66 +47,89 @@ export default function Projects({ auth }) {
   const firstName = auth.user?.name?.split(' ')[0] || auth.user?.login || ''
 
   return (
-    <div className="page">
-      <header className="topbar">
-        <Link to="/" className="wordmark wordmark-link">plainly</Link>
-        <div className="topbar-actions" style={{ marginLeft: 'auto' }}>
-          <Link to="/help" className="btn-ghost topbar-help-link">Help</Link>
-          <button className="btn-ghost" onClick={auth.signOut}>Sign out</button>
+    <div className="projects-page">
+      <nav className="app-nav">
+        <Link to="/" className="app-nav-logo">plainly</Link>
+        <div className="app-nav-links">
+          <Link
+            to="/"
+            className={`app-nav-link${location.pathname === '/' ? ' active' : ''}`}
+          >
+            Projects
+          </Link>
+          <Link
+            to="/help"
+            className={`app-nav-link${location.pathname === '/help' ? ' active' : ''}`}
+          >
+            Help
+          </Link>
         </div>
-      </header>
+        <div className="app-nav-footer">
+          {auth.user?.avatar_url && (
+            <img
+              className="app-nav-avatar"
+              src={auth.user.avatar_url}
+              alt={auth.user.login}
+            />
+          )}
+          <span className="app-nav-username">{auth.user?.login}</span>
+          <button className="app-nav-signout" onClick={auth.signOut}>Sign out</button>
+        </div>
+      </nav>
 
-      <main className="page-main">
-        {!loading && !error && (
-          <div className="dashboard-header">
-            <div className="dashboard-greeting">
-              {greeting()}{firstName ? `, ${firstName}` : ''}.
+      <div className="app-main">
+        <div className="page-main">
+          {!loading && !error && (
+            <div className="dashboard-header">
+              <div className="dashboard-greeting">
+                {greeting()}{firstName ? `, ${firstName}` : ''}.
+              </div>
+              <button className="btn-primary" onClick={openModal}>New project</button>
             </div>
-            <button className="btn-primary" onClick={openModal}>New project</button>
-          </div>
-        )}
+          )}
 
-        {loading && <p className="state-loading">Loading your projects…</p>}
+          {loading && <p className="state-loading">Loading your projects…</p>}
 
-        {!loading && error && <p className="error-box">{error}</p>}
+          {!loading && error && <p className="error-box">{error}</p>}
 
-        {!loading && !error && repos.length === 0 && (
-          <div className="empty-state empty-state-dashboard">
-            <div className="empty-icon">📁</div>
-            <h2 className="empty-heading">Start your first project</h2>
-            <p className="empty-body">
-              A project is a place to keep all your files for one thing —
-              a book, a business, a class. Make your first one and we'll keep
-              every version safe.
-            </p>
-            <button className="btn-primary" onClick={openModal}>Create a project</button>
-          </div>
-        )}
+          {!loading && !error && repos.length === 0 && (
+            <div className="empty-state empty-state-dashboard">
+              <div className="empty-icon">📁</div>
+              <h2 className="empty-heading">Start your first project</h2>
+              <p className="empty-body">
+                A project is a place to keep all your files for one thing —
+                a book, a business, a class. Make your first one and we'll keep
+                every version safe.
+              </p>
+              <button className="btn-primary" onClick={openModal}>Create a project</button>
+            </div>
+          )}
 
-        {!loading && !error && repos.length > 0 && (
-          <ul className="project-list">
-            {repos.map(repo => (
-              <li key={repo.id}>
-                <button
-                  className="project-card"
-                  onClick={() => navigate(`/p/${repo.name}`)}
-                >
-                  <div className="project-card-main">
-                    <span className="project-name">{repo.name.replace(/-/g, ' ')}</span>
-                    {repo.description && (
-                      <span className="project-card-desc">{repo.description}</span>
-                    )}
-                  </div>
-                  <div className="project-card-meta">
-                    <span className="project-time">Last touched {timeAgo(repo.updated_at)}</span>
-                    <span className="project-card-arrow" aria-hidden="true">›</span>
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
+          {!loading && !error && repos.length > 0 && (
+            <ul className="project-list">
+              {repos.map(repo => (
+                <li key={repo.id}>
+                  <button
+                    className="project-card"
+                    onClick={() => navigate(`/p/${repo.name}`)}
+                  >
+                    <div className="project-card-main">
+                      <span className="project-name">{repo.name.replace(/-/g, ' ')}</span>
+                      {repo.description && (
+                        <span className="project-card-desc">{repo.description}</span>
+                      )}
+                    </div>
+                    <div className="project-card-meta">
+                      <span className="project-time">Last touched {timeAgo(repo.updated_at)}</span>
+                      <span className="project-card-arrow" aria-hidden="true">›</span>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
 
       {showModal && (
         <div className="modal-overlay" onClick={() => !creating && setShowModal(false)}>

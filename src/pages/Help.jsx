@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 const HOW_IT_WORKS = [
   {
@@ -52,47 +52,81 @@ const GLOSSARY = [
 ]
 
 export default function Help({ auth }) {
-  const backLabel = auth?.token ? 'Projects' : 'Home'
+  const location = useLocation()
+  const isSignedIn = !!auth?.token
+
+  if (isSignedIn) {
+    return (
+      <div className="projects-page">
+        <nav className="app-nav">
+          <Link to="/" className="app-nav-logo">plainly</Link>
+          <div className="app-nav-links">
+            <Link to="/" className={`app-nav-link${location.pathname === '/' ? ' active' : ''}`}>
+              Projects
+            </Link>
+            <Link to="/help" className={`app-nav-link${location.pathname === '/help' ? ' active' : ''}`}>
+              Help
+            </Link>
+          </div>
+          <div className="app-nav-footer">
+            {auth.user?.avatar_url && (
+              <img className="app-nav-avatar" src={auth.user.avatar_url} alt={auth.user.login} />
+            )}
+            <span className="app-nav-username">{auth.user?.login}</span>
+            <button className="app-nav-signout" onClick={auth.signOut}>Sign out</button>
+          </div>
+        </nav>
+        <div className="app-main">
+          <HelpContent />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="page">
       <header className="topbar">
         <Link to="/" className="back-btn">
-          <span aria-hidden="true">←</span> {backLabel}
+          <span aria-hidden="true">←</span> Home
         </Link>
         <div className="topbar-title">How plainly works</div>
         <div className="topbar-actions" />
       </header>
-
-      <main className="help-main">
-        <section className="help-section">
-          <h2 className="help-section-title">How it works</h2>
-          <div className="how-steps">
-            {HOW_IT_WORKS.map(({ step, title, body }) => (
-              <div key={step} className="how-step">
-                <div className="how-step-num">{step}</div>
-                <div className="how-step-content">
-                  <h3 className="how-step-title">{title}</h3>
-                  <p className="how-step-body">{body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="help-section">
-          <h2 className="help-section-title">Plain-English glossary</h2>
-          <div className="glossary">
-            {GLOSSARY.map(({ term, definition, example }) => (
-              <div key={term} className="glossary-card">
-                <h3 className="glossary-term">{term}</h3>
-                <p className="glossary-def">{definition}</p>
-                <p className="glossary-example">{example}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      </main>
+      <HelpContent />
     </div>
+  )
+}
+
+function HelpContent() {
+  return (
+    <main className="help-main">
+      <section className="help-section">
+        <h2 className="help-section-title">How it works</h2>
+        <div className="how-steps">
+          {HOW_IT_WORKS.map(({ step, title, body }) => (
+            <div key={step} className="how-step">
+              <div className="how-step-num">{step}</div>
+              <div className="how-step-content">
+                <h3 className="how-step-title">{title}</h3>
+                <p className="how-step-body">{body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="help-section">
+        <h2 className="help-section-title">Plain-English glossary</h2>
+        <div className="glossary">
+          {GLOSSARY.map(({ term, definition, example }) => (
+            <div key={term} className="glossary-card">
+              <h3 className="glossary-term">{term}</h3>
+              <p className="glossary-def">{definition}</p>
+              <p className="glossary-example">{example}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </main>
   )
 }
