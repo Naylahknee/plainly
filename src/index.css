@@ -565,6 +565,172 @@ body {
   padding: 4px 0;
 }
 
+/* ── Save inline form ── */
+.save-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.save-label-input {
+  padding: 8px 12px;
+  border: 1.5px solid var(--grey-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+  color: var(--ink);
+  width: 220px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.save-label-input:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
+}
+.save-label-input::placeholder { color: var(--grey); }
+
+/* ── Editor toolbar (Markdown preview toggle) ── */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 32px;
+  border-bottom: 1px solid var(--grey-light);
+  background: var(--canvas);
+  flex-shrink: 0;
+}
+.toolbar-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1.5px solid var(--grey-border);
+  background: none;
+  color: var(--grey);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.toolbar-btn:hover {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+.toolbar-btn.active {
+  background: var(--grey-light);
+  border-color: var(--grey-border);
+  color: var(--ink);
+}
+
+/* ── Markdown preview ── */
+.markdown-preview {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink);
+}
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4 {
+  font-weight: 600;
+  margin: 1.4em 0 0.5em;
+  line-height: 1.3;
+}
+.markdown-preview h1 { font-size: 24px; }
+.markdown-preview h2 { font-size: 20px; }
+.markdown-preview h3 { font-size: 17px; }
+.markdown-preview p { margin: 0 0 1em; }
+.markdown-preview ul,
+.markdown-preview ol { padding-left: 24px; margin: 0 0 1em; }
+.markdown-preview li { margin-bottom: 4px; }
+.markdown-preview code {
+  background: var(--grey-light);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.88em;
+  font-family: 'Courier New', monospace;
+}
+.markdown-preview pre {
+  background: var(--grey-light);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 0 0 1em;
+}
+.markdown-preview pre code { background: none; padding: 0; }
+.markdown-preview blockquote {
+  border-left: 3px solid var(--grey-border);
+  margin: 0 0 1em;
+  padding: 4px 0 4px 16px;
+  color: var(--grey);
+}
+.markdown-preview a { color: var(--purple); }
+.markdown-preview hr {
+  border: none;
+  border-top: 1px solid var(--grey-border);
+  margin: 1.5em 0;
+}
+
+/* ── Editor footer (word count) ── */
+.editor-footer {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 8px 32px;
+  border-top: 1px solid var(--grey-light);
+  font-size: 12px;
+  color: var(--grey);
+  flex-shrink: 0;
+  background: var(--canvas);
+}
+.footer-unsaved {
+  color: var(--purple);
+  margin-left: auto;
+}
+
+/* ── Sidebar empty state ── */
+.sidebar-empty-state {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+.sidebar-empty-state p {
+  font-size: 13px;
+  color: var(--grey);
+}
+.sidebar-empty-btn {
+  font-size: 13px;
+  padding: 8px 14px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── Editor welcome state ── */
+.editor-welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  gap: 10px;
+}
+.welcome-title {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.welcome-sub {
+  font-size: 14px;
+  color: var(--grey);
+  max-width: 320px;
+  line-height: 1.6;
+}
+
 /* ── Mobile ── */
 @media (max-width: 640px) {
   .topbar { padding: 0 16px; }
@@ -580,6 +746,11 @@ body {
     max-height: 200px;
   }
   .editor { padding: 20px 16px; font-size: 15px; }
+  .editor-toolbar { padding: 8px 16px; }
+  .markdown-preview { padding: 20px 16px; }
+  .editor-footer { padding: 8px 16px; }
+  .save-label-input { width: 140px; }
+  .footer-unsaved { display: none; }
 
   .modal { padding: 24px 20px; }
   .modal-actions { flex-direction: column-reverse; }

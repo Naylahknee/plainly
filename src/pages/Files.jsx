@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { marked } from 'marked'
 import { getFiles, getFileContent, saveFile, createFile } from '../api/github'
+
+marked.setOptions({ breaks: true, gfm: true })
 
 const SAVE_PHRASES = [
   'Saved progress',
@@ -31,8 +34,12 @@ export default function Files({ auth }) {
   const [fileError, setFileError] = useState(null)
 
   const [saving, setSaving] = useState(false)
+  const [savingMode, setSavingMode] = useState(false)
+  const [saveLabel, setSaveLabel] = useState('')
   const [saveToast, setSaveToast] = useState(null)
   const toastTimer = useRef(null)
+
+  const [preview, setPreview] = useState(false)
 
   const [showNewFile, setShowNewFile] = useState(false)
   const [newFileName, setNewFileName] = useState('')
@@ -43,6 +50,24 @@ export default function Files({ auth }) {
     if (!owner) return
     loadFiles()
   }, [owner, repo])
+
+  // Cmd/Ctrl+S keyboard shortcut
+  useEffect(() => {
+    function onKeyDown(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        if (isDirty && !saving && !savingMode) {
+          setSaveLabel('')
+          setSavingMode(true)
+        }
+      }
+      if (e.key === 'Escape' && savingMode) {
+        setSavingMode(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isDirty, saving, savingMode])
 
   async function loadFiles() {
     setFilesLoading(true)
@@ -63,6 +88,8 @@ export default function Files({ auth }) {
     setFileLoading(true)
     setFileError(null)
     setSaveToast(null)
+    setSavingMode(false)
+    setPreview(false)
     try {
       const { content: text, sha } = await getFileContent(auth.token, owner, repo, file.path)
       setContent(text)
@@ -81,21 +108,25 @@ export default function Files({ auth }) {
     toastTimer.current = setTimeout(() => setSaveToast(null), 4000)
   }
 
-  async function handleSave() {
-    if (!activeFile || saving || !isDirty) return
+  async function confirmSave(e) {
+    e.preventDefault()
+    if (!activeFile || saving) return
     setSaving(true)
+    setSavingMode(false)
+    const message = saveLabel.trim() || randomPhrase()
     try {
       const result = await saveFile(
         auth.token, owner, repo, activeFile.path,
-        content, fileSha, randomPhrase()
+        content, fileSha, message
       )
       setFileSha(result.content.sha)
       setSavedContent(content)
-      showToast('success', 'Saved')
+      showToast('success', `Saved: ${message}`)
     } catch (e) {
       showToast('error', e.message)
     } finally {
       setSaving(false)
+      setSaveLabel('')
     }
   }
 
@@ -110,7 +141,6 @@ export default function Files({ auth }) {
       await createFile(auth.token, owner, repo, name)
       setShowNewFile(false)
       setNewFileName('')
-      await loadFiles()
       const updated = await getFiles(auth.token, owner, repo)
       setFiles(updated)
       const created = updated.find(f => f.name === name)
@@ -121,7 +151,15 @@ export default function Files({ auth }) {
     }
   }
 
+  function openNewFile() {
+    setNewFileName('')
+    setNewFileError(null)
+    setShowNewFile(true)
+  }
+
   const isDirty = content !== savedContent
+  const isMarkdown = activeFile?.name.toLowerCase().endsWith('.md')
+  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
 
   return (
     <div className="files-page">
@@ -139,13 +177,37 @@ export default function Files({ auth }) {
               >
                 History
               </button>
-              <button
-                className="btn-primary"
-                onClick={handleSave}
-                disabled={saving || !isDirty}
-              >
-                {saving ? 'Saving…' : 'Save point'}
-              </button>
+
+              {savingMode ? (
+                <form className="save-inline" onSubmit={confirmSave}>
+                  <input
+                    autoFocus
+                    className="save-label-input"
+                    placeholder="What changed? (optional)"
+                    value={saveLabel}
+                    onChange={e => setSaveLabel(e.target.value)}
+                  />
+                  <button type="submit" className="btn-primary" disabled={saving}>
+                    {saving ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => setSavingMode(false)}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </button>
+                </form>
+              ) : (
+                <button
+                  className="btn-primary"
+                  onClick={() => { setSaveLabel(''); setSavingMode(true) }}
+                  disabled={saving || !isDirty}
+                >
+                  {saving ? 'Saving…' : 'Save point'}
+                </button>
+              )}
             </>
           )}
         </div>
@@ -161,7 +223,7 @@ export default function Files({ auth }) {
         <aside className="file-sidebar">
           <div className="sidebar-head">
             <span className="sidebar-label">Files</span>
-            <button className="sidebar-new-btn" onClick={() => { setNewFileName(''); setNewFileError(null); setShowNewFile(true) }}>
+            <button className="sidebar-new-btn" onClick={openNewFile}>
               + New file
             </button>
           </div>
@@ -169,7 +231,12 @@ export default function Files({ auth }) {
           {filesLoading && <p className="sidebar-state">Loading…</p>}
           {!filesLoading && filesError && <p className="sidebar-state sidebar-error">{filesError}</p>}
           {!filesLoading && !filesError && files.length === 0 && (
-            <p className="sidebar-state">No text files yet. Create one to get started.</p>
+            <div className="sidebar-empty-state">
+              <p>No files yet.</p>
+              <button className="btn-primary sidebar-empty-btn" onClick={openNewFile}>
+                + Create your first file
+              </button>
+            </div>
           )}
           {!filesLoading && !filesError && files.length > 0 && (
             <ul className="file-list">
@@ -189,29 +256,62 @@ export default function Files({ auth }) {
 
         <main className="editor-area">
           {!activeFile && !filesLoading && (
-            <div className="editor-placeholder">
-              {files.length === 0
-                ? 'Create a new file to get started.'
-                : 'Pick a file from the list to open it.'}
+            <div className="editor-welcome">
+              <p className="welcome-title">
+                {files.length === 0 ? 'Create a file to get started.' : 'Pick a file to open it.'}
+              </p>
+              <p className="welcome-sub">
+                {files.length === 0
+                  ? 'Every version you save is kept forever — you can always go back.'
+                  : 'Every save point is kept forever. You can always go back.'}
+              </p>
             </div>
           )}
 
           {activeFile && fileLoading && (
-            <div className="editor-placeholder">Opening file…</div>
+            <div className="editor-welcome"><p className="welcome-title">Opening file…</p></div>
           )}
 
           {activeFile && fileError && (
-            <div className="editor-placeholder error-text">{fileError}</div>
+            <div className="editor-welcome"><p className="error-text">{fileError}</p></div>
           )}
 
           {activeFile && !fileLoading && !fileError && (
-            <textarea
-              className="editor"
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              placeholder="This file is blank. Start typing, then make a save point when you want to keep your progress."
-              aria-label={`Editing ${activeFile.name}`}
-            />
+            <>
+              {isMarkdown && (
+                <div className="editor-toolbar">
+                  <button
+                    className={`toolbar-btn${preview ? ' active' : ''}`}
+                    onClick={() => setPreview(p => !p)}
+                  >
+                    {preview ? 'Edit' : 'Preview'}
+                  </button>
+                </div>
+              )}
+
+              {preview ? (
+                <div
+                  className="markdown-preview"
+                  dangerouslySetInnerHTML={{ __html: marked.parse(content || '') }}
+                />
+              ) : (
+                <textarea
+                  className="editor"
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  placeholder="This file is blank. Start typing, then make a save point when you want to keep your progress."
+                  aria-label={`Editing ${activeFile.name}`}
+                />
+              )}
+
+              {!preview && (
+                <div className="editor-footer">
+                  <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
+                  <span>{content.length} {content.length === 1 ? 'character' : 'characters'}</span>
+                  {isDirty && <span className="footer-unsaved">Unsaved changes · Cmd+S to save</span>}
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>
