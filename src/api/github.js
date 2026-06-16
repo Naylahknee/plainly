@@ -113,3 +113,42 @@ export async function getFileAtCommit(token, owner, repo, path, sha) {
   const data = await r.json()
   return fromBase64(data.content)
 }
+
+export async function deleteFile(token, owner, repo, path, sha, message) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`, {
+    method: 'DELETE',
+    headers: { ...headers(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, sha })
+  })
+  if (!r.ok) throw new Error('Could not delete this file. Try again.')
+  return r.json()
+}
+
+export async function createFileWithContent(token, owner, repo, path, content, message) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`, {
+    method: 'PUT',
+    headers: { ...headers(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, content: toBase64(content) })
+  })
+  if (r.status === 422) throw new Error('A file with that name already exists.')
+  if (!r.ok) throw new Error('Could not create the file. Try again.')
+  return r.json()
+}
+
+export async function updateRepoSettings(token, owner, repo, settings) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}`, {
+    method: 'PATCH',
+    headers: { ...headers(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings)
+  })
+  if (!r.ok) throw new Error('Could not update project settings. Try again.')
+  return r.json()
+}
+
+export async function deleteRepo(token, owner, repo) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}`, {
+    method: 'DELETE',
+    headers: headers(token)
+  })
+  if (!r.ok) throw new Error('Could not delete the project. Try again.')
+}

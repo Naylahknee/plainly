@@ -1107,6 +1107,237 @@ body {
   line-height: 1.5;
 }
 
+/* ── File rename/delete ── */
+.file-item-wrapper { position: relative; }
+.file-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.file-row .file-item { flex: 1; min-width: 0; }
+.file-actions {
+  display: none;
+  flex-shrink: 0;
+  gap: 1px;
+  padding-right: 4px;
+}
+.file-row:hover .file-actions { display: flex; }
+.file-action-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--grey);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.file-action-btn:hover { background: var(--grey-light); color: var(--ink); }
+.rename-form { padding: 0 8px 4px; }
+.rename-input {
+  width: 100%;
+  border: 1.5px solid var(--purple);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* ── Toolbar spacer + font controls ── */
+.toolbar-spacer { flex: 1; }
+.font-size-controls { display: flex; gap: 4px; }
+
+/* ── Word goal ── */
+.word-goal-bar {
+  height: 3px;
+  background: var(--grey-light);
+  flex-shrink: 0;
+}
+.word-goal-progress {
+  height: 100%;
+  background: var(--success);
+  transition: width 0.4s ease;
+  max-width: 100%;
+}
+.footer-stat {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--grey);
+  cursor: pointer;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+.footer-stat:hover { color: var(--purple); }
+.footer-autosaved { color: var(--success); }
+.goal-form { display: flex; }
+.goal-input {
+  width: 150px;
+  border: 1px solid var(--grey-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  outline: none;
+}
+.goal-input:focus { border-color: var(--purple); }
+
+/* ── Focus mode ── */
+.files-page.focus-mode > .topbar,
+.files-page.focus-mode > .project-summary-bar,
+.files-page.focus-mode > .toast { display: none; }
+.files-page.focus-mode .file-sidebar { display: none; }
+.files-page.focus-mode .editor-toolbar { display: none; }
+.files-page.focus-mode .editor-footer { display: none; }
+.files-page.focus-mode .word-goal-bar { display: none; }
+.files-page.focus-mode .editor {
+  padding: 80px 120px;
+  font-size: 18px !important;
+}
+
+/* ── Topbar icon buttons ── */
+.topbar-icon-btn {
+  padding: 7px 12px;
+  font-size: 15px;
+  min-width: auto;
+}
+
+/* ── Summary bar download all ── */
+.summary-download-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--purple);
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+.summary-download-btn:hover { opacity: 0.75; }
+.summary-download-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Danger button ── */
+.btn-danger {
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--error-text);
+  background: none;
+  color: var(--error-text);
+  transition: background 0.15s;
+}
+.btn-danger:hover { background: var(--error-bg); }
+.btn-danger:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Project settings modal ── */
+.modal-settings { max-width: 460px; }
+.settings-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.settings-desc-input {
+  resize: vertical;
+  min-height: 72px;
+  margin-bottom: 14px;
+}
+.settings-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  color: var(--grey);
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+.settings-danger-zone {
+  border-top: 1px solid var(--grey-light);
+  margin-top: 28px;
+  padding-top: 24px;
+}
+.settings-danger-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--error-text);
+  margin-bottom: 6px;
+}
+.settings-danger-body {
+  font-size: 13px;
+  color: var(--grey);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+/* ── Timeline actions (restore + compare) ── */
+.timeline-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.compare-btn {
+  background: none;
+  border: 1.5px solid var(--grey-border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--grey);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
+}
+.timeline-entry:hover .compare-btn { opacity: 1; }
+.compare-btn:hover { border-color: var(--purple); color: var(--purple); }
+.compare-btn.active { opacity: 1; border-color: var(--purple); color: var(--purple); }
+.compare-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Diff panel ── */
+.diff-panel {
+  margin-top: 12px;
+  border: 1px solid var(--grey-light);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: 'Courier New', 'Courier', monospace;
+  font-size: 12px;
+}
+.diff-stats {
+  padding: 8px 14px;
+  background: var(--grey-light);
+  font-size: 13px;
+  color: var(--grey);
+  font-family: inherit;
+}
+.diff-stat-added { color: #007a57; font-weight: 600; }
+.diff-stat-removed { color: var(--error-text); font-weight: 600; }
+.diff-stat-sep { color: var(--grey-border); }
+.diff-lines {
+  max-height: 320px;
+  overflow-y: auto;
+}
+.diff-line {
+  padding: 1px 14px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.7;
+}
+.diff-line-added { background: #e6fbf5; }
+.diff-line-added::before { content: '+ '; color: #007a57; }
+.diff-line-removed { background: var(--error-bg); }
+.diff-line-removed::before { content: '− '; color: var(--error-text); }
+.diff-line-unchanged { color: var(--grey); }
+
 @media (max-width: 640px) {
   .dashboard-greeting { font-size: 18px; }
   .project-summary-bar { padding: 8px 16px; }
@@ -1137,4 +1368,9 @@ body {
   .app-nav-username { display: none; }
   .app-nav-signout { font-size: 12px; }
   .app-main { overflow-y: auto; flex: 1; }
+
+  .topbar-icon-btn { padding: 6px 8px; font-size: 14px; }
+  .files-page.focus-mode .editor { padding: 40px 20px; }
+  .timeline-actions { gap: 6px; }
+  .compare-btn { opacity: 1; }
 }
