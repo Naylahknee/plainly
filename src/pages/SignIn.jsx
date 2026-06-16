@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 
 export default function SignIn() {
   const location = useLocation()
@@ -21,10 +21,18 @@ export default function SignIn() {
         <p className="signin-sub">
           Keep your writing safe. Go back to any version. No tech jargon required.
         </p>
+
+        <ul className="signin-features">
+          <li>Every version of your work is kept safe</li>
+          <li>Go back to any save point, any time</li>
+          <li>Works with files you already have</li>
+        </ul>
+
         {error && <p className="error-box">{error}</p>}
         <a href={authUrl} className="btn-primary signin-btn">
           Get started
         </a>
+        <Link to="/help" className="signin-help-link">How it works →</Link>
       </div>
     </div>
   )

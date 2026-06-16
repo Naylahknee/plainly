@@ -20,6 +20,12 @@ function fromBase64(b64) {
   return new TextDecoder().decode(bytes)
 }
 
+export async function getRepoInfo(token, owner, repo) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}`, { headers: headers(token) })
+  if (!r.ok) return null
+  return r.json()
+}
+
 export async function getUser(token) {
   const r = await fetch(`${API}/user`, { headers: headers(token) })
   if (!r.ok) throw new Error('Could not load your account.')

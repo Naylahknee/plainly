@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { marked } from 'marked'
-import { getFiles, getFileContent, saveFile, createFile } from '../api/github'
+import { timeAgo } from '../utils/time'
+import { getFiles, getFileContent, saveFile, createFile, getRepoInfo } from '../api/github'
 
 marked.setOptions({ breaks: true, gfm: true })
 
 const SAVE_PHRASES = [
-  'Saved progress',
-  'Checkpoint saved',
-  'Version saved',
-  'Kept this version',
-  'Saved a copy'
+  'Saved progress', 'Checkpoint saved', 'Version saved',
+  'Kept this version', 'Saved a copy'
 ]
 
 function randomPhrase() {
@@ -25,6 +23,7 @@ export default function Files({ auth }) {
   const [files, setFiles] = useState([])
   const [filesLoading, setFilesLoading] = useState(true)
   const [filesError, setFilesError] = useState(null)
+  const [repoInfo, setRepoInfo] = useState(null)
 
   const [activeFile, setActiveFile] = useState(null)
   const [content, setContent] = useState('')
@@ -46,9 +45,15 @@ export default function Files({ auth }) {
   const [newFileError, setNewFileError] = useState(null)
   const [newFileSaving, setNewFileSaving] = useState(false)
 
+  // isDirty MUST be declared before useEffects that reference it
+  const isDirty = content !== savedContent
+  const isMarkdown = activeFile?.name.toLowerCase().endsWith('.md')
+  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
+
   useEffect(() => {
     if (!owner) return
     loadFiles()
+    getRepoInfo(auth.token, owner, repo).then(setRepoInfo).catch(() => {})
   }, [owner, repo])
 
   // Cmd/Ctrl+S keyboard shortcut
@@ -157,9 +162,7 @@ export default function Files({ auth }) {
     setShowNewFile(true)
   }
 
-  const isDirty = content !== savedContent
-  const isMarkdown = activeFile?.name.toLowerCase().endsWith('.md')
-  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
+  const projectTitle = repo.replace(/-/g, ' ')
 
   return (
     <div className="files-page">
@@ -167,7 +170,7 @@ export default function Files({ auth }) {
         <button className="back-btn" onClick={() => navigate('/')}>
           <span aria-hidden="true">←</span> Projects
         </button>
-        <div className="topbar-title">{repo.replace(/-/g, ' ')}</div>
+        <div className="topbar-title">{projectTitle}</div>
         <div className="topbar-actions">
           {activeFile && (
             <>
@@ -201,7 +204,7 @@ export default function Files({ auth }) {
                 </form>
               ) : (
                 <button
-                  className="btn-primary"
+                  className={`btn-primary${isDirty && !saving ? ' btn-pulse' : ''}`}
                   onClick={() => { setSaveLabel(''); setSavingMode(true) }}
                   disabled={saving || !isDirty}
                 >
@@ -212,6 +215,29 @@ export default function Files({ auth }) {
           )}
         </div>
       </header>
+
+      {/* Project summary bar */}
+      <div className="project-summary-bar">
+        <div className="project-summary-left">
+          <span className="project-summary-name">{projectTitle}</span>
+          {repoInfo?.description && (
+            <span className="project-summary-desc">{repoInfo.description}</span>
+          )}
+        </div>
+        <div className="project-summary-right">
+          {!filesLoading && (
+            <span className="project-summary-stat">
+              {files.length} {files.length === 1 ? 'file' : 'files'}
+            </span>
+          )}
+          {repoInfo?.pushed_at && (
+            <>
+              <span className="project-summary-dot">·</span>
+              <span className="project-summary-stat">Last save {timeAgo(repoInfo.pushed_at)}</span>
+            </>
+          )}
+        </div>
+      </div>
 
       {saveToast && (
         <div className={`toast toast-${saveToast.type}`} role="status">
@@ -308,7 +334,7 @@ export default function Files({ auth }) {
                 <div className="editor-footer">
                   <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
                   <span>{content.length} {content.length === 1 ? 'character' : 'characters'}</span>
-                  {isDirty && <span className="footer-unsaved">Unsaved changes · Cmd+S to save</span>}
+                  {isDirty && <span className="footer-unsaved">Unsaved · Cmd+S to save</span>}
                 </div>
               )}
             </>

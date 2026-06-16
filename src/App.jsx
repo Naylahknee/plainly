@@ -5,6 +5,7 @@ import AuthCallback from './pages/AuthCallback'
 import Projects from './pages/Projects'
 import Files from './pages/Files'
 import History from './pages/History'
+import Help from './pages/Help'
 
 export default function App() {
   const auth = useAuth()
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/" element={auth.token ? <Projects auth={auth} /> : <SignIn />} />
         <Route path="/p/:repo" element={auth.token ? <Files auth={auth} /> : <Navigate to="/" replace />} />
         <Route path="/p/:repo/h/*" element={auth.token ? <History auth={auth} /> : <Navigate to="/" replace />} />
+        <Route path="/help" element={<Help auth={auth} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

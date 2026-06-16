@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { getRepos, createRepo } from '../api/github'
-import { timeAgo } from '../utils/time'
+import { timeAgo, greeting } from '../utils/time'
 
 export default function Projects({ auth }) {
   const navigate = useNavigate()
@@ -43,29 +43,42 @@ export default function Projects({ auth }) {
     }
   }
 
+  const firstName = auth.user?.name?.split(' ')[0] || auth.user?.login || ''
+
   return (
     <div className="page">
       <header className="topbar">
-        <div className="wordmark">plainly</div>
-        <button className="btn-ghost" onClick={auth.signOut}>Sign out</button>
+        <Link to="/" className="wordmark wordmark-link">plainly</Link>
+        <div className="topbar-actions" style={{ marginLeft: 'auto' }}>
+          <Link to="/help" className="btn-ghost topbar-help-link">Help</Link>
+          <button className="btn-ghost" onClick={auth.signOut}>Sign out</button>
+        </div>
       </header>
 
       <main className="page-main">
-        <div className="section-header">
-          <h1>Your projects</h1>
-          <button className="btn-primary" onClick={openModal}>New project</button>
-        </div>
+        {!loading && !error && (
+          <div className="dashboard-header">
+            <div className="dashboard-greeting">
+              {greeting()}{firstName ? `, ${firstName}` : ''}.
+            </div>
+            <button className="btn-primary" onClick={openModal}>New project</button>
+          </div>
+        )}
 
         {loading && <p className="state-loading">Loading your projects…</p>}
 
         {!loading && error && <p className="error-box">{error}</p>}
 
         {!loading && !error && repos.length === 0 && (
-          <div className="empty-state">
-            <p>
-              No projects yet. A project is just a place to keep files that belong together.
-              Make your first one.
+          <div className="empty-state empty-state-dashboard">
+            <div className="empty-icon">📁</div>
+            <h2 className="empty-heading">Start your first project</h2>
+            <p className="empty-body">
+              A project is a place to keep all your files for one thing —
+              a book, a business, a class. Make your first one and we'll keep
+              every version safe.
             </p>
+            <button className="btn-primary" onClick={openModal}>Create a project</button>
           </div>
         )}
 
@@ -74,11 +87,19 @@ export default function Projects({ auth }) {
             {repos.map(repo => (
               <li key={repo.id}>
                 <button
-                  className="project-row"
+                  className="project-card"
                   onClick={() => navigate(`/p/${repo.name}`)}
                 >
-                  <span className="project-name">{repo.name.replace(/-/g, ' ')}</span>
-                  <span className="project-time">Last touched {timeAgo(repo.updated_at)}</span>
+                  <div className="project-card-main">
+                    <span className="project-name">{repo.name.replace(/-/g, ' ')}</span>
+                    {repo.description && (
+                      <span className="project-card-desc">{repo.description}</span>
+                    )}
+                  </div>
+                  <div className="project-card-meta">
+                    <span className="project-time">Last touched {timeAgo(repo.updated_at)}</span>
+                    <span className="project-card-arrow" aria-hidden="true">›</span>
+                  </div>
                 </button>
               </li>
             ))}
