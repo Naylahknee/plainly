@@ -1,11 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 
 // Layout
 import AppShell from './components/AppShell'
 
 // Auth pages (no shell)
-import SignIn       from './pages/SignIn'
 import AuthCallback from './pages/AuthCallback'
 import Welcome      from './pages/Welcome'
 
@@ -29,7 +28,6 @@ import SavePoints     from './pages/SavePoints'
 import Versions       from './pages/Versions'
 import Share          from './pages/Share'
 import Settings       from './pages/Settings'
-import History        from './pages/History'
 
 // Update pages
 import UpdateWorkspace  from './pages/UpdateWorkspace'
@@ -38,6 +36,15 @@ import ReturnFromAI     from './pages/ReturnFromAI'
 import ReviewAIChanges  from './pages/ReviewAIChanges'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * The old per-file history screen lived at /p/:repo/h/*. Save Points covers it
+ * now, so old links land there instead of nowhere.
+ */
+function RedirectToSavePoints() {
+  const { repo } = useParams()
+  return <Navigate to={`/p/${repo}/points`} replace />
+}
 
 /**
  * Wraps a page in AppShell. Redirects to "/" if not authenticated.
@@ -95,7 +102,7 @@ export default function App() {
         <Route path="/p/:repo/versions"    element={<Protected auth={auth}><Versions     auth={auth} /></Protected>} />
         <Route path="/p/:repo/share"       element={<Protected auth={auth}><Share        auth={auth} /></Protected>} />
         <Route path="/p/:repo/settings"    element={<Protected auth={auth}><Settings     auth={auth} /></Protected>} />
-        <Route path="/p/:repo/h/*"         element={<Protected auth={auth}><History      auth={auth} /></Protected>} />
+        <Route path="/p/:repo/h/*"         element={<RedirectToSavePoints />} />
 
         {/* ── Update pages ────────────────────────────────────────── */}
         <Route path="/p/:repo/u/:updateId"        element={<Protected auth={auth}><UpdateWorkspace auth={auth} /></Protected>} />
