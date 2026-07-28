@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import JSZip from 'jszip'
@@ -14,6 +14,7 @@ import {
   getTasks, createTask, updateTask, deleteTask, getActiveTask
 } from '../utils/taskMemory'
 import { projectName } from '../utils/projectName'
+import { setDraft, clearDraft, getDraft } from '../utils/drafts'
 
 marked.setOptions({ breaks: true, gfm: true })
 
@@ -198,7 +199,8 @@ export default function Files({ auth }) {
     if (owner) recordFileOpen(owner, repo, file.name)
     try {
       const { content: text, sha } = await getFileContent(auth.token, owner, repo, file.path)
-      setContent(text)
+      const draft = owner ? getDraft(owner, repo, file.path) : null
+      setContent(draft ? draft.content : text)
       setSavedContent(text)
       setFileSha(sha)
     } catch (e) {
@@ -222,7 +224,10 @@ export default function Files({ auth }) {
       const result = await saveFile(auth.token, owner, repo, activeFile.path, content, fileSha, message)
       setFileSha(result.content.sha)
       setSavedContent(content)
-      if (owner) recordSave(owner, repo, message)
+      if (owner) {
+        recordSave(owner, repo, message, result.commit?.sha)
+        clearDraft(owner, repo, activeFile.path)
+      }
       if (showSuccess) {
         setLastAutoSaveTime(null)
         showToast('success', `Saved: ${message}`)
@@ -880,7 +885,12 @@ export default function Files({ auth }) {
                   className="editor"
                   style={{ fontSize: `${fontSize}px` }}
                   value={content}
-                  onChange={e => setContent(e.target.value)}
+                  onChange={e => {
+                    setContent(e.target.value)
+                    if (owner && activeFile) {
+                      setDraft(owner, repo, activeFile.path, e.target.value, fileSha)
+                    }
+                  }}
                   placeholder="This file is blank. Start typing, then make a save point when you want to keep your progress."
                   aria-label={`Editing ${activeFile.name}`}
                 />
@@ -918,7 +928,10 @@ export default function Files({ auth }) {
                   {!isDirty && lastAutoSaveTime && (
                     <span className="footer-autosaved">Auto-saved {timeAgo(lastAutoSaveTime)}</span>
                   )}
-                  {isDirty && <span className="footer-unsaved">Unsaved · Cmd+S to save</span>}
+                  {isDirty
+                    ? <span className="footer-unsaved">Changes not saved yet</span>
+                    : <span className="footer-autosaved">Saved in GitHub</span>}
+                  <Link to={`/p/${repo}/save`} className="footer-review">Review and save</Link>
                 </div>
               )}
             </>

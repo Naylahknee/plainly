@@ -207,3 +207,39 @@ export async function getCommitDetails(token, owner, repo, sha) {
     return null
   }
 }
+
+/**
+ * Everything in a folder — files *and* folders, nothing filtered out.
+ *
+ * getFiles() above keeps its text-file filter for the editor's file list.
+ * This is what the Project Files screen and the AI handoff use, because the
+ * design shows folders (HANDOFF §7.14).
+ */
+export async function getContents(token, owner, repo, path = '') {
+  const url = path
+    ? `${API}/repos/${owner}/${repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`
+    : `${API}/repos/${owner}/${repo}/contents`
+  const r = await fetch(url, { headers: headers(token) })
+  if (r.status === 404) return []
+  if (!r.ok) throw new Error('Could not load the files in this project. Try refreshing the page.')
+  const all = await r.json()
+  if (!Array.isArray(all)) return []
+  // Folders first, then files, each alphabetically — the order the design shows.
+  return all.sort((a, b) =>
+    a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'dir' ? -1 : 1
+  )
+}
+
+/**
+ * Recent Save Points (commits) on the project's main version.
+ */
+export async function getCommits(token, owner, repo, perPage = 20) {
+  const r = await fetch(
+    `${API}/repos/${owner}/${repo}/commits?per_page=${perPage}`,
+    { headers: headers(token) }
+  )
+  if (r.status === 404 || r.status === 409) return []   // 409 = empty repository
+  if (!r.ok) throw new Error('Could not load the Save Points for this project.')
+  const data = await r.json()
+  return Array.isArray(data) ? data : []
+}

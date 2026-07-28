@@ -26,13 +26,9 @@ export default function UpdateWorkspace({ auth }) {
 
   if (!update) {
     return (
-      <div className="page">
-        <main className="page-main" style={{ maxWidth: '880px' }}>
-          <p className="error-box">This update could not be found.</p>
-          <Link to={`/p/${repo}/updates`} className="pl-btn">
-            Back to updates
-          </Link>
-        </main>
+      <div className="screen-padded workspace-screen">
+        <p className="error-box">This update could not be found.</p>
+        <Link to={`/p/${repo}/updates`} className="pl-btn">Back to updates</Link>
       </div>
     )
   }
@@ -57,8 +53,8 @@ export default function UpdateWorkspace({ auth }) {
   }
 
   return (
-    <div className="page">
-      <main className="page-main" style={{ maxWidth: '880px' }}>
+    <div className="screen-padded workspace-screen">
+      <div>
         {/* Back link */}
         <Link to={`/p/${repo}/updates`} className="update-workspace-back">
           ← All updates
@@ -102,7 +98,10 @@ export default function UpdateWorkspace({ auth }) {
 
         {/* Recommended next step */}
         <section className="update-recommendation">
-          <p className="update-recommendation-text">{hero.next}</p>
+          <div>
+            <p className="update-recommendation-label">Recommended next step</p>
+            <p className="update-recommendation-text">{hero.next}</p>
+          </div>
           <button
             className="pl-btn-primary"
             onClick={() => navigate(`/p/${repo}/u/${updateId}/${hero.route}`)}
@@ -141,8 +140,11 @@ export default function UpdateWorkspace({ auth }) {
               ) : (
                 <ul className="update-files-list">
                   {(update.files || []).map((file, i) => (
-                    <li key={i} className="update-file-item">
-                      <code>{file}</code>
+                    <li key={i}>
+                      <Link to={`/p/${repo}/f/${file}`} className="update-file-item">
+                        <code>{file}</code>
+                        <span className="update-file-open">Open</span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -176,12 +178,12 @@ export default function UpdateWorkspace({ auth }) {
 
         {/* Footer actions */}
         <div className="update-workspace-footer">
-          <button
-            className="pl-btn-primary"
-            onClick={() => navigate(`/p/${repo}/u/${updateId}/${hero.route}`)}
-          >
-            {hero.cta}
-          </button>
+          <Link to={`/p/${repo}/u/${updateId}/ai`} className="pl-btn-primary">
+            Continue with AI
+          </Link>
+          <Link to={`/p/${repo}/u/${updateId}/review`} className="pl-btn">
+            Review the changes
+          </Link>
           {update.status !== 'saved' && update.status !== 'paused' && (
             <button
               className="pl-btn"
@@ -219,7 +221,7 @@ export default function UpdateWorkspace({ auth }) {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   )
 }

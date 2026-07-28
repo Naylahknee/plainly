@@ -1,18 +1,23 @@
 /**
- * ReviewAndSave.jsx — /p/:repo/save
+ * ReviewAndSave.jsx — /p/:repo/save (max-width 820px)
  *
- * Final save screen: shows pending changes, lets user write a "what changed"
- * message, and creates the save point via the GitHub API.
+ * Exactly what will be saved to GitHub, then the button that saves it
+ * (HANDOFF §7.10), followed by the confirmation (§7.11).
  *
- * Note: This is a project-level route (/p/:repo/save), not update-scoped.
- * It resolves the active update for the project from updateMemory.
+ * The diff comes from real drafts on this computer compared against the file
+ * as it currently stands in GitHub. If GitHub rejects a save because the file
+ * changed underneath, the conflict screen from §7.10 takes over — nothing is
+ * thrown away without asking.
  */
 
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getActiveUpdate, updateUpdate } from '../utils/updateMemory'
-import { getFiles, getFileContent, saveFile } from '../api/github'
+import { getFileContent, saveFile } from '../api/github'
 import { recordSave } from '../utils/projectMemory'
+import { getDrafts, clearDraft, lineChanges } from '../utils/drafts'
+import { projectName } from '../utils/projectName'
+import { timeAgo } from '../utils/time'
 
 export default function ReviewAndSave({ auth }) {
   const { repo } = useParams()
@@ -22,112 +27,243 @@ export default function ReviewAndSave({ auth }) {
 
   const update = owner ? getActiveUpdate(owner, repo) : null
 
-  const [label, setLabel]         = useState('')
-  const [saving, setSaving]       = useState(false)
-  const [error, setError]         = useState(null)
-  const [done, setDone]           = useState(false)
+  const [files, setFiles]       = useState([])   // [{ path, sha, draft, changes }]
+  const [loading, setLoading]   = useState(true)
+  const [label, setLabel]       = useState('')
+  const [saving, setSaving]     = useState(false)
+  const [conflict, setConflict] = useState(null)
+  const [error, setError]       = useState(null)
+  const [saved, setSaved]       = useState(null)
 
-  const defaultLabel = update?.title
-    ? `Updated: ${update.title}`
-    : 'Saved progress'
+  useEffect(() => {
+    if (!owner || !token) return
+    const drafts = getDrafts(owner, repo)
+    const paths = Object.keys(drafts)
+    if (paths.length === 0) { setLoading(false); return }
+
+    Promise.all(paths.map(async path => {
+      let current = ''
+      let sha = drafts[path].sha
+      try {
+        const file = await getFileContent(token, owner, repo, path)
+        current = file.content
+        sha = file.sha
+      } catch { /* new or unreadable file — treated as empty */ }
+      return {
+        path,
+        sha,
+        draft: drafts[path].content,
+        at: drafts[path].at,
+        changes: lineChanges(current, drafts[path].content),
+      }
+    })).then(rows => {
+      setFiles(rows)
+      setLoading(false)
+    })
+  }, [owner, token, repo])
 
   async function handleSave(e) {
     e.preventDefault()
-    if (!owner) return
+    if (!owner || files.length === 0) return
     setSaving(true)
     setError(null)
-    const saveLabel = label.trim() || defaultLabel
+    const message = label.trim() || 'Made the project description clearer'
+
     try {
-      // The actual file-level save is done in Files.jsx editor flow.
-      // Here we mark the update as saved in local memory.
+      let lastSha = null
+      for (const file of files) {
+        const result = await saveFile(token, owner, repo, file.path, file.draft, file.sha, message)
+        lastSha = result.commit?.sha || lastSha
+        clearDraft(owner, repo, file.path)
+      }
+      recordSave(owner, repo, message, lastSha)
       if (update) {
         updateUpdate(owner, repo, update.id, {
-          status:     'saved',
-          savePoint:  saveLabel,
-          storyEntry: `Saved to GitHub as "${saveLabel}"`,
+          status: 'saved',
+          savePoint: message,
+          storyEntry: `Saved to GitHub as "${message}"`,
         })
-        recordSave(owner, repo, saveLabel)
       }
-      setDone(true)
-    } catch (e) {
-      setError(e.message || 'Could not save. Try again.')
+      setSaved({ label: message, files: files.map(f => f.path) })
+    } catch (err) {
+      if (/409|conflict|sha|changed/i.test(err.message || '')) {
+        setConflict({ path: files[0]?.path })
+      } else {
+        setError(err.message || 'Could not save. Try again.')
+      }
     } finally {
       setSaving(false)
     }
   }
 
-  if (done) {
+  /* ── Confirmation (§7.11) ─────────────────────────────────────────────── */
+  if (saved) {
     return (
-      <div className="screen-padded screen-narrow">
-        <div className="screen-header">
-          <h1>Saved!</h1>
-        </div>
-        <p className="save-done-text">
-          Your changes are saved to GitHub{label.trim() ? ` as "${label.trim()}"` : ''}.
+      <div className="screen-padded save-screen">
+        <div className="save-done-tick" aria-hidden="true">✓</div>
+        <h1 className="save-done-title">Your work is saved in GitHub.</h1>
+        <p className="save-done-body">
+          Nice — that version is kept forever. You can come back to it any time from Save Points.
         </p>
+        <div className="save-done-card">
+          <div className="save-done-row">
+            <span className="save-done-label">Save Point</span>
+            <span className="save-done-value">{saved.label}</span>
+          </div>
+          <div className="save-done-rule" />
+          <div className="save-done-row">
+            <span className="save-done-label">Saved</span>
+            <span className="save-done-value">Just now</span>
+          </div>
+          <div className="save-done-rule" />
+          <div className="save-done-row">
+            <span className="save-done-label">Files saved</span>
+            <span className="save-done-value">{saved.files.join(', ')}</span>
+          </div>
+        </div>
         <div className="save-done-actions">
-          <Link to={`/p/${repo}`} className="btn-primary">Back to project</Link>
-          <Link to={`/p/${repo}/new-update`} className="btn-ghost">Make another update</Link>
+          <Link to={`/p/${repo}`} className="pl-btn-primary">Back to {projectName(repo)}</Link>
+          <Link to={`/p/${repo}/changed`} className="pl-btn">See what changed</Link>
+          {update && (
+            <Link to={`/p/${repo}/u/${update.id}/ai`} className="pl-btn">Continue with AI</Link>
+          )}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="screen-padded screen-narrow">
-      <div className="screen-header">
-        <h1>Review and save</h1>
-        <p className="screen-subtitle">
-          Add a note describing what changed, then save it to GitHub.
-        </p>
-      </div>
+    <div className="screen-padded save-screen">
+      <Link to={`/p/${repo}/files`} className="back-link">← Back to the file</Link>
+      <h1 className="save-title">Review and save</h1>
+      <p className="save-intro">
+        Here's exactly what will be saved to GitHub. Nothing leaves this screen until you press
+        the button.
+      </p>
 
-      {update && (
-        <div className="save-update-context">
-          <p className="save-context-label">Saving for update:</p>
-          <p className="save-context-title">{update.title}</p>
+      {conflict && (
+        <section className="save-conflict">
+          <div className="save-conflict-title">This didn't save — the file changed somewhere else</div>
+          <p className="save-conflict-body">
+            Someone or something else saved <code>{conflict.path}</code> to GitHub while you were
+            editing — probably an AI you handed this project to.
+          </p>
+          <p className="save-conflict-body">
+            <strong>Nothing is lost.</strong> Your edits are still here on this computer. You just
+            need to decide which version wins.
+          </p>
+          <div className="save-conflict-choices">
+            <Link to={`/p/${repo}/changed`} className="save-conflict-choice">
+              <span>
+                <span className="save-conflict-choice-name">Show me the other version first</span>
+                <span className="save-conflict-choice-body">
+                  Recommended — see what changed before you decide.
+                </span>
+              </span>
+              <span aria-hidden="true">›</span>
+            </Link>
+            <button
+              type="button"
+              className="save-conflict-choice"
+              onClick={() => { setConflict(null); setError(null) }}
+            >
+              <span>
+                <span className="save-conflict-choice-name">Keep my version</span>
+                <span className="save-conflict-choice-body">
+                  Saves your edits over theirs. Their version stays in the history, so it can be
+                  restored.
+                </span>
+              </span>
+              <span aria-hidden="true">›</span>
+            </button>
+            <Link to={`/p/${repo}/points`} className="save-conflict-choice">
+              <span>
+                <span className="save-conflict-choice-name">Keep their version</span>
+                <span className="save-conflict-choice-body">
+                  Throws away the edits you made on this computer. Plainly will ask you to confirm.
+                </span>
+              </span>
+              <span aria-hidden="true">›</span>
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {loading && <p className="state-loading">Reading your edits…</p>}
+
+      {!loading && files.length === 0 && (
+        <div className="save-empty">
+          <p className="save-empty-title">There's nothing waiting to be saved.</p>
+          <p className="save-empty-body">
+            Everything you've edited is already in GitHub. Open a file to make a change and it
+            will show up here before anything is saved.
+          </p>
+          <Link to={`/p/${repo}/files`} className="pl-btn-primary">Browse project files</Link>
         </div>
       )}
 
-      <form onSubmit={handleSave} className="form-stack">
-        <div className="form-field">
-          <label className="form-label" htmlFor="save-label">
-            What changed? <span className="form-optional">(optional)</span>
-          </label>
-          <input
-            id="save-label"
-            type="text"
-            className="text-input"
-            placeholder={defaultLabel}
-            value={label}
-            onChange={e => setLabel(e.target.value)}
-            disabled={saving}
-          />
-          <p className="form-hint">
-            This note is saved in GitHub and helps you remember what happened.
-          </p>
-        </div>
+      {!loading && files.map(file => {
+        const added = file.changes.added.length
+        const removed = file.changes.removed.length
+        return (
+          <section key={file.path} className="save-file">
+            <div className="save-file-head">
+              <div className="save-file-name">{file.path}</div>
+              <div className="save-file-stat">
+                1 file changed · {added} {added === 1 ? 'line' : 'lines'} added ·{' '}
+                {removed} {removed === 1 ? 'line' : 'lines'} removed
+                {file.at ? ` · edited ${timeAgo(file.at)}` : ''}
+              </div>
+            </div>
+            <div className="save-diff">
+              {file.changes.removed.map((line, i) => (
+                <div key={`r${i}`} className="save-diff-line save-diff-line--removed">
+                  <span aria-hidden="true">−</span><span>{line}</span>
+                </div>
+              ))}
+              {file.changes.added.map((line, i) => (
+                <div key={`a${i}`} className="save-diff-line save-diff-line--added">
+                  <span aria-hidden="true">+</span><span>{line}</span>
+                </div>
+              ))}
+              {added === 0 && removed === 0 && (
+                <div className="save-diff-line">No line changes — the file matches GitHub.</div>
+              )}
+            </div>
+          </section>
+        )
+      })}
 
-        {error && <p className="error-box">{error}</p>}
+      {!loading && files.length > 0 && (
+        <form onSubmit={handleSave}>
+          <div className="save-label-block">
+            <label className="save-label-title" htmlFor="save-label">What changed?</label>
+            <div className="save-label-hint">
+              One short line in your own words. This becomes the name of your Save Point, so
+              future-you can find it.
+            </div>
+            <input
+              id="save-label"
+              className="save-label-input"
+              placeholder="Made the project description clearer"
+              value={label}
+              onChange={e => setLabel(e.target.value)}
+              disabled={saving}
+            />
+          </div>
 
-        <div className="form-actions">
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={saving}
-          >
-            {saving ? 'Saving…' : 'Save to GitHub'}
-          </button>
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => navigate(-1)}
-            disabled={saving}
-          >
-            Back
-          </button>
-        </div>
-      </form>
+          {error && <p className="error-box">{error}</p>}
+
+          <div className="save-actions">
+            <button type="submit" className="pl-btn-primary" disabled={saving}>
+              {saving ? 'Saving…' : 'Create Save Point and save to GitHub'}
+            </button>
+            <button type="button" className="pl-btn" onClick={() => navigate(`/p/${repo}/files`)}>
+              Keep editing
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   )
 }

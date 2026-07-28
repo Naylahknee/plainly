@@ -1,24 +1,24 @@
 /**
- * Home.jsx — /` (max-width 1000px)
+ * Home.jsx — / (max-width 1000px)
  *
- * Dashboard for signed-in users.
- * Answers three questions: where did I leave off, what happened since, what should I do next?
+ * Answers three questions the moment it opens: where did I leave off, what
+ * happened since, what should I do next (HANDOFF §7.3).
  *
- * Section order:
- * 1. Greeting + All Projects button + subtitle
- * 2. Dismissible explainer box (lilac background)
- * 3. CONTINUE WHERE YOU LEFT OFF — hero card with active update
- * 4. WHAT NEEDS YOUR ATTENTION — state-driven section
- * 5. Two columns: RECENT PROJECTS (left) + RECENT ACTIVITY (right)
+ * Order: greeting → explainer → CONTINUE WHERE YOU LEFT OFF → WHAT NEEDS YOUR
+ * ATTENTION → recent projects + recent activity.
+ *
+ * The three hero sentences come from heroFor() — never computed here.
  */
 
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getUpdates, getActiveUpdate, STATUS_LABEL } from '../utils/updateMemory'
 import { heroFor } from '../utils/heroFor'
-import { greeting } from '../utils/time'
+import { greeting, timeAgo } from '../utils/time'
 import { getRepos } from '../api/github'
+import { getMemory } from '../utils/projectMemory'
 import { projectName } from '../utils/projectName'
+import { projectStatus } from '../utils/projectStatus'
 
 const EXPLAINER_DISMISSED_KEY = 'plainly_home_explainer_dismissed'
 
@@ -45,189 +45,227 @@ export default function Home({ auth }) {
 
   const owner = user?.login
 
-  // Find the most recent active update across all repos
+  // Every update across every project, newest activity first.
+  const allUpdates = []
+  if (owner) {
+    for (const r of repos) {
+      for (const u of getUpdates(owner, r.name) || []) {
+        allUpdates.push({ ...u, repoName: r.name })
+      }
+    }
+  }
+  allUpdates.sort((a, b) => new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0))
+
+  // The hero is one update — the most recently active one still in flight.
   let heroUpdate = null
   let heroRepo = null
   if (owner) {
     for (const r of repos) {
       const active = getActiveUpdate(owner, r.name)
-      if (active) {
+      if (active && (!heroUpdate || new Date(active.lastActivityAt || 0) > new Date(heroUpdate.lastActivityAt || 0))) {
         heroUpdate = active
         heroRepo = r.name
-        break
       }
     }
   }
 
-  const hero = heroUpdate && heroRepo
+  const hero = heroUpdate
     ? heroFor(heroUpdate, { filesCount: (heroUpdate.files || []).length })
     : null
+
+  const updateCount = allUpdates.filter(u => u.status !== 'saved' && u.status !== 'paused').length
+
+  // What needs your attention: only real items. An update that has been
+  // reviewed but not saved is the one thing Plainly can say for certain.
+  const unsavedUpdate = allUpdates.find(u => u.status === 'ready_to_save')
 
   const dismissExplainer = () => {
     try {
       localStorage.setItem(EXPLAINER_DISMISSED_KEY, 'true')
       setExplainerDismissed(true)
-    } catch {
-      // silently fail
-    }
+    } catch { /* preference just won't persist */ }
   }
 
-  // Count updates in progress across all repos
-  const updateCount = owner
-    ? repos.reduce((sum, r) => sum + (getUpdates(owner, r.name) || []).filter(u => u.status !== 'saved' && u.status !== 'paused').length, 0)
-    : 0
-
   return (
-    <div className="page">
-      <main className="page-main" style={{ maxWidth: '1000px' }}>
-        {/* 1. Greeting + All Projects button + subtitle */}
-        <div className="home-header">
+    <div className="screen-padded home-screen">
+      {/* 1. Greeting */}
+      <div className="home-header">
+        <div>
+          <h1 className="home-greeting">
+            {greeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}.
+          </h1>
+          <p className="home-subtitle">
+            Here's where you left off, what changed, and what to do next.
+          </p>
+        </div>
+        <Link to="/projects" className="pl-btn home-all-projects">All projects</Link>
+      </div>
+
+      {/* 2. Dismissible explainer */}
+      {!explainerDismissed && (
+        <section className="home-explainer">
           <div>
-            <h1 className="home-greeting">
-              {greeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}.
-            </h1>
-            <p className="home-subtitle">
-              Here's where you left off, what changed, and what to do next.
+            <p className="home-explainer-title">New here? This is what Plainly does.</p>
+            <p className="home-explainer-body">
+              Your work lives in GitHub. Plainly is the front door: it remembers where you stopped,
+              explains what changed in normal words, and keeps a Save Point every time you save so
+              you can always go back.
             </p>
           </div>
-          <Link to="/projects" className="btn-ghost" style={{ whiteSpace: 'nowrap' }}>
-            All projects
+          <button className="home-explainer-dismiss" onClick={dismissExplainer}>Got it</button>
+        </section>
+      )}
+
+      {/* 3. Continue where you left off */}
+      <div className="section-label">Continue where you left off</div>
+      {heroUpdate && hero ? (
+        <section className="home-hero-card">
+          <div className="home-hero-context">
+            <span className="home-hero-project">{projectName(heroRepo)}</span>
+            <span className="home-hero-separator">·</span>
+            <span className="home-hero-label">Update</span>
+            <span className={`pl-pill pl-pill--${heroUpdate.status}`}>
+              {STATUS_LABEL[heroUpdate.status]}
+            </span>
+          </div>
+          <h2 className="home-hero-title">{heroUpdate.title}</h2>
+          {heroUpdate.goal && <p className="home-hero-goal">{heroUpdate.goal}</p>}
+
+          <div className="home-hero-panel">
+            <div className="home-hero-row">
+              <span className="home-hero-row-label">Where you left off</span>
+              <span className="home-hero-row-value">{hero.left}</span>
+            </div>
+            <div className="home-hero-row">
+              <span className="home-hero-row-label">What's happened since</span>
+              <span className="home-hero-row-value">{hero.since}</span>
+            </div>
+            <div className="home-hero-row">
+              <span className="home-hero-row-label home-hero-row-label--next">What to do next</span>
+              <span className="home-hero-row-value home-hero-row-value--next">{hero.next}</span>
+            </div>
+          </div>
+
+          <div className="home-hero-actions">
+            <button
+              className="pl-btn-primary home-hero-cta"
+              onClick={() => navigate(`/p/${heroRepo}/u/${heroUpdate.id}/${hero.route}`)}
+            >
+              {hero.cta}
+            </button>
+            <Link to={`/p/${heroRepo}/u/${heroUpdate.id}`} className="pl-btn">Open the update</Link>
+            <Link to={`/p/${heroRepo}/updates`} className="pl-btn">Something else</Link>
+          </div>
+        </section>
+      ) : (
+        <section className="home-hero-card home-hero-empty">
+          <p className="home-hero-empty-title">You haven't started an update yet.</p>
+          <p className="home-hero-empty-next">Describe what you want to change.</p>
+          <Link
+            to={repos.length ? `/p/${repos[0].name}/new-update` : '/projects'}
+            className="pl-btn-primary"
+          >
+            Make an update
+          </Link>
+        </section>
+      )}
+
+      {/* 4. What needs your attention */}
+      <div className="section-label">What needs your attention</div>
+      {unsavedUpdate ? (
+        <div className="home-attention-card">
+          <div className="home-attention-text">
+            <div className="home-attention-title">
+              {projectName(unsavedUpdate.repoName)} has changes that aren't saved yet
+            </div>
+            <div className="home-attention-body">
+              Edits to{' '}
+              <strong>
+                {(unsavedUpdate.files || []).length
+                  ? unsavedUpdate.files.join(', ')
+                  : 'this update'}
+              </strong>{' '}
+              only exist on this computer. Until you save them to GitHub, they aren't backed up
+              and you can't go back to them later.
+            </div>
+          </div>
+          <Link to={`/p/${unsavedUpdate.repoName}/save`} className="pl-btn-primary home-attention-cta">
+            Review and save
           </Link>
         </div>
+      ) : (
+        <div className="home-attention-none">
+          <span className="home-attention-tick" aria-hidden="true">✓</span>
+          <span>Nothing needs you right now. Everything is saved in GitHub.</span>
+        </div>
+      )}
 
-        {/* 2. Dismissible explainer */}
-        {!explainerDismissed && (
-          <section className="home-explainer">
-            <div>
-              <p className="home-explainer-title">New here? This is what Plainly does.</p>
-              <p className="home-explainer-body">
-                Your work lives in GitHub. Plainly is the front door: it remembers where you stopped,
-                explains what changed in normal words, and keeps a Save Point every time you save so
-                you can always go back.
-              </p>
-            </div>
-            <button
-              className="home-explainer-dismiss"
-              onClick={dismissExplainer}
-            >
-              Got it
-            </button>
-          </section>
-        )}
-
-        {/* 3. CONTINUE WHERE YOU LEFT OFF — hero card */}
-        {heroUpdate && heroRepo && hero && (
-          <section className="home-hero-card">
-            <div className="home-hero-context">
-              <span className="home-hero-project">{projectName(heroRepo)}</span>
-              <span className="home-hero-separator">·</span>
-              <span className="home-hero-label">Update</span>
-              <span className={`pl-pill pl-pill--${heroUpdate.status}`}>
-                {STATUS_LABEL[heroUpdate.status]}
-              </span>
-            </div>
-            <h2 className="home-hero-title">{heroUpdate.title}</h2>
-            {heroUpdate.goal && (
-              <p className="home-hero-goal">{heroUpdate.goal}</p>
-            )}
-            <div className="home-hero-panel">
-              <div className="home-hero-row">
-                <span className="home-hero-row-label">Where you left off</span>
-                <span className="home-hero-row-value">{hero.left}</span>
-              </div>
-              <div className="home-hero-row">
-                <span className="home-hero-row-label">What's happened since</span>
-                <span className="home-hero-row-value">{hero.since}</span>
-              </div>
-              <div className="home-hero-row">
-                <span className="home-hero-row-label" style={{ color: 'var(--purple)', fontWeight: '600' }}>
-                  What to do next
-                </span>
-                <span className="home-hero-row-value" style={{ fontWeight: '600' }}>
-                  {hero.next}
-                </span>
-              </div>
-            </div>
-            <div className="home-hero-actions">
-              <button
-                className="pl-btn-primary"
-                onClick={() => navigate(`/p/${heroRepo}/u/${heroUpdate.id}/${hero.route}`)}
-              >
-                {hero.cta}
-              </button>
-              <Link to={`/p/${heroRepo}`} className="pl-btn">
-                Open the update
-              </Link>
-              {updateCount > 1 && (
-                <button
-                  className="home-hero-updates-link"
-                  onClick={() => navigate(`/p/${heroRepo}/updates`)}
-                >
-                  {updateCount} updates in progress →
-                </button>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* 3b. Empty state when no active update */}
-        {!loading && !heroUpdate && (
-          <section className="home-hero-card home-hero-empty">
-            <p className="home-hero-empty-title">You haven't started an update yet.</p>
-            <p className="home-hero-empty-next">Describe what you want to change.</p>
-            <button
-              className="pl-btn-primary"
-              onClick={() => navigate('/projects')}
-            >
-              Make an update
-            </button>
-          </section>
-        )}
-
-        {/* 4. WHAT NEEDS YOUR ATTENTION */}
-        <section className="home-attention">
-          <h2 className="home-attention-title">What needs your attention</h2>
-          {!loading && !heroUpdate && (
-            <div className="home-attention-none">
-              <span style={{ color: 'var(--success)' }}>✓</span>
-              <p>Nothing needs you right now. Everything is saved in GitHub.</p>
-            </div>
-          )}
-          {/* More complex logic for attention items would go here */}
-        </section>
-
-        {/* 5. Two columns: RECENT PROJECTS + RECENT ACTIVITY */}
-        <div className="home-columns">
-          <div className="home-column-projects">
-            <h2 className="home-section-title">Recent projects</h2>
-            {repos.slice(0, 3).map(repo => (
-              <Link
-                key={repo.name}
-                to={`/p/${repo.name}`}
-                className="home-project-card"
-              >
-                <div className="home-project-info">
-                  <p className="home-project-name">{projectName(repo.name)}</p>
-                  <p className="home-project-desc">{repo.description || 'No description'}</p>
-                  <p className="home-project-url">
-                    <code>github.com/{owner}/{repo.name}</code>
-                  </p>
-                </div>
-              </Link>
-            ))}
-            <Link to="/projects" className="home-view-all">
-              View all projects →
-            </Link>
+      {/* 5. Recent projects + recent activity */}
+      <div className="home-columns">
+        <div>
+          <div className="home-column-head">
+            <div className="section-label section-label--tight">Recent projects</div>
+            <Link to="/projects" className="text-link">See all</Link>
           </div>
-          <div className="home-column-activity">
-            <h2 className="home-section-title">Recent activity</h2>
-            <p className="home-activity-empty">Activity tracking coming soon.</p>
-            <Link to="/activity" className="home-view-all">
-              View all activity →
-            </Link>
+          {loading && <p className="state-loading">Getting your projects from GitHub…</p>}
+          {!loading && repos.length === 0 && (
+            <p className="home-empty-note">No projects yet. Start one and it shows up here.</p>
+          )}
+          <div className="home-project-list">
+            {repos.slice(0, 4).map(repo => {
+              const mem = owner ? getMemory(owner, repo.name) : {}
+              const status = projectStatus(owner ? getUpdates(owner, repo.name) : [])
+              const lastAction = mem.lastSaveLabel
+                ? `Last Save Point: ${mem.lastSaveLabel}`
+                : mem.lastOpenedAt
+                  ? `Opened ${timeAgo(mem.lastOpenedAt)}`
+                  : `Last touched ${timeAgo(repo.updated_at)}`
+              return (
+                <Link key={repo.id || repo.name} to={`/p/${repo.name}`} className="home-project-card">
+                  <span className="home-project-body">
+                    <span className="home-project-top">
+                      <span className="home-project-name">{projectName(repo.name)}</span>
+                      {status && (
+                        <span className={`pl-pill pl-pill--${status.tone}`}>{status.label}</span>
+                      )}
+                    </span>
+                    {repo.description && (
+                      <span className="home-project-desc">{repo.description}</span>
+                    )}
+                    <span className="home-project-action">{lastAction}</span>
+                    <span className="home-project-url">github.com/{owner}/{repo.name}</span>
+                  </span>
+                  <span className="home-project-chevron" aria-hidden="true">›</span>
+                </Link>
+              )
+            })}
           </div>
         </div>
-      </main>
+
+        <div>
+          <div className="section-label section-label--tight">Recent activity</div>
+          <div className="home-activity">
+            {allUpdates.length === 0 && (
+              <p className="home-empty-note">
+                Nothing yet. Activity shows up here once you start an update.
+              </p>
+            )}
+            {allUpdates.slice(0, 5).map(u => (
+              <div key={`${u.repoName}-${u.id}`} className="home-activity-row">
+                <span className="home-activity-dot" aria-hidden="true" />
+                <span>
+                  <span className="home-activity-what">{u.title}</span>
+                  <span className="home-activity-meta">
+                    {projectName(u.repoName)} · {STATUS_LABEL[u.status]}
+                    {u.lastActivityAt ? ` · ${timeAgo(u.lastActivityAt)}` : ''}
+                  </span>
+                </span>
+              </div>
+            ))}
+            <Link to="/activity" className="text-link home-activity-all">See all activity</Link>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

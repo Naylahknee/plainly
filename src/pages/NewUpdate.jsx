@@ -1,91 +1,97 @@
 /**
- * NewUpdate.jsx — /p/:repo/new-update
+ * NewUpdate.jsx — /p/:repo/new-update (max-width 740px)
  *
- * Form to describe a new update. Creates an update record in 'planned' state,
- * then navigates to the update workspace.
+ * One question, in the user's words. No file picker, no technical step
+ * (HANDOFF §7.6).
+ *
+ * "Likely area involved" never guesses. Unless Plainly has a real signal it
+ * says so plainly and lets the AI find the file.
  */
 
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { createUpdate } from '../utils/updateMemory'
+import { projectName } from '../utils/projectName'
+
+const AREA_UNKNOWN =
+  'Plainly has not confirmed which file controls this. Your AI can find it from the project ' +
+  'contents included in the handoff.'
+
+/** A short title for lists, taken from the first line of what they wrote. */
+function titleFrom(text) {
+  const first = text.trim().split('\n')[0].trim()
+  return first.length > 80 ? `${first.slice(0, 77)}…` : first
+}
 
 export default function NewUpdate({ auth }) {
   const { repo } = useParams()
   const navigate = useNavigate()
   const owner = auth?.user?.login
 
-  const [title, setTitle]   = useState('')
-  const [goal, setGoal]     = useState('')
-  const [saving, setSaving] = useState(false)
+  const [text, setText] = useState('')
+  const [created, setCreated] = useState(null)
 
-  function handleCreate(e) {
+  function handleContinue(e) {
     e.preventDefault()
-    if (!title.trim() || !owner) return
-    setSaving(true)
-    const update = createUpdate(owner, repo, title.trim(), goal.trim() || null)
-    navigate(`/p/${repo}/u/${update.id}`, { replace: true })
+    const value = text.trim()
+    if (!value || !owner) return
+    setCreated(createUpdate(owner, repo, titleFrom(value), value))
   }
 
   return (
-    <div className="screen-padded screen-narrow">
-      <div className="screen-header">
-        <h1>Make an update</h1>
-        <p className="screen-subtitle">
-          Describe what you want to change. You'll choose how to do it next.
-        </p>
-      </div>
+    <div className="screen-padded newupdate-screen">
+      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <h1 className="newupdate-title">What do you want to change?</h1>
+      <p className="newupdate-intro">
+        Describe the result you want. You do not need to know which file or technical step
+        is involved.
+      </p>
 
-      <form onSubmit={handleCreate} className="form-stack">
-        <div className="form-field">
-          <label className="form-label" htmlFor="update-title">
-            What do you want to change?
-          </label>
-          <input
-            id="update-title"
-            type="text"
-            className="text-input"
-            placeholder="e.g. Add a contact page"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            disabled={saving}
-            autoFocus
-            required
-          />
-        </div>
-
-        <div className="form-field">
-          <label className="form-label" htmlFor="update-goal">
-            Why? <span className="form-optional">(optional)</span>
-          </label>
-          <textarea
-            id="update-goal"
-            className="text-input"
-            placeholder="e.g. So visitors can reach me directly"
-            value={goal}
-            onChange={e => setGoal(e.target.value)}
-            disabled={saving}
-            rows={3}
-          />
-        </div>
-
-        <div className="form-actions">
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={saving || !title.trim()}
-          >
-            {saving ? 'Starting…' : 'Start this update'}
-          </button>
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => navigate(`/p/${repo}`)}
-            disabled={saving}
-          >
-            Cancel
-          </button>
-        </div>
+      <form onSubmit={handleContinue}>
+        <textarea
+          className="newupdate-input"
+          placeholder="Add a clearer welcome message to the homepage and make the main button easier to find."
+          value={text}
+          onChange={e => setText(e.target.value)}
+          disabled={Boolean(created)}
+          autoFocus
+        />
+        {!created && (
+          <div className="newupdate-actions">
+            <button type="submit" className="pl-btn-primary" disabled={!text.trim()}>
+              Continue
+            </button>
+            <button type="button" className="pl-btn" onClick={() => navigate(`/p/${repo}`)}>
+              Cancel
+            </button>
+          </div>
+        )}
       </form>
+
+      {created && (
+        <section className="newupdate-summary">
+          <div className="section-label">Your update</div>
+
+          <div className="newupdate-field">What you want</div>
+          <div className="newupdate-value">{created.goal}</div>
+
+          <div className="newupdate-field">Likely area involved</div>
+          <div className="newupdate-value newupdate-value--muted">{AREA_UNKNOWN}</div>
+
+          <div className="newupdate-field">Suggested next step</div>
+          <div className="newupdate-value">
+            Hand this to an AI along with your project context, then come back and save the result.
+          </div>
+
+          <div className="newupdate-summary-actions">
+            <Link to={`/p/${repo}/u/${created.id}/ai`} className="pl-btn-primary">
+              Continue with AI
+            </Link>
+            <Link to={`/p/${repo}/files`} className="pl-btn">Browse project files</Link>
+            <Link to={`/p/${repo}`} className="pl-btn">Save task for later</Link>
+          </div>
+        </section>
+      )}
     </div>
   )
 }

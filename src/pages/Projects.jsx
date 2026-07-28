@@ -5,9 +5,9 @@
  *
  * The nav lives in AppShell — this page must never render one of its own.
  *
- * Nothing here is invented: the status pill only appears when stored updates
- * say something true about the project, and the meta line only prints the
- * parts that exist (HANDOFF §0).
+ * Nothing here is invented: the status pill (see utils/projectStatus) only
+ * appears when stored updates say something true about the project, and the
+ * meta line only prints the parts that exist (HANDOFF §0).
  */
 
 import { useState, useEffect } from 'react'
@@ -17,24 +17,7 @@ import { timeAgo } from '../utils/time'
 import { getMemory, setMemory } from '../utils/projectMemory'
 import { getUpdates } from '../utils/updateMemory'
 import { projectName } from '../utils/projectName'
-
-/**
- * Project-level status pill, derived only from stored update records.
- * Returns null when Plainly has nothing true to say — no pill beats a wrong one.
- */
-function projectStatus(updates) {
-  if (!updates || updates.length === 0) return null
-  if (updates.some(u => u.status === 'changes_detected' || u.status === 'waiting_for_review')) {
-    return { label: 'Needs review', tone: 'needs-review' }
-  }
-  if (updates.some(u => u.status === 'ready_to_save')) {
-    return { label: 'Changes not saved', tone: 'changes-unsaved' }
-  }
-  if (updates.every(u => u.status === 'saved')) {
-    return { label: 'Up to date', tone: 'up-to-date' }
-  }
-  return null
-}
+import { projectStatus } from '../utils/projectStatus'
 
 export default function Projects({ auth }) {
   const owner = auth.user?.login
