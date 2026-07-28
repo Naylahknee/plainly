@@ -17,6 +17,7 @@ import { heroFor } from '../utils/heroFor'
 import { timeAgo } from '../utils/time'
 import { projectName } from '../utils/projectName'
 import { useShowGithubWords } from '../utils/settings'
+import { aiRouteFor } from '../utils/aiRoute'
 
 export default function ProjectHome({ auth }) {
   const { repo } = useParams()
@@ -51,9 +52,10 @@ export default function ProjectHome({ auth }) {
   // is waiting to be saved. Anything else and Plainly says nothing.
   const unsaved = allUpdates.some(u => u.status === 'ready_to_save')
 
-  // Every action on this page that needs an update goes to the one in progress,
-  // or to the updates list to pick one.
-  const aiRoute = activeUpdate ? `/p/${repo}/u/${activeUpdate.id}/ai` : `/p/${repo}/updates`
+  // Continue with AI opens for the update in progress, or for the project
+  // itself when there isn't one. Shared with the sidebar so the two can't
+  // disagree about where the same words lead.
+  const aiRoute = aiRouteFor(repo, activeUpdate)
 
   const ACTIONS = [
     { title: 'Make an update',            body: "Describe what you want to change. You don't need to know which file controls it.", cta: 'Describe an update', to: `/p/${repo}/new-update` },

@@ -19,6 +19,7 @@
 import { NavLink, useParams, useLocation, Link } from 'react-router-dom'
 import { getActiveUpdate } from '../utils/updateMemory'
 import { projectName } from '../utils/projectName'
+import { aiRouteFor } from '../utils/aiRoute'
 import { SECTIONS as HELP_SECTIONS } from '../help/content'
 
 function NavItem({ to, label, end }) {
@@ -93,11 +94,8 @@ export default function AppShell({ auth, children }) {
             <NavItem to={`/p/${repo}/versions`}       label="Separate Versions" />
             <NavItem to={`/p/${repo}/share`}          label="Who Can See It" />
             {/* Opens the handoff for the update in progress, or for the project
-                itself when there isn't one yet. */}
-            <NavItem
-              to={activeUpdate ? `/p/${repo}/u/${activeUpdate.id}/ai` : `/p/${repo}/ai`}
-              label="Continue with AI"
-            />
+                itself when there isn't one yet. Same helper as Project Home. */}
+            <NavItem to={aiRouteFor(repo, activeUpdate)} label="Continue with AI" />
             <NavItem to={`/p/${repo}/settings`}       label="Settings" />
           </div>
         )}
