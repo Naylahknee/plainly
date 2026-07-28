@@ -36,7 +36,7 @@ const STATUS_LABELS = {
 }
 
 export default function Files({ auth }) {
-  const { repo } = useParams()
+  const { repo, '*': routeFile } = useParams()
   const navigate = useNavigate()
   const owner = auth.user?.login
 
@@ -173,6 +173,14 @@ export default function Files({ auth }) {
     }
     if (wordCount < wordGoal * 0.9) setGoalReached(false)
   }, [wordCount, wordGoal])
+
+  // A link to /p/:repo/f/<path> should open that file, not an empty editor.
+  useEffect(() => {
+    if (!routeFile || filesLoading) return
+    if (activeFile?.path === routeFile) return
+    const match = files.find(f => f.path === routeFile)
+    if (match) openFile(match)
+  }, [routeFile, filesLoading, files, activeFile?.path])
 
   async function loadFiles() {
     setFilesLoading(true)

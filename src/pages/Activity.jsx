@@ -39,9 +39,8 @@ export default function Activity({ auth }) {
 
   return (
     <div className="screen-padded">
-      <div className="screen-header">
-        <h1>Recent Activity</h1>
-      </div>
+      <h1 className="changed-title">Recent Activity</h1>
+      <p className="changed-intro">Everything you and your AI tools have done, newest first.</p>
 
       {loading && <p className="state-loading">Loading activity…</p>}
 
