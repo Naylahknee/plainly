@@ -1,202 +1,233 @@
 /**
  * ReturnFromAI.jsx — /p/:repo/u/:updateId/return (max-width 860px)
  *
- * Screen shown when the user returns after sending work to an AI.
- * Compares the current GitHub HEAD against commitShaAtSend.
- * Five possible branches:
- *   1. Changes detected (files changed > 0)
- *   2. Nothing yet (no new commits)
- *   3. Already saved externally (external commits)
- *   4. GitHub is newer than local (not implemented here)
- *   5. Can't check (network error)
+ * What happened while you were away (HANDOFF §7.8).
+ *
+ * Detection compares the branch head now against handoff.commitShaAtSend, and
+ * tells Plainly's own Save Points apart from anyone else's using the sha list
+ * recorded at save time. Exactly one of five branches shows, and it is chosen
+ * from real state — never from a flag. If a count can't be computed, the
+ * "can't check" branch shows instead of a guess.
  */
 
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import { getUpdateById, updateUpdate } from '../utils/updateMemory'
+import { getMemory } from '../utils/projectMemory'
 import { getCurrentHeadSha, compareCommits } from '../api/github'
 
 export default function ReturnFromAI({ auth }) {
   const { repo, updateId } = useParams()
-  const navigate = useNavigate()
   const { token, user } = auth
   const owner = user?.login
 
   const update = owner ? getUpdateById(owner, repo, updateId) : null
+  const sentSha = update?.handoff?.commitShaAtSend
 
-  const [checking, setChecking] = useState(false)
-  const [checked, setChecked] = useState(false)
-  const [branch, setBranch] = useState(null) // 'changes' | 'nothing' | 'external' | 'error'
-  const [data, setData] = useState(null)
-  const [error, setError] = useState(null)
+  const [state, setState] = useState({ status: 'checking' })
 
-  async function checkForChanges() {
+  const check = useCallback(async () => {
     if (!token || !owner) return
-    setChecking(true)
-    setError(null)
+    setState({ status: 'checking' })
+
+    if (!sentSha) {
+      setState({ status: 'nohandoff' })
+      return
+    }
+
     try {
-      const sentSha = update?.handoff?.commitShaAtSend
-      if (!sentSha) {
-        setBranch('unknown')
-        setChecked(true)
-        setChecking(false)
+      const head = await getCurrentHeadSha(token, owner, repo)
+      if (head === sentSha) {
+        setState({ status: 'none' })
         return
       }
 
-      // Get current HEAD
-      const currentSha = await getCurrentHeadSha(token, owner, repo)
+      const diff = await compareCommits(token, owner, repo, sentSha, head)
+      const mem = getMemory(owner, repo)
+      const ours = new Set(mem.plainlySavedShas || [])
+      const theirs = (diff.commits || []).filter(c => !ours.has(c.sha))
+      const files = (diff.files || []).map(f => f.filename)
 
-      if (currentSha === sentSha) {
-        // Branch 2: Nothing yet
-        setBranch('nothing')
-        setData({ currentSha })
-        setChecked(true)
-        setChecking(false)
+      // Local edits waiting to be saved + GitHub moved on = work from an old copy.
+      if (update.status === 'ready_to_save' && theirs.length > 0) {
+        setState({ status: 'newer', commits: theirs.length })
         return
       }
 
-      // Compare commits
-      const comparison = await compareCommits(token, owner, repo, sentSha, currentSha)
-
-      if (comparison.filesChanged === 0) {
-        // No files changed
-        setBranch('nothing')
-      } else if (comparison.filesChanged > 0) {
-        // Branch 1: Changes detected
-        setBranch('changes')
-        setData({ filesChanged: comparison.filesChanged, commits: comparison.commits })
-
-        // Auto-advance status
-        if (update?.status !== 'changes_detected') {
-          updateUpdate(owner, repo, updateId, {
-            status: 'changes_detected',
-            storyEntry: 'Changes detected in GitHub',
-          })
-        }
+      if (theirs.length === 0) {
+        setState({ status: 'none' })
+        return
       }
-    } catch (e) {
-      // Branch 5: Can't check (network error)
-      setBranch('error')
-      setError('Could not check GitHub. Check your connection and try again.')
-    } finally {
-      setChecking(false)
-      setChecked(true)
-    }
-  }
 
-  useEffect(() => {
-    // Auto-check on mount if update has a handoff
-    if (update?.handoff?.commitShaAtSend && !checked && !checking) {
-      checkForChanges()
+      // Every new Save Point is somebody else's: the AI saved to GitHub itself.
+      if (theirs.length === diff.commitCount) {
+        setState({ status: 'external', commits: theirs.length, files })
+      } else {
+        setState({ status: 'changes', filesChanged: diff.filesChanged, files })
+      }
+
+      if (update.status !== 'changes_detected' && update.status !== 'waiting_for_review') {
+        updateUpdate(owner, repo, updateId, {
+          status: 'changes_detected',
+          files: files.length ? files : update.files,
+          storyEntry: `Plainly noticed ${diff.filesChanged} ${diff.filesChanged === 1 ? 'file' : 'files'} changed in GitHub`,
+        })
+      }
+    } catch {
+      setState({ status: 'offline' })
     }
-  }, [update?.handoff?.commitShaAtSend, checked, checking])
+  }, [token, owner, repo, updateId, sentSha, update?.status])
+
+  useEffect(() => { check() }, [check])
 
   if (!update) {
     return (
-      <div className="screen-padded">
+      <div className="screen-padded return-screen">
         <p className="error-box">Update not found.</p>
-        <Link to={`/p/${repo}/updates`} className="btn-ghost" style={{ marginTop: 16, display: 'inline-flex' }}>
-          Back to updates
-        </Link>
+        <Link to={`/p/${repo}/updates`} className="pl-btn">Back to updates</Link>
       </div>
     )
   }
 
   const ai = update.ai || 'the AI'
+  const reviewLink = `/p/${repo}/u/${updateId}/review`
 
   return (
-    <div className="page">
-      <main className="page-main" style={{ maxWidth: '860px' }}>
-        <h1 className="return-title">You continued this update with {ai}.</h1>
-        <p className="return-subtitle">
-          Plainly checked GitHub to see what happened while you were away.
-        </p>
+    <div className="screen-padded return-screen">
+      <Link to={`/p/${repo}/u/${updateId}`} className="back-link">← {update.title}</Link>
 
-      {/* Auto-checking on load */}
-      {checking && (
+      <div className="return-head">
+        <span className="section-label section-label--tight">Welcome back</span>
+      </div>
+      <h1 className="return-title">You continued this update with {ai}.</h1>
+      <p className="return-subtitle">Plainly checked GitHub to see what happened while you were away.</p>
+
+      {state.status === 'checking' && (
         <p className="state-loading">Checking GitHub for changes…</p>
       )}
 
-      {/* Branch 1: Changes detected */}
-      {checked && branch === 'changes' && (
-        <section className="return-section return-section--found">
-          <div className="return-result return-result--yes">
-            <p className="return-result-title">
-              {data?.filesChanged} {data?.filesChanged === 1 ? 'file' : 'files'} changed after your handoff
-            </p>
-            <p className="return-result-body">
-              {ai} made changes to your project. Read through them before saving.
-            </p>
+      {/* 1. Changes detected */}
+      {state.status === 'changes' && (
+        <section className="return-card return-card--amber">
+          <div className="return-card-head">
+            <span className="return-mark return-mark--amber">!</span>
+            <div className="return-card-title">
+              {state.filesChanged} {state.filesChanged === 1 ? 'file' : 'files'} changed after your handoff
+            </div>
           </div>
-          <div className="return-actions">
-            <button
-              className="pl-btn-primary"
-              onClick={() => navigate(`/p/${repo}/u/${updateId}/review`)}
-            >
-              Review changes
-            </button>
-            <Link to={`/p/${repo}/u/${updateId}`} className="pl-btn">
-              Back to update
-            </Link>
+          <div className="return-rows">
+            <div className="return-row">
+              <div className="return-row-label">What you asked for</div>
+              <div className="return-row-value">{update.goal || update.title}</div>
+            </div>
+            <div className="return-row">
+              <div className="return-row-label">What changed</div>
+              <div className="return-row-value">
+                {state.files.length
+                  ? state.files.join(', ')
+                  : 'Plainly could not list the files.'}
+              </div>
+            </div>
+            <div className="return-row">
+              <div className="return-row-label">Worth a look</div>
+              <div className="return-row-value">
+                Read the changes before anything is saved — a plain-English review comes next.
+              </div>
+            </div>
           </div>
+          <div className="return-next">
+            <div className="return-next-label">Recommended next step</div>
+            <div className="return-next-text">
+              Read the plain-English review before anything is saved.
+            </div>
+          </div>
+          <Link to={reviewLink} className="pl-btn-primary">Review changes</Link>
         </section>
       )}
 
-      {/* Branch 2: Nothing yet */}
-      {checked && branch === 'nothing' && (
-        <section className="return-section">
-          <div className="return-result return-result--no">
-            <p className="return-result-title">Nothing has changed yet</p>
-            <p className="return-result-body">
-              Your project in GitHub looks exactly as it did before the handoff. That usually means {ai} hasn't saved
-              its work yet — or it made changes somewhere Plainly can't see, like on your own computer.
-            </p>
-          </div>
-          <div className="return-actions">
-            <button className="pl-btn" onClick={checkForChanges}>
-              Check again
-            </button>
-            <Link to={`/p/${repo}/u/${updateId}/ai`} className="pl-btn">
-              Send the handoff again
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* Branch 5: Can't check (error) */}
-      {checked && branch === 'error' && (
-        <section className="return-section">
-          <div className="return-result">
-            <p className="return-result-title">Plainly can't check GitHub right now</p>
-            <p className="return-result-body">
-              This is a connection problem, not a problem with your work. Nothing has been lost, and nothing will be
-              saved until you say so.
-            </p>
-          </div>
-          {error && <p className="error-box" style={{ marginBottom: 12 }}>{error}</p>}
-          <div className="return-actions">
-            <button className="pl-btn" onClick={checkForChanges}>
-              Try again
-            </button>
-            <Link to={`/p/${repo}/u/${updateId}`} className="pl-btn">
-              Back to update
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* Not checked yet (no handoff) */}
-      {!checked && !checking && !update?.handoff?.commitShaAtSend && (
-        <section className="return-section">
-          <p className="return-result-body">
-            No previous handoff found. Start a new handoff to send your work to {ai}.
+      {/* 2. Nothing yet */}
+      {state.status === 'none' && (
+        <section className="return-card">
+          <div className="return-card-title">Nothing has changed yet</div>
+          <p className="return-card-body">
+            Your project in GitHub looks exactly as it did before the handoff. That usually means
+            the AI hasn't saved its work yet — or it made changes somewhere Plainly can't see,
+            like on your own computer.
           </p>
-          <Link to={`/p/${repo}/u/${updateId}/ai`} className="pl-btn-primary">
-            Continue with {ai}
-          </Link>
+          <div className="return-actions">
+            <button className="pl-btn-primary" onClick={check}>Check again</button>
+            <Link to={`/p/${repo}/u/${updateId}/ai`} className="pl-btn">Send the handoff again</Link>
+          </div>
         </section>
       )}
-      </main>
+
+      {/* 3. The AI saved it itself */}
+      {state.status === 'external' && (
+        <section className="return-card return-card--green">
+          <div className="return-card-head">
+            <span className="return-mark return-mark--green">✓</span>
+            <div className="return-card-title">The AI already saved this work to GitHub</div>
+          </div>
+          <p className="return-card-body">
+            There {state.commits === 1 ? 'is' : 'are'} {state.commits} new Save{' '}
+            {state.commits === 1 ? 'Point' : 'Points'} that Plainly didn't create. Your work is
+            safe — but nobody has read through it in plain English yet, so it's worth a look
+            before you build on top of it.
+          </p>
+          <div className="return-actions">
+            <Link to={reviewLink} className="pl-btn-primary">Read what changed</Link>
+            <Link to={`/p/${repo}/changed`} className="pl-btn">See the Save Points</Link>
+          </div>
+        </section>
+      )}
+
+      {/* 4. GitHub is ahead of the work waiting here */}
+      {state.status === 'newer' && (
+        <section className="return-card return-card--red">
+          <div className="return-card-title">
+            GitHub has a newer version than the one on this computer
+          </div>
+          <p className="return-card-body">
+            Get the latest version first. If you edit now, you'd be working from an old copy and
+            Plainly would have to ask you to choose between them later.
+          </p>
+          <div className="return-actions">
+            <Link to={`/p/${repo}/versions`} className="pl-btn-primary">Get latest version</Link>
+            <Link to={reviewLink} className="pl-btn">See what's different first</Link>
+          </div>
+        </section>
+      )}
+
+      {/* 5. Can't check */}
+      {state.status === 'offline' && (
+        <section className="return-card">
+          <div className="return-card-title">Plainly can't check GitHub right now</div>
+          <p className="return-card-body">
+            This is a connection problem, not a problem with your work. Nothing has been lost,
+            and nothing will be saved until you say so.
+          </p>
+          <div className="return-actions">
+            <button className="pl-btn-primary" onClick={check}>Try again</button>
+            <Link to={`/p/${repo}/u/${updateId}`} className="pl-btn">Back to the update</Link>
+          </div>
+        </section>
+      )}
+
+      {/* No handoff was ever recorded, so there is nothing to compare against. */}
+      {state.status === 'nohandoff' && (
+        <section className="return-card">
+          <div className="return-card-title">Plainly has nothing to compare against</div>
+          <p className="return-card-body">
+            This update was never marked as sent, so Plainly didn't record where GitHub was at
+            the time. Hand it to an AI and mark it as sent — then this screen can tell you
+            exactly what changed.
+          </p>
+          <div className="return-actions">
+            <Link to={`/p/${repo}/u/${updateId}/ai`} className="pl-btn-primary">Continue with AI</Link>
+            <Link to={`/p/${repo}/u/${updateId}`} className="pl-btn">Back to the update</Link>
+          </div>
+        </section>
+      )}
     </div>
   )
 }

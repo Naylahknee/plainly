@@ -1,14 +1,18 @@
 /**
- * Account.jsx — /account
+ * Account.jsx — /account  (max-width 660px)
  *
- * Shows current GitHub account, connection status, and sign-out.
+ * Who you're signed in as, what Plainly is allowed to do, and the one setting
+ * (HANDOFF §7.19). Sign out lives here — it is the only way out of the app,
+ * and the design's sidebar has no room for it.
  */
 
 import { useNavigate } from 'react-router-dom'
+import { useShowGithubWords } from '../utils/settings'
 
 export default function Account({ auth }) {
   const { user, signOut } = auth
   const navigate = useNavigate()
+  const [showWords, toggleWords] = useShowGithubWords()
 
   function handleSignOut() {
     signOut()
@@ -16,41 +20,45 @@ export default function Account({ auth }) {
   }
 
   return (
-    <div className="screen-padded">
-      <div className="screen-header">
-        <h1>Account</h1>
-      </div>
+    <div className="screen-padded account-screen">
+      <h1 className="account-title">Account</h1>
 
-      {user && (
-        <div className="account-card">
-          <div className="account-identity">
-            {user.avatar_url && (
-              <img
-                src={user.avatar_url}
-                alt={`${user.login}'s avatar`}
-                className="account-avatar"
-                width={64}
-                height={64}
-              />
-            )}
-            <div className="account-details">
-              {user.name && <p className="account-name">{user.name}</p>}
-              <p className="account-login">@{user.login}</p>
-              {user.email && <p className="account-email">{user.email}</p>}
-            </div>
-          </div>
-
-          <div className="account-status">
-            <span className="shell-status-dot" aria-hidden="true" />
-            <span>Connected to GitHub</span>
+      <div className="account-card">
+        <div className="account-identity">
+          {user?.avatar_url
+            ? <img src={user.avatar_url} alt="" className="account-avatar" width={52} height={52} />
+            : <div className="account-avatar account-avatar--blank" aria-hidden="true" />}
+          <div>
+            <div className="account-login">{user?.login || '—'}</div>
+            <div className="account-sub">Signed in with GitHub</div>
           </div>
         </div>
-      )}
 
-      <div className="account-actions">
-        <button className="btn-ghost" onClick={handleSignOut}>
-          Sign out
+        <div className="account-permission">
+          <div className="account-tick" aria-hidden="true">✓</div>
+          <div className="account-permission-text">
+            Plainly can read and save to your projects. You can disconnect any time and your
+            files stay in GitHub.
+          </div>
+        </div>
+      </div>
+
+      <div className="account-card account-card--setting">
+        <div className="account-setting-title">Show technical GitHub words</div>
+        <div className="account-setting-body">
+          Adds the real GitHub term in grey next to Plainly's plain-English label, so you learn
+          them as you go.
+        </div>
+        <button className="pl-btn" onClick={toggleWords}>
+          {showWords ? 'Turn off technical words' : 'Turn on technical words'}
         </button>
+      </div>
+
+      <div className="account-signout">
+        <button className="pl-btn" onClick={handleSignOut}>Sign out</button>
+        <span className="account-signout-note">
+          Your work stays in GitHub. Signing in again brings you straight back.
+        </span>
       </div>
     </div>
   )

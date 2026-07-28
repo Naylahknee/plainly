@@ -1,5 +1,13 @@
+/**
+ * Help.jsx — /help (max-width 800px)
+ *
+ * How Plainly works, then the plain-English glossary: the Plainly word first,
+ * the GitHub word beside it in grey (HANDOFF §7.20).
+ *
+ * The nav lives in AppShell — this page must never render one of its own.
+ */
+
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
 
 // ── Goal-based navigation ──────────────────────────────────────────────────────
 const GOALS = [
@@ -13,23 +21,38 @@ const GOALS = [
   { id: 'link',        label: 'I received a GitHub link' },
 ]
 
-// ── Plain-language translation table ──────────────────────────────────────────
-const TRANSLATIONS = [
-  { github: 'Repository',     plain: 'Project',                              meaning: 'The main folder for one project — its files, history, and settings.',                now: false },
-  { github: 'Commit',         plain: 'A saved checkpoint',                   meaning: 'A snapshot of the project at one moment in time.',                                   now: true  },
-  { github: 'Commit message', plain: 'A note explaining what changed',       meaning: 'The label you write when saving — describes what you did.',                          now: true  },
-  { github: 'Push',           plain: 'Send saved work to GitHub',            meaning: 'Upload your saved changes so they are stored online.',                               now: true  },
-  { github: 'Pull',           plain: 'Get the newest version',               meaning: 'Download the latest changes from GitHub to your current view.',                      now: false },
-  { github: 'Branch',         plain: 'A separate version',                   meaning: 'A copy of the project where changes can be tested without affecting the main work.', now: false },
-  { github: 'Merge',          plain: 'Combine one version with another',     meaning: 'Bring changes from one version into the main project.',                              now: false },
-  { github: 'Pull request',   plain: 'Ask to review and combine changes',    meaning: 'A formal way to propose that someone review and accept a set of changes.',           now: false },
-  { github: 'Clone',          plain: 'Copy a project onto a computer',       meaning: 'Download the full project to work on it locally.',                                   now: false },
-  { github: 'Fork',           plain: 'Your own copy of someone else\'s project', meaning: 'Create a personal copy of a project you do not own.',                           now: false },
-  { github: 'Issue',          plain: 'A task, problem, or request',          meaning: 'A way to track work that needs to be done.',                                        now: false },
-  { github: 'README',         plain: 'The project\'s introduction',          meaning: 'A file that explains what the project is and how to use it.',                       now: false },
-  { github: 'Deploy',         plain: 'Publish the project',                  meaning: 'Make the project live so other people can use it.',                                  now: false },
-  { github: 'Star',           plain: 'Bookmark or favourite',                meaning: 'Save a project you like — it does not give you access or copy anything.',           now: false },
-  { github: 'Watch',          plain: 'Follow activity from a project',       meaning: 'Receive notifications when something changes in the project.',                       now: false },
+// ── How Plainly works — the four steps (HANDOFF §7.20) ────────────────────────
+const STEPS = [
+  {
+    title: 'Sign in with GitHub',
+    body: 'Your GitHub account is your login. No new password, and nothing is copied off GitHub.',
+  },
+  {
+    title: 'Open a project and pick up where you left off',
+    body: 'Home always shows the last thing you touched, so you never have to remember.',
+  },
+  {
+    title: 'Make a Save Point when you want to keep a version',
+    body: 'Write one line about what changed. That version is kept forever and you can always go back to it.',
+  },
+  {
+    title: 'Hand the project to an AI when you want help',
+    body: 'Plainly writes out the context so Claude, ChatGPT, Bob or Codex knows what your project is and what you want changed.',
+  },
+]
+
+// ── Glossary — the Plainly word first, the GitHub word beside it ──────────────
+const GLOSSARY = [
+  { term: 'Project',                    github: 'repository',            def: 'One place for all the files that belong together — an app, a book, a client job.' },
+  { term: 'Save Point',                 github: 'commit',                def: 'A snapshot of your work at a moment in time. Kept forever, and you can always go back to it.' },
+  { term: 'What changed?',              github: 'commit message',        def: 'The one line you write when you save, so future-you can find that version again.' },
+  { term: 'Save to GitHub',             github: 'push',                  def: 'Send the work on this computer up to GitHub, where it is safe and backed up.' },
+  { term: 'Get latest version',         github: 'pull',                  def: 'Bring down anything that changed in GitHub since you last worked — for example, work an AI or teammate saved.' },
+  { term: 'Separate version',           github: 'branch',                def: 'A safe copy of the whole project so you can try something without touching your main version.' },
+  { term: 'Main version',               github: 'default branch',        def: 'The real, current version of your project. This is what you work in unless you choose otherwise.' },
+  { term: 'See what changed',           github: 'diff',                  def: 'A side-by-side look at the lines that were added and removed.' },
+  { term: 'Restore an earlier version', github: 'revert',                def: 'Put the files back the way they were at an earlier Save Point. Nothing newer is deleted.' },
+  { term: 'Changes not saved yet',      github: 'uncommitted changes',   def: 'Edits that only exist on this computer. They are not backed up until you save them to GitHub.' },
 ]
 
 // ── Walkthroughs ──────────────────────────────────────────────────────────────
@@ -375,87 +398,48 @@ const GOAL_CONTENT = {
   },
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
-export default function Help({ auth }) {
-  const location = useLocation()
-  const isSignedIn = !!auth?.token
-
-  if (isSignedIn) {
-    return (
-      <div className="projects-page">
-        <nav className="app-nav">
-          <Link to="/" className="app-nav-logo">plainly</Link>
-          <div className="app-nav-links">
-            <Link to="/" className={`app-nav-link${location.pathname === '/' ? ' active' : ''}`}>
-              Projects
-            </Link>
-            <Link to="/help" className={`app-nav-link${location.pathname === '/help' ? ' active' : ''}`}>
-              Help
-            </Link>
-          </div>
-          <div className="app-nav-footer">
-            {auth.user?.avatar_url && (
-              <img className="app-nav-avatar" src={auth.user.avatar_url} alt={auth.user.login} />
-            )}
-            <span className="app-nav-username">{auth.user?.login}</span>
-            <button className="app-nav-signout" onClick={auth.signOut}>Sign out</button>
-          </div>
-        </nav>
-        <div className="app-main">
-          <HelpContent />
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="page">
-      <header className="topbar">
-        <Link to="/" className="back-btn">
-          <span aria-hidden="true">←</span> Home
-        </Link>
-        <div className="topbar-title">Help</div>
-        <div className="topbar-actions" />
-      </header>
-      <HelpContent />
-    </div>
-  )
-}
-
-// ── Help content — shared between signed-in and signed-out layouts ─────────────
-function HelpContent() {
+// ── Main component ────────────────────────────────────────────────────────────
+export default function Help() {
   const [activeGoal, setActiveGoal] = useState(null)
-  const [openTerm, setOpenTerm]     = useState(null)
-
   const goalContent = activeGoal ? GOAL_CONTENT[activeGoal] : null
 
   return (
-    <main className="help-main">
+    <div className="screen-padded help-screen">
+      <h1 className="help-page-title">How Plainly works</h1>
+      <p className="help-page-intro">
+        Plainly is a plain-English way to use GitHub. Your files live in your real GitHub
+        account — Plainly just makes it obvious what's going on and what to do next.
+      </p>
 
-      {/* ── Section 1: Start here ── */}
-      <section className="help-section">
-        <h2 className="help-section-title">Start here</h2>
-        <p className="help-lead">
-          GitHub is where your project is stored, protected, and tracked over time.
-          Plainly gives you access to everything GitHub can do — in plain language,
-          without requiring you to learn developer tools.
-        </p>
-        <div className="help-callout">
-          <p className="help-callout-label">The five things beginners need to know</p>
-          <ol className="help-five">
-            <li>Your project is stored in a repository — Plainly calls it a <strong>Project</strong>.</li>
-            <li>GitHub keeps a history of every change you save.</li>
-            <li>A saved change is called a <strong>commit</strong> — Plainly calls it a <strong>Save Point</strong>.</li>
-            <li>Private projects are not visible to anyone you have not invited.</li>
-            <li>You can always open GitHub directly for advanced controls.</li>
-          </ol>
-          <p className="help-callout-foot">
-            You can build and manage a basic project without learning every GitHub feature.
-          </p>
-        </div>
-      </section>
+      {/* ── The four steps ── */}
+      <div className="help-how-list">
+        {STEPS.map((step, i) => (
+          <div key={step.title} className="help-how-card">
+            <div className="help-how-num">{i + 1}</div>
+            <div>
+              <div className="help-how-title">{step.title}</div>
+              <div className="help-how-body">{step.body}</div>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* ── Section 2: Goal-based nav ── */}
+      {/* ── Glossary ── */}
+      <h2 className="help-gloss-title">Plain-English glossary</h2>
+      <p className="help-gloss-intro">The word Plainly uses, and the GitHub word it replaces.</p>
+      <div className="help-gloss-list">
+        {GLOSSARY.map(g => (
+          <div key={g.term} className="help-gloss-card">
+            <div className="help-gloss-top">
+              <span className="help-gloss-term">{g.term}</span>
+              <span className="help-gloss-github">GitHub calls this: {g.github}</span>
+            </div>
+            <div className="help-gloss-def">{g.def}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── What are you trying to do? ── */}
       <section className="help-section">
         <h2 className="help-section-title">What are you trying to do?</h2>
         <div className="help-goal-grid">
@@ -478,47 +462,7 @@ function HelpContent() {
         )}
       </section>
 
-      {/* ── Section 3: Translation table ── */}
-      <section className="help-section">
-        <h2 className="help-section-title">GitHub translated</h2>
-        <p className="help-section-intro">
-          Every GitHub term below has a plain-language equivalent. Click any row to see
-          whether you need it right now.
-        </p>
-        <div className="help-translation-list">
-          {TRANSLATIONS.map(t => (
-            <div
-              key={t.github}
-              className={`help-translation-row${openTerm === t.github ? ' open' : ''}`}
-            >
-              <button
-                className="help-translation-trigger"
-                onClick={() => setOpenTerm(openTerm === t.github ? null : t.github)}
-              >
-                <span className="help-github-term">{t.github}</span>
-                <span className="help-arrow" aria-hidden="true">→</span>
-                <span className="help-plain-term">{t.plain}</span>
-                <span className="help-expand-icon" aria-hidden="true">
-                  {openTerm === t.github ? '▲' : '▼'}
-                </span>
-              </button>
-              {openTerm === t.github && (
-                <div className="help-translation-detail">
-                  <p>{t.meaning}</p>
-                  <p className={`help-need-now ${t.now ? 'yes' : 'no'}`}>
-                    <strong>Do I need this right now?</strong>{' '}
-                    {t.now
-                      ? 'Yes — this is part of the core Plainly workflow.'
-                      : 'Probably not yet. You can use Plainly fully without this for now.'}
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Section 4: Walkthroughs ── */}
+      {/* ── Show me how ── */}
       <section className="help-section">
         <h2 className="help-section-title">Show me how</h2>
         <div className="help-walkthroughs">
@@ -537,7 +481,6 @@ function HelpContent() {
           ))}
         </div>
       </section>
-
-    </main>
+    </div>
   )
 }

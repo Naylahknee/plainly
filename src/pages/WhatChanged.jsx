@@ -1,90 +1,94 @@
 /**
- * WhatChanged.jsx — /p/:repo/changed
+ * WhatChanged.jsx — /p/:repo/changed (max-width 800px)
  *
- * Project-level history: shows recent save points (commits) across all files.
- * Translates GitHub commit list into plain-language "what changed" entries.
+ * Every Save Point, newest first, in the words it was written in
+ * (HANDOFF §7.12). Never leads with a hash: GitHub's words live behind
+ * "See details", or inline when the Account setting asks for them.
  */
 
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getFiles, getFileHistory } from '../api/github'
+import { getCommits } from '../api/github'
 import { timeAgo, formatCommitLabel } from '../utils/time'
+import { projectName } from '../utils/projectName'
+import { useShowGithubWords } from '../utils/settings'
 
 export default function WhatChanged({ auth }) {
   const { repo } = useParams()
   const { token, user } = auth
   const owner = user?.login
+  const [showWords] = useShowGithubWords()
 
   const [commits, setCommits] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
+  const [open, setOpen]       = useState(null)
 
   useEffect(() => {
     if (!token || !owner) return
-    load()
+    getCommits(token, owner, repo, 30)
+      .then(setCommits)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false))
   }, [token, owner, repo])
 
-  async function load() {
-    setLoading(true)
-    setError(null)
-    try {
-      const files = await getFiles(token, owner, repo)
-      const seen = new Set()
-      const all = []
-      await Promise.all(
-        files.map(async f => {
-          try {
-            const history = await getFileHistory(token, owner, repo, f.path)
-            for (const c of history) {
-              if (!seen.has(c.sha)) {
-                seen.add(c.sha)
-                all.push({ ...c, _fileName: f.name })
-              }
-            }
-          } catch { /* skip */ }
-        })
-      )
-      all.sort((a, b) =>
-        new Date(b.commit.author.date) - new Date(a.commit.author.date)
-      )
-      setCommits(all.slice(0, 30))
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
-    <div className="screen-padded">
-      <div className="screen-header">
-        <h1>What Changed</h1>
-      </div>
+    <div className="screen-padded changed-screen">
+      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <h1 className="changed-title">What changed</h1>
+      <p className="changed-intro">
+        Every Save Point in this project, newest first — written the way you wrote it, not in
+        GitHub's words.
+      </p>
 
-      {loading && <p className="state-loading">Loading save points…</p>}
+      {loading && <p className="state-loading">Getting your Save Points from GitHub…</p>}
       {error && <p className="error-box">{error}</p>}
-
       {!loading && !error && commits.length === 0 && (
-        <div className="empty-state">
-          <p>No save points yet. Make a save in the file editor to see history here.</p>
-        </div>
+        <p className="changed-empty">
+          No Save Points yet. The first time you save, it shows up here.
+        </p>
       )}
 
-      {!loading && !error && commits.length > 0 && (
-        <ul className="commit-list">
-          {commits.map((c, i) => (
-            <li key={c.sha} className="commit-item">
-              <div className="commit-item-top">
-                <span className="commit-message">
-                  {formatCommitLabel(c.commit.message)}
-                </span>
-                <span className="commit-file">{c._fileName}</span>
+      <div className="changed-list">
+        {commits.map(c => {
+          const message = c.commit?.message || ''
+          const [firstLine, ...rest] = message.split('\n')
+          const who = c.author?.login || c.commit?.author?.name || 'Someone'
+          const when = c.commit?.author?.date
+          const isOpen = open === c.sha
+          return (
+            <div key={c.sha} className="changed-entry">
+              <div className="changed-entry-main">
+                <div>
+                  <div className="changed-entry-title">{formatCommitLabel(firstLine)}</div>
+                  {rest.join(' ').trim() && (
+                    <div className="changed-entry-summary">{rest.join(' ').trim()}</div>
+                  )}
+                  <div className="changed-entry-meta">
+                    {who} · {when ? timeAgo(when) : 'date unknown'}
+                    {showWords && <span className="changed-github"> · commit {c.sha.slice(0, 7)}</span>}
+                  </div>
+                </div>
+                <button className="pl-btn changed-toggle" onClick={() => setOpen(isOpen ? null : c.sha)}>
+                  {isOpen ? 'Hide details' : 'See details'}
+                </button>
               </div>
-              <span className="commit-meta">{timeAgo(c.commit.author.date)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+              {isOpen && (
+                <div className="changed-details">
+                  <div>In GitHub words: commit {c.sha} on the main version</div>
+                  {c.html_url && (
+                    <div>
+                      <a href={c.html_url} target="_blank" rel="noreferrer">
+                        Open this Save Point on GitHub
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

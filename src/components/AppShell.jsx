@@ -9,11 +9,15 @@
  *   - Global nav: Home · My Projects · Recent Activity · Account · Help
  *   - Project nav (only when inside /p/:repo): Project Home · Updates ·
  *     Make an Update · Project Files · What Changed · Save Points ·
- *     Separate Versions · Who Can See It · Settings
- *   - Footer: avatar + GitHub login + connection dot
+ *     Separate Versions · Who Can See It · Continue with AI · Settings
+ *   - Footer: avatar + GitHub login + connection status
+ *
+ * This is the only navigation in the app. No page renders one of its own.
  */
 
 import { NavLink, useParams, Link } from 'react-router-dom'
+import { getActiveUpdate } from '../utils/updateMemory'
+import { projectName } from '../utils/projectName'
 
 function NavItem({ to, label, end }) {
   return (
@@ -38,6 +42,8 @@ export default function AppShell({ auth, children }) {
   const avatarUrl = user?.avatar_url
   const login = user?.login
 
+  const activeUpdate = inProject && login ? getActiveUpdate(login, repo) : null
+
   return (
     <div className="shell">
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
@@ -61,7 +67,7 @@ export default function AppShell({ auth, children }) {
         {inProject && repo && (
           <div className="shell-nav-group">
             <p className="shell-nav-heading">
-              {repo.replace(/-/g, ' ')}
+              {projectName(repo)}
             </p>
             <NavItem to={`/p/${repo}`}          end   label="Project Home" />
             <NavItem to={`/p/${repo}/updates`}        label="Updates" />
@@ -71,6 +77,12 @@ export default function AppShell({ auth, children }) {
             <NavItem to={`/p/${repo}/points`}         label="Save Points" />
             <NavItem to={`/p/${repo}/versions`}       label="Separate Versions" />
             <NavItem to={`/p/${repo}/share`}          label="Who Can See It" />
+            {/* Continue with AI belongs to an update. Go to the one in progress,
+                or to the updates list to pick one — never to a dead route. */}
+            <NavItem
+              to={activeUpdate ? `/p/${repo}/u/${activeUpdate.id}/ai` : `/p/${repo}/updates`}
+              label="Continue with AI"
+            />
             <NavItem to={`/p/${repo}/settings`}       label="Settings" />
           </div>
         )}
@@ -88,10 +100,7 @@ export default function AppShell({ auth, children }) {
           )}
           <div className="shell-footer-text">
             {login && <span className="shell-footer-login">{login}</span>}
-            <span className="shell-footer-status">
-              <span className="shell-status-dot" aria-hidden="true" />
-              Connected
-            </span>
+            <span className="shell-footer-status">GitHub connected</span>
           </div>
         </div>
       </nav>

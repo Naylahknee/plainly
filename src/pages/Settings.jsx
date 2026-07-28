@@ -1,12 +1,17 @@
 /**
- * Settings.jsx — /p/:repo/settings
+ * Settings.jsx — /p/:repo/settings (max-width 700px)
  *
- * Project settings: name, description, danger zone (delete).
+ * Name, what the project is, who can see it, and delete (HANDOFF §7.17).
+ *
+ * The name field holds the real repository name, because renaming changes it
+ * in GitHub. Delete requires typing that same name first — it is the one
+ * action here that cannot be undone.
  */
 
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRepoInfo, updateRepoSettings, deleteRepo } from '../api/github'
+import { projectName } from '../utils/projectName'
 
 export default function Settings({ auth }) {
   const { repo } = useParams()
@@ -14,22 +19,22 @@ export default function Settings({ auth }) {
   const { token, user } = auth
   const owner = user?.login
 
-  const [repoData, setRepoData]       = useState(null)
-  const [name, setName]               = useState('')
-  const [description, setDesc]        = useState('')
-  const [loading, setLoading]         = useState(true)
-  const [saving, setSaving]           = useState(false)
-  const [saved, setSaved]             = useState(false)
-  const [error, setError]             = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [deleting, setDeleting]       = useState(false)
+  const [repoData, setRepoData] = useState(null)
+  const [name, setName]         = useState(repo)
+  const [description, setDesc]  = useState('')
+  const [loading, setLoading]   = useState(true)
+  const [saving, setSaving]     = useState(false)
+  const [saved, setSaved]       = useState(false)
+  const [error, setError]       = useState(null)
+  const [typedName, setTypedName]     = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!token || !owner) return
     getRepoInfo(token, owner, repo)
       .then(r => {
         setRepoData(r)
-        setName(r?.name?.replace(/-/g, ' ') || '')
+        setName(r?.name || repo)
         setDesc(r?.description || '')
       })
       .catch(e => setError(e?.message || 'Could not load project settings.'))
@@ -42,12 +47,15 @@ export default function Settings({ auth }) {
     setSaving(true)
     setError(null)
     try {
-      const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-      await updateRepoSettings(token, owner, repo, {
+      const slug = name.trim().replace(/\s+/g, '-')
+      const updated = await updateRepoSettings(token, owner, repo, {
         name: slug || repo,
         description: description.trim(),
       })
       setSaved(true)
+      if (updated?.name && updated.name !== repo) {
+        navigate(`/p/${updated.name}/settings`, { replace: true })
+      }
       setTimeout(() => setSaved(false), 2500)
     } catch (e) {
       setError(e.message)
@@ -57,7 +65,7 @@ export default function Settings({ auth }) {
   }
 
   async function handleDelete() {
-    if (!owner) return
+    if (!owner || typedName.trim() !== repo) return
     setDeleting(true)
     try {
       await deleteRepo(token, owner, repo)
@@ -65,87 +73,93 @@ export default function Settings({ auth }) {
     } catch (e) {
       setError(e.message)
       setDeleting(false)
-      setConfirmDelete(false)
     }
   }
 
   if (loading) {
-    return (
-      <div className="screen-padded">
-        <p className="state-loading">Loading settings…</p>
-      </div>
-    )
+    return <div className="screen-padded settings-screen"><p className="state-loading">Loading…</p></div>
   }
 
   return (
-    <div className="screen-padded screen-narrow">
-      <div className="screen-header">
-        <h1>Settings</h1>
-      </div>
+    <div className="screen-padded settings-screen">
+      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <h1 className="settings-title">Project settings</h1>
 
-      {error && <p className="error-box">{error}</p>}
-
-      <form onSubmit={handleSave} className="form-stack">
-        <div className="form-field">
-          <label className="form-label" htmlFor="settings-name">Project name</label>
+      <form className="settings-card" onSubmit={handleSave}>
+        <div>
+          <label className="settings-label" htmlFor="p-name">Project name</label>
+          <div className="settings-hint">
+            This renames the repository in GitHub too. Existing links may stop working.
+          </div>
           <input
-            id="settings-name"
-            type="text"
-            className="text-input"
+            id="p-name"
+            className="settings-input"
             value={name}
             onChange={e => setName(e.target.value)}
             disabled={saving}
           />
         </div>
 
-        <div className="form-field">
-          <label className="form-label" htmlFor="settings-desc">Description</label>
+        <div className="settings-rule" />
+
+        <div>
+          <label className="settings-label" htmlFor="p-desc">What this project is</label>
+          <div className="settings-hint">
+            One sentence. Shows on your dashboard and in every AI handoff.
+          </div>
           <input
-            id="settings-desc"
-            type="text"
-            className="text-input"
+            id="p-desc"
+            className="settings-input"
             value={description}
             onChange={e => setDesc(e.target.value)}
             disabled={saving}
-            placeholder="What is this project about?"
+            placeholder="e.g. The plain-English front door to my GitHub projects"
           />
         </div>
 
-        <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? 'Saving…' : saved ? 'Saved!' : 'Save changes'}
+        <div className="settings-actions">
+          <button type="submit" className="pl-btn-primary" disabled={saving}>
+            {saving ? 'Saving…' : 'Save changes'}
           </button>
+          {saved && <span className="settings-saved">Saved.</span>}
         </div>
       </form>
 
-      {/* Danger zone */}
-      <section className="settings-danger">
-        <h2 className="settings-danger-heading">Danger zone</h2>
-        {!confirmDelete ? (
-          <button className="btn-ghost btn-danger" onClick={() => setConfirmDelete(true)}>
-            Delete this project
-          </button>
-        ) : (
-          <div className="danger-confirm">
-            <p>
-              Delete <strong>{repo.replace(/-/g, ' ')}</strong> permanently from GitHub?
-              This cannot be undone.
-            </p>
-            <div className="danger-confirm-actions">
-              <button
-                className="btn-primary btn-destructive"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? 'Deleting…' : 'Yes, delete it'}
-              </button>
-              <button className="btn-ghost" onClick={() => setConfirmDelete(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
+      <div className="settings-card">
+        <div className="settings-label">Who can see this project</div>
+        <div className="settings-body">
+          Right now: {repoData?.private ? 'only you. Anyone you add as a collaborator in GitHub can also see it.' : 'anyone with the link — this project is public.'}
+        </div>
+        <Link to={`/p/${repo}/share`} className="pl-btn">Change who can see it</Link>
+      </div>
+
+      {error && <p className="error-box">{error}</p>}
+
+      <div className="settings-card settings-card--danger">
+        <div className="settings-label settings-label--danger">Delete this project</div>
+        <div className="settings-body">
+          This deletes the repository and every Save Point in it from GitHub. It cannot be undone,
+          and Plainly will ask you to type the project name first.
+        </div>
+        <label className="settings-hint" htmlFor="p-confirm">
+          Type <strong>{repo}</strong> to confirm.
+        </label>
+        <input
+          id="p-confirm"
+          className="settings-input settings-input--danger"
+          value={typedName}
+          onChange={e => setTypedName(e.target.value)}
+          placeholder={repo}
+          disabled={deleting}
+        />
+        <button
+          className="pl-btn settings-delete"
+          onClick={handleDelete}
+          disabled={deleting || typedName.trim() !== repo}
+        >
+          {deleting ? 'Deleting…' : 'Delete project'}
+        </button>
+      </div>
     </div>
   )
 }

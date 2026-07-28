@@ -1,22 +1,29 @@
 /**
  * ProjectHome.jsx — /p/:repo (max-width 880px)
  *
- * Project-level dashboard. Shows project info, active update hero, and recommended action.
- * Same layout as Home but scoped to one project.
+ * Where a project opens. Status row, the update you're in the middle of, then
+ * everything else you might want to do (HANDOFF §7.3, screen "Project Home").
+ *
+ * The four sentences about the current update come from heroFor() — the same
+ * function Home and the update workspace call, so the three screens can never
+ * contradict each other (§6).
  */
 
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRepoInfo } from '../api/github'
 import { getActiveUpdate, getUpdates, STATUS_LABEL } from '../utils/updateMemory'
-import { heroFor, projectNextAction } from '../utils/heroFor'
+import { heroFor } from '../utils/heroFor'
 import { timeAgo } from '../utils/time'
+import { projectName } from '../utils/projectName'
+import { useShowGithubWords } from '../utils/settings'
 
 export default function ProjectHome({ auth }) {
   const { repo } = useParams()
   const navigate = useNavigate()
   const { token, user } = auth
   const owner = user?.login
+  const [showWords] = useShowGithubWords()
 
   const [repoData, setRepoData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -31,7 +38,7 @@ export default function ProjectHome({ auth }) {
       .finally(() => setLoading(false))
   }, [token, owner, repo])
 
-  const projectTitle = repo.replace(/-/g, ' ')
+  const projectTitle = projectName(repo)
   const activeUpdate = owner ? getActiveUpdate(owner, repo) : null
   const allUpdates = owner ? getUpdates(owner, repo) : []
   const inProgressCount = allUpdates.filter(u => u.status !== 'saved' && u.status !== 'paused').length
@@ -40,155 +47,143 @@ export default function ProjectHome({ auth }) {
     ? heroFor(activeUpdate, { filesCount: (activeUpdate.files || []).length })
     : null
 
-  const recommendation = projectNextAction({ activeUpdate })
+  // "Changes not saved yet" is only true when an update has been reviewed and
+  // is waiting to be saved. Anything else and Plainly says nothing.
+  const unsaved = allUpdates.some(u => u.status === 'ready_to_save')
+
+  // Every action on this page that needs an update goes to the one in progress,
+  // or to the updates list to pick one.
+  const aiRoute = activeUpdate ? `/p/${repo}/u/${activeUpdate.id}/ai` : `/p/${repo}/updates`
+
+  const ACTIONS = [
+    { title: 'Make an update',            body: "Describe what you want to change. You don't need to know which file controls it.", cta: 'Describe an update', to: `/p/${repo}/new-update` },
+    { title: 'Continue with AI',          body: 'Hand this project to Claude, ChatGPT, Bob, Codex or another AI — with all the context it needs.', cta: 'Continue with AI', to: aiRoute },
+    { title: 'Review what changed',       body: 'See recent Save Points and understand what each one changed.', cta: 'View changes', to: `/p/${repo}/changed` },
+    { title: 'Browse project files',      body: 'Open and edit the files stored in this GitHub project.', cta: 'Browse files', to: `/p/${repo}/files` },
+    { title: 'Restore an earlier version', body: 'Go back to a previous Save Point. Nothing newer is deleted.', cta: 'View Save Points', to: `/p/${repo}/points` },
+  ]
 
   if (loading) {
     return (
-      <div className="page">
-        <main className="page-main" style={{ maxWidth: '880px' }}>
-          <p className="state-loading">Loading project…</p>
-        </main>
+      <div className="screen-padded project-screen">
+        <p className="state-loading">Getting this project from GitHub…</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="page">
-        <main className="page-main" style={{ maxWidth: '880px' }}>
-          <p className="error-box">{error}</p>
-        </main>
+      <div className="screen-padded project-screen">
+        <p className="error-box">{error}</p>
       </div>
     )
   }
 
   return (
-    <div className="page">
-      <main className="page-main" style={{ maxWidth: '880px' }}>
-        {/* Project header */}
-        <div className="project-home-header">
-          <h1 className="project-home-title">{projectTitle}</h1>
-          {repoData?.description && (
-            <p className="project-home-desc">{repoData.description}</p>
-          )}
-        </div>
+    <div className="screen-padded project-screen">
+      <Link to="/" className="back-link">← Home</Link>
 
-        {/* Recommended next action */}
-        <section className="project-recommendation">
-          <p className="project-recommendation-text">{recommendation.text}</p>
-          {activeUpdate ? (
-            <button
-              className="pl-btn-primary"
-              onClick={() => navigate(`/p/${repo}/u/${activeUpdate.id}/${recommendation.route}`)}
-            >
-              {recommendation.cta}
-            </button>
-          ) : (
-            <Link
-              to={`/p/${repo}/${recommendation.route}`}
-              className="pl-btn-primary"
-            >
-              {recommendation.cta}
-            </Link>
-          )}
-        </section>
+      <h1 className="project-title">{projectTitle}</h1>
+      {repoData?.description && <p className="project-desc">{repoData.description}</p>}
 
-        {/* Active update hero */}
-        {activeUpdate && hero && (
-          <section className="project-hero-card">
-            <div className="project-hero-context">
-              <span className="project-hero-project">{projectTitle}</span>
-              <span className="project-hero-separator">·</span>
-              <span className="project-hero-label">Update</span>
+      {/* Status row — every value here comes from GitHub or stored memory. */}
+      <div className="project-status">
+        <a
+          className="project-status-url"
+          href={repoData?.html_url || `https://github.com/${owner}/${repo}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          github.com/{owner}/{repo}
+        </a>
+        <span className="project-status-sep" aria-hidden="true">|</span>
+        <span className="project-status-ok">GitHub connected</span>
+        <span className="project-status-sep" aria-hidden="true">|</span>
+        <span>
+          Main version
+          {showWords && repoData?.default_branch && (
+            <span className="project-status-github"> ({repoData.default_branch})</span>
+          )}
+        </span>
+        {repoData?.pushed_at && (
+          <>
+            <span className="project-status-sep" aria-hidden="true">|</span>
+            <span>Last Save Point {timeAgo(repoData.pushed_at)}</span>
+          </>
+        )}
+        <span className="project-status-sep" aria-hidden="true">|</span>
+        {unsaved
+          ? <span className="project-status-unsaved">Changes not saved yet</span>
+          : <span className="project-status-ok">Everything saved</span>}
+      </div>
+
+      {/* Current update */}
+      {activeUpdate && hero ? (
+        <>
+          <div className="section-label">Current update</div>
+          <section className="project-update-card">
+            <div className="project-update-head">
+              <h2 className="project-update-name">{activeUpdate.title}</h2>
               <span className={`pl-pill pl-pill--${activeUpdate.status}`}>
                 {STATUS_LABEL[activeUpdate.status]}
               </span>
             </div>
-            <h2 className="project-hero-title">{activeUpdate.title}</h2>
-            {activeUpdate.goal && (
-              <p className="project-hero-goal">{activeUpdate.goal}</p>
-            )}
-            <div className="project-hero-panel">
-              <div className="project-hero-row">
-                <span className="project-hero-row-label">Where you left off</span>
-                <span className="project-hero-row-value">{hero.left}</span>
-              </div>
-              <div className="project-hero-row">
-                <span className="project-hero-row-label">What's happened since</span>
-                <span className="project-hero-row-value">{hero.since}</span>
-              </div>
-              <div className="project-hero-row">
-                <span className="project-hero-row-label" style={{ color: 'var(--purple)', fontWeight: '600' }}>
-                  What to do next
-                </span>
-                <span className="project-hero-row-value" style={{ fontWeight: '600' }}>
-                  {hero.next}
-                </span>
-              </div>
+            {activeUpdate.goal && <p className="project-update-goal">{activeUpdate.goal}</p>}
+
+            <div className="project-update-facts">
+              {activeUpdate.ai && (
+                <span>Worked on with <strong>{activeUpdate.ai}</strong></span>
+              )}
+              <span>
+                {(activeUpdate.files || []).length === 1
+                  ? '1 file affected'
+                  : `${(activeUpdate.files || []).length} files affected`}
+              </span>
+              {activeUpdate.lastActivityAt && (
+                <span>Last activity {timeAgo(activeUpdate.lastActivityAt)}</span>
+              )}
             </div>
-            <div className="project-hero-actions">
+
+            <div className="project-update-actions">
               <button
                 className="pl-btn-primary"
                 onClick={() => navigate(`/p/${repo}/u/${activeUpdate.id}/${hero.route}`)}
               >
                 {hero.cta}
               </button>
-              <Link to={`/p/${repo}/updates`} className="pl-btn">
+              <Link to={`/p/${repo}/u/${activeUpdate.id}`} className="pl-btn">
                 Open the update
               </Link>
               {inProgressCount > 1 && (
-                <button
-                  className="project-hero-updates-link"
-                  onClick={() => navigate(`/p/${repo}/updates`)}
-                >
+                <Link to={`/p/${repo}/updates`} className="text-link">
                   {inProgressCount} updates in progress →
-                </button>
+                </Link>
               )}
             </div>
           </section>
-        )}
+        </>
+      ) : (
+        <section className="project-update-card project-update-card--empty">
+          <p className="project-update-empty-title">You haven't started an update yet.</p>
+          <p className="project-update-empty-next">Describe what you want to change.</p>
+          <Link to={`/p/${repo}/new-update`} className="pl-btn-primary">Make an update</Link>
+        </section>
+      )}
 
-        {/* Empty state */}
-        {!activeUpdate && (
-          <section className="project-hero-card project-hero-empty">
-            <p className="project-hero-empty-title">You haven't started an update yet.</p>
-            <p className="project-hero-empty-next">Describe what you want to change.</p>
-            <Link to={`/p/${repo}/new-update`} className="pl-btn-primary">
-              Make an update
-            </Link>
-          </section>
-        )}
-
-        {/* Recent updates list */}
-        {allUpdates.length > 0 && (
-          <section className="project-updates-section">
-            <div className="project-updates-header">
-              <h2>Updates</h2>
-              <Link to={`/p/${repo}/updates`} className="pl-btn">See all</Link>
-            </div>
-            <div className="project-updates-list">
-              {allUpdates.slice(0, 4).map(u => (
-                <Link
-                  key={u.id}
-                  to={`/p/${repo}/u/${u.id}`}
-                  className="project-update-row"
-                >
-                  <div className="project-update-info">
-                    <p className="project-update-title">{u.title}</p>
-                    {u.goal && <p className="project-update-goal">{u.goal}</p>}
-                  </div>
-                  <div className="project-update-meta">
-                    <span className={`pl-pill pl-pill--${u.status}`}>
-                      {STATUS_LABEL[u.status]}
-                    </span>
-                    <span className="project-update-time">{timeAgo(u.lastActivityAt)}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-      </main>
+      {/* Everything else */}
+      <h2 className="project-else-title">Or do something else</h2>
+      <p className="project-else-sub">Pick one. You can always come back here.</p>
+      <div className="project-actions">
+        {ACTIONS.map(a => (
+          <Link key={a.title} to={a.to} className="project-action">
+            <span className="project-action-text">
+              <span className="project-action-title">{a.title}</span>
+              <span className="project-action-body">{a.body}</span>
+            </span>
+            <span className="project-action-cta">{a.cta}</span>
+          </Link>
+        ))}
+      </div>
     </div>
   )
 }
