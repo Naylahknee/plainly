@@ -4,12 +4,22 @@
  * Every Save Point, newest first, in the words it was written in
  * (HANDOFF §7.12). Never leads with a hash: GitHub's words live behind
  * "See details", or inline when the Account setting asks for them.
+ *
+ * Three things per row and no more — title, one line, meta. This screen used
+ * to print the whole commit body as the summary, trailers and all, which for
+ * any real project is a wall of text. splitCommitMessage() decides what is
+ * worth showing first; everything else moves into the details panel.
+ *
+ * The file list is fetched only when a row is opened. Knowing it up front
+ * would cost one request per Save Point, and a guessed count is worse than
+ * no count.
  */
 
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getCommits } from '../api/github'
-import { timeAgo, formatCommitLabel } from '../utils/time'
+import { getCommits, getCommitDetails, getSavePointCount } from '../api/github'
+import { timeAgo } from '../utils/time'
+import { splitCommitMessage, commitAuthor } from '../utils/commitText'
 import { projectName } from '../utils/projectName'
 import { useShowGithubWords } from '../utils/settings'
 
@@ -20,9 +30,11 @@ export default function WhatChanged({ auth }) {
   const [showWords] = useShowGithubWords()
 
   const [commits, setCommits] = useState([])
+  const [total, setTotal]     = useState(null)   // null = couldn't count
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
   const [open, setOpen]       = useState(null)
+  const [files, setFiles]     = useState({})     // sha → string[] | 'loading' | null
 
   useEffect(() => {
     if (!token || !owner) return
@@ -31,6 +43,27 @@ export default function WhatChanged({ auth }) {
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [token, owner, repo])
+
+  // Separate, and allowed to fail: a missing count costs a version number,
+  // not the screen.
+  useEffect(() => {
+    if (!token || !owner) return
+    let cancelled = false
+    getSavePointCount(token, owner, repo).then(n => { if (!cancelled) setTotal(n) })
+    return () => { cancelled = true }
+  }, [token, owner, repo])
+
+  async function toggle(sha) {
+    if (open === sha) { setOpen(null); return }
+    setOpen(sha)
+    if (files[sha] !== undefined) return          // already fetched, or failed
+    setFiles(f => ({ ...f, [sha]: 'loading' }))
+    const detail = await getCommitDetails(token, owner, repo, sha)
+    setFiles(f => ({
+      ...f,
+      [sha]: detail?.files ? detail.files.map(x => x.filename) : null,
+    }))
+  }
 
   return (
     <div className="screen-padded changed-screen">
@@ -50,39 +83,54 @@ export default function WhatChanged({ auth }) {
       )}
 
       <div className="changed-list">
-        {commits.map(c => {
-          const message = c.commit?.message || ''
-          const [firstLine, ...rest] = message.split('\n')
-          const who = c.author?.login || c.commit?.author?.name || 'Someone'
+        {commits.map((c, i) => {
+          const { title, summary, body } = splitCommitMessage(c.commit?.message)
+          const who = commitAuthor(c, owner)
           const when = c.commit?.author?.date
+          // Page one, newest first — so the top row is the newest Save Point.
+          const version = total ? total - i : null
           const isOpen = open === c.sha
+          const theseFiles = files[c.sha]
+
           return (
             <div key={c.sha} className="changed-entry">
               <div className="changed-entry-main">
-                <div>
-                  <div className="changed-entry-title">{formatCommitLabel(firstLine)}</div>
-                  {rest.join(' ').trim() && (
-                    <div className="changed-entry-summary">{rest.join(' ').trim()}</div>
-                  )}
+                <div className="changed-entry-text">
+                  <div className="changed-entry-title">{title}</div>
+                  {summary && <div className="changed-entry-summary">{summary}</div>}
                   <div className="changed-entry-meta">
                     {who} · {when ? timeAgo(when) : 'date unknown'}
+                    {version > 0 ? <> · v{version}</> : null}
                     {showWords && <span className="changed-github"> · commit {c.sha.slice(0, 7)}</span>}
                   </div>
                 </div>
-                <button className="pl-btn changed-toggle" onClick={() => setOpen(isOpen ? null : c.sha)}>
+                <button className="pl-btn changed-toggle" onClick={() => toggle(c.sha)}>
                   {isOpen ? 'Hide details' : 'See details'}
                 </button>
               </div>
+
               {isOpen && (
                 <div className="changed-details">
-                  <div>In GitHub words: commit {c.sha} on the main version</div>
-                  {c.html_url && (
+                  {body && <p className="changed-details-body">{body}</p>}
+                  <div className="changed-details-tech">
+                    <div>In GitHub words: commit {c.sha} on the main version</div>
                     <div>
-                      <a href={c.html_url} target="_blank" rel="noreferrer">
-                        Open this Save Point on GitHub
-                      </a>
+                      {theseFiles === 'loading' && 'Files: checking…'}
+                      {theseFiles === null && "Files: Plainly couldn't get the list for this one."}
+                      {Array.isArray(theseFiles) && (
+                        theseFiles.length
+                          ? `Files: ${theseFiles.join(', ')}`
+                          : 'Files: none recorded'
+                      )}
                     </div>
-                  )}
+                    {c.html_url && (
+                      <div>
+                        <a href={c.html_url} target="_blank" rel="noreferrer">
+                          Open this Save Point on GitHub
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

@@ -136,6 +136,39 @@ These are design rules, not engineering ones. Breaking them makes the product li
 - **Nothing reaches GitHub without the user pressing a button that says so.** Edits are
   drafts on this computer until Review and save.
 
+## 8a. Updates and Save Points are different things
+
+An **update** is something Plainly followed start to finish: you described it, it went to an
+AI, changes came back, you reviewed and saved. A **Save Point** is something GitHub recorded,
+however it got there — pushed from an editor, from an AI tool, from another machine.
+
+Most work arrives the second way. So the project screens show both, and never blur them: a
+Save Point is never rendered as an update, never counted in "updates in progress", and never
+fed to `heroFor()`. When Plainly has no update of its own, Project Home leads with **Recently
+saved to GitHub** rather than a sentence about nothing, and Updates carries a **Saved to
+GitHub** list underneath its own.
+
+## 8b. A commit message is a title and one line
+
+Commit messages are written for git: a subject, then paragraphs, then trailers like
+`Co-Authored-By:`. Printing all of it is how What Changed became a wall of text.
+
+`src/utils/commitText.js` is the only place that decides: the first line is the title, the
+first paragraph becomes a one-line summary cut at a word boundary, everything else goes
+behind **See details** along with the sha and the file list. Trailers never appear on screen
+at all. Every screen showing a Save Point uses it, so one commit reads the same way
+everywhere.
+
+## 8c. Version numbers are counted, not stored
+
+`v18` means *the 18th Save Point GitHub currently lists on the main version*. It is counted
+at read time by `getSavePointCount()` — ask for one commit, read the `rel="last"` page number
+out of the `Link` header, which GitHub exposes to browsers via
+`Access-Control-Expose-Headers`.
+
+When the count can't be made it is `null`, and **nothing is rendered** — not `v0`, not `vNaN`.
+Guard with `version > 0 ? … : null`, never `version && …`: JSX renders a bare `0`.
+
 ## 9. One status, four sentences
 
 `src/utils/heroFor.js` turns an update's status into exactly four fields: *where you left

@@ -1,21 +1,47 @@
 /**
  * Updates.jsx — /p/:repo/updates (max-width 860px)
  *
- * List of all updates for a project.
- * Shows: title + status pill / goal / metadata (AI, files, time) / next step
+ * Two lists, and the difference between them is the point.
+ *
+ * An **update** is something Plainly followed from beginning to end: you
+ * described it, it went to an AI, changes came back, you reviewed and saved.
+ * A **Save Point** is something GitHub recorded, however it got there.
+ *
+ * Most work arrives the second way. Listing only the first left this screen
+ * empty for projects that had been worked on all week, so the Save Points are
+ * here too — underneath, named for what they are, never counted as updates.
  */
 
+import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { getCommits, getSavePointCount } from '../api/github'
 import { getUpdates, STATUS_LABEL } from '../utils/updateMemory'
 import { heroFor } from '../utils/heroFor'
 import { timeAgo } from '../utils/time'
+import { splitCommitMessage, commitAuthor } from '../utils/commitText'
 import { projectName } from '../utils/projectName'
 
 export default function Updates({ auth }) {
   const { repo } = useParams()
+  const { token } = auth
   const owner = auth?.user?.login
   const updates = owner ? getUpdates(owner, repo) : []
   const inProgressCount = updates.filter(u => u.status !== 'saved' && u.status !== 'paused').length
+
+  const [saved, setSaved] = useState([])
+  const [total, setTotal] = useState(null)
+  const [loadingSaved, setLoadingSaved] = useState(true)
+
+  useEffect(() => {
+    if (!token || !owner) return
+    let cancelled = false
+    getCommits(token, owner, repo, 10)
+      .then(c => { if (!cancelled) setSaved(c || []) })
+      .catch(() => { if (!cancelled) setSaved([]) })
+      .finally(() => { if (!cancelled) setLoadingSaved(false) })
+    getSavePointCount(token, owner, repo).then(n => { if (!cancelled) setTotal(n) })
+    return () => { cancelled = true }
+  }, [token, owner, repo])
 
   return (
     <div className="screen-padded updates-screen">
@@ -35,17 +61,18 @@ export default function Updates({ auth }) {
           {inProgressCount} {inProgressCount === 1 ? 'update' : 'updates'} in progress.
         </p>
 
-        {/* Empty state */}
         {updates.length === 0 && (
           <div className="updates-empty">
-            <p>No updates yet. Describe what you want to change to get started.</p>
+            <p>
+              No updates yet — nothing has been followed start to finish inside Plainly. Work
+              already saved to GitHub is below.
+            </p>
             <Link to={`/p/${repo}/new-update`} className="pl-btn-primary">
               Make an update
             </Link>
           </div>
         )}
 
-        {/* Updates list */}
         {updates.length > 0 && (
           <div className="updates-list">
             {updates.map(u => {
@@ -74,6 +101,48 @@ export default function Updates({ auth }) {
               )
             })}
           </div>
+        )}
+
+        {/* ── Work that reached GitHub some other way ─────────────────────── */}
+        <div className="section-label updates-saved-label">Saved to GitHub</div>
+        <p className="updates-saved-intro">
+          Every change already saved in this project, newest first — including work done outside
+          Plainly.
+        </p>
+
+        {loadingSaved && <p className="state-loading">Getting your Save Points from GitHub…</p>}
+
+        {!loadingSaved && saved.length === 0 && (
+          <p className="updates-saved-empty">
+            Nothing saved in this project yet. The first time you save, it shows up here.
+          </p>
+        )}
+
+        {saved.length > 0 && (
+          <>
+            <div className="changed-list">
+              {saved.map((c, i) => {
+                const { title, summary } = splitCommitMessage(c.commit?.message)
+                const version = total ? total - i : null
+                return (
+                  <div key={c.sha} className="changed-entry">
+                    <div className="changed-entry-text">
+                      <div className="changed-entry-title">{title}</div>
+                      {summary && <div className="changed-entry-summary">{summary}</div>}
+                      <div className="changed-entry-meta">
+                        {commitAuthor(c, owner)}
+                        {c.commit?.author?.date && <> · {timeAgo(c.commit.author.date)}</>}
+                        {version > 0 ? <> · v{version}</> : null}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <Link to={`/p/${repo}/changed`} className="text-link updates-saved-all">
+              See everything that changed →
+            </Link>
+          </>
         )}
       </div>
     </div>

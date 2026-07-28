@@ -231,6 +231,39 @@ export async function getContents(token, owner, repo, path = '') {
 }
 
 /**
+ * How many Save Points this project has on its main version.
+ *
+ * This is what makes "v18" a real number rather than a label: ask for a single
+ * commit and read the last page number out of the Link header, which is the
+ * total. GitHub lists Link in Access-Control-Expose-Headers, so the browser is
+ * allowed to read it.
+ *
+ * Returns null when it can't be counted. Callers must render null as no version
+ * at all — never v0, never vNaN.
+ */
+export async function getSavePointCount(token, owner, repo) {
+  try {
+    const r = await fetch(`${API}/repos/${owner}/${repo}/commits?per_page=1`, {
+      headers: headers(token),
+    })
+    if (r.status === 404 || r.status === 409) return 0   // no repo, or no commits yet
+    if (!r.ok) return null
+
+    // With 0 or 1 commits there is nothing to paginate and no Link header.
+    const link = r.headers.get('Link')
+    if (!link) {
+      const data = await r.json()
+      return Array.isArray(data) ? data.length : null
+    }
+
+    const match = link.match(/[?&]page=(\d+)>;\s*rel="last"/)
+    return match ? Number(match[1]) : 1
+  } catch {
+    return null
+  }
+}
+
+/**
  * Recent Save Points (commits) on the project's main version.
  */
 export async function getCommits(token, owner, repo, perPage = 20) {

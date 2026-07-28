@@ -10,9 +10,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getCommits, getCommitDetails, getFileAtCommit, getFileContent, saveFile } from '../api/github'
+import { getSavePointCount, getCommits, getCommitDetails, getFileAtCommit, getFileContent, saveFile } from '../api/github'
 import { recordSave } from '../utils/projectMemory'
 import { timeAgo, formatCommitLabel } from '../utils/time'
+import { splitCommitMessage, commitAuthor } from '../utils/commitText'
 import { projectName } from '../utils/projectName'
 
 export default function SavePoints({ auth }) {
@@ -26,6 +27,7 @@ export default function SavePoints({ auth }) {
   const [confirming, setConfirming] = useState(null)  // sha awaiting confirmation
   const [working, setWorking]   = useState(false)
   const [restored, setRestored] = useState(null)      // { title, files }
+  const [total, setTotal]       = useState(null)      // null = couldn't count
 
   useEffect(() => {
     if (!token || !owner) return
@@ -33,6 +35,14 @@ export default function SavePoints({ auth }) {
       .then(setCommits)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
+  }, [token, owner, repo])
+
+  // Only for the version numbers. Failing to count costs a "v18", not the page.
+  useEffect(() => {
+    if (!token || !owner) return
+    let cancelled = false
+    getSavePointCount(token, owner, repo).then(n => { if (!cancelled) setTotal(n) })
+    return () => { cancelled = true }
   }, [token, owner, repo])
 
   async function restore(commit) {
@@ -97,16 +107,19 @@ export default function SavePoints({ auth }) {
       )}
 
       <div className="points-list">
-        {commits.map(c => {
-          const title = formatCommitLabel((c.commit?.message || '').split('\n')[0])
-          const who = c.author?.login || c.commit?.author?.name || 'Someone'
+        {commits.map((c, i) => {
+          const { title } = splitCommitMessage(c.commit?.message)
+          const who = commitAuthor(c, owner)
           const when = c.commit?.author?.date
+          // Page one, newest first, so the top row is the latest Save Point.
+          const version = total ? total - i : null
           return (
             <div key={c.sha} className="points-row">
               <div>
                 <div className="points-row-title">{title}</div>
                 <div className="points-row-meta">
                   {who} · {when ? timeAgo(when) : 'date unknown'}
+                  {version > 0 ? <> · v{version}</> : null}
                 </div>
               </div>
               {confirming === c.sha ? (

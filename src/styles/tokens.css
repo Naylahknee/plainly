@@ -2788,15 +2788,31 @@
   justify-content: space-between;
   gap: 18px;
 }
-.changed-entry-title, .points-row-title { font: 600 16px/1.35 var(--font); color: var(--ink); }
-.changed-entry-summary { font: 400 14px/1.5 var(--font); color: var(--ink-soft); margin-top: 3px; }
-.changed-entry-meta, .points-row-meta { font: 400 13px/1.4 var(--font); color: var(--grey); margin-top: 4px; }
+/* The row is title-first, so the toggle aligns to the top of the text rather
+   than floating to the middle of a two-line summary. */
+.changed-entry-main { align-items: flex-start; }
+.changed-entry-text { flex: 1; min-width: 0; }
+
+.changed-entry-title, .points-row-title { font: 600 16.5px/1.35 var(--font); color: var(--ink); }
+.changed-entry-summary { font: 400 14.5px/1.5 var(--font); color: var(--ink-soft); margin-top: 4px; }
+.changed-entry-meta, .points-row-meta { font: 400 13px/1.4 var(--font); color: var(--grey); margin-top: 6px; }
 .changed-github { font-family: var(--font-mono); }
 .changed-toggle, .points-action { flex: none; padding: 9px 14px; font-size: 13.5px; border-radius: 9px; }
 .changed-details {
   margin-top: 14px;
   padding-top: 14px;
   border-top: 1px solid var(--lilac-bg);
+}
+/* The rest of what the author wrote: prose, so not monospace, and paragraph
+   breaks kept the way they were typed. */
+.changed-details-body {
+  margin: 0 0 14px;
+  font: 400 14.5px/1.65 var(--font);
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+/* GitHub's own words. Monospace because these are identifiers, not sentences. */
+.changed-details-tech {
   font: 400 12.5px/1.7 var(--font-mono);
   color: var(--grey);
   word-break: break-word;
@@ -3475,3 +3491,26 @@ a:hover { color: var(--purple-dark); }
   font: 400 14px/1.6 var(--font);
   color: var(--grey);
 }
+
+/* Recent Save Points where the current update would be, on a project Plainly
+   has no update of its own for. Same card, different contents — these are
+   GitHub's records, and the heading above them says so. */
+.project-recent-list { display: flex; flex-direction: column; gap: 16px; }
+.project-recent-row + .project-recent-row {
+  padding-top: 16px;
+  border-top: 1px solid var(--grey-light);
+}
+.project-recent-title { font: 600 16.5px/1.35 var(--font); color: var(--ink); }
+.project-recent-summary { font: 400 14.5px/1.5 var(--font); color: var(--ink-soft); margin-top: 4px; }
+.project-recent-meta { font: 400 13px/1.4 var(--font); color: var(--grey); margin-top: 6px; }
+.project-recent-note {
+  margin: 20px 0 0;
+  font: 400 14px/1.6 var(--font);
+  color: var(--grey);
+}
+
+/* "Saved to GitHub" on the Updates screen. */
+.updates-saved-label { margin-top: 40px; }
+.updates-saved-intro { margin: 0 0 16px; font: 400 14.5px/1.6 var(--font); color: var(--grey); }
+.updates-saved-empty { font: 400 15px/1.6 var(--font); color: var(--grey); }
+.updates-saved-all { display: inline-block; margin-top: 16px; }

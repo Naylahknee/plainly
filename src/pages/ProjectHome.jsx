@@ -11,10 +11,11 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getRepoInfo } from '../api/github'
+import { getRepoInfo, getCommits, getSavePointCount } from '../api/github'
 import { getActiveUpdate, getUpdates, STATUS_LABEL } from '../utils/updateMemory'
 import { heroFor } from '../utils/heroFor'
 import { timeAgo } from '../utils/time'
+import { splitCommitMessage, commitAuthor } from '../utils/commitText'
 import { projectName } from '../utils/projectName'
 import { useShowGithubWords } from '../utils/settings'
 import { aiRouteFor } from '../utils/aiRoute'
@@ -29,6 +30,8 @@ export default function ProjectHome({ auth }) {
   const [repoData, setRepoData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [recent, setRecent] = useState([])    // real Save Points from GitHub
+  const [total, setTotal] = useState(null)    // null = couldn't count
 
   useEffect(() => {
     if (!token || !owner) return
@@ -37,6 +40,22 @@ export default function ProjectHome({ auth }) {
       .then(r => setRepoData(r))
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
+  }, [token, owner, repo])
+
+  // What has actually happened in this project. Plainly only knows about the
+  // updates it created itself, and most work arrives some other way — pushed
+  // from an editor, from an AI tool, from another machine. Without this the
+  // screen says "you haven't started an update" to someone who has been
+  // working all week.
+  useEffect(() => {
+    if (!token || !owner) return
+    let cancelled = false
+    getCommits(token, owner, repo, 3)
+      .then(c => { if (!cancelled) setRecent(c || []) })
+      .catch(() => { if (!cancelled) setRecent([]) })
+    getSavePointCount(token, owner, repo)
+      .then(n => { if (!cancelled) setTotal(n) })
+    return () => { cancelled = true }
   }, [token, owner, repo])
 
   const projectTitle = projectName(repo)
@@ -103,6 +122,9 @@ export default function ProjectHome({ auth }) {
         <span className="project-status-sep" aria-hidden="true">|</span>
         <span>
           Main version
+          {/* v18 means the 18th Save Point GitHub currently lists. Counted, not
+              stored — and simply absent when the count couldn't be made. */}
+          {total ? <> · v{total}</> : null}
           {showWords && repoData?.default_branch && (
             <span className="project-status-github"> ({repoData.default_branch})</span>
           )}
@@ -161,6 +183,45 @@ export default function ProjectHome({ auth }) {
                   {inProgressCount} updates in progress →
                 </Link>
               )}
+            </div>
+          </section>
+        </>
+      ) : recent.length > 0 ? (
+        /* No update of Plainly's own, but the project has real history. Show
+           what actually happened rather than a sentence about nothing. These
+           are Save Points, and they say so — an update is a different thing,
+           with a lifecycle Plainly watched. */
+        <>
+          <div className="section-label">Recently saved to GitHub</div>
+          <section className="project-update-card">
+            <div className="project-recent-list">
+              {recent.map((c, i) => {
+                const { title, summary } = splitCommitMessage(c.commit?.message)
+                const version = total ? total - i : null
+                return (
+                  <div key={c.sha} className="project-recent-row">
+                    <div className="project-recent-title">{title}</div>
+                    {summary && <div className="project-recent-summary">{summary}</div>}
+                    <div className="project-recent-meta">
+                      {commitAuthor(c, owner)}
+                      {c.commit?.author?.date && <> · {timeAgo(c.commit.author.date)}</>}
+                      {version > 0 ? <> · v{version}</> : null}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <p className="project-recent-note">
+              This is work already saved in GitHub. Start an update when you want Plainly to
+              follow a change from beginning to end.
+            </p>
+
+            <div className="project-update-actions">
+              <Link to={`/p/${repo}/new-update`} className="pl-btn-primary">Make an update</Link>
+              <Link to={`/p/${repo}/changed`} className="text-link">
+                See everything that changed →
+              </Link>
             </div>
           </section>
         </>
