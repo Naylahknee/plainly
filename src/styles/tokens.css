@@ -3041,3 +3041,66 @@
 .newproject-empty-title { font: 600 19px/1.3 var(--font); color: var(--ink); margin-bottom: 8px; }
 .newproject-empty-body  { font: 400 15.5px/1.55 var(--font); color: var(--ink-soft); margin: 0 0 22px; }
 .newproject-empty-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   File editor — /p/:repo/f/<path>
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.editor-screen { display: flex; flex-direction: column; flex: 1; min-height: 100vh; }
+
+.editor-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 40px;
+  background: #fff;
+  border-bottom: 1px solid var(--grey-light);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.editor-back { flex: none; }
+.editor-bar-file { flex: 1; min-width: 0; }
+.editor-bar-name { font: 600 15.5px/1.4 var(--font-mono); color: var(--ink); }
+.editor-bar-note { font: 400 12.5px/1.4 var(--font); color: var(--grey); }
+.editor-pill {
+  flex: none;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font: 600 12.5px/1.35 var(--font);
+  white-space: nowrap;
+}
+.editor-pill--unsaved { background: var(--amber-bg); color: var(--amber); }
+.editor-pill--saved   { background: var(--green-bg); color: var(--green-deep); }
+.editor-save { flex: none; padding: 12px 20px; font-size: 14.5px; border-radius: 10px; box-shadow: none; }
+
+.editor-body { flex: 1; padding: 32px 40px 60px; display: flex; justify-content: center; }
+.editor-area {
+  width: 100%;
+  max-width: 760px;
+  min-height: 520px;
+  padding: 34px 38px;
+  border: 1px solid var(--grey-light);
+  border-radius: 16px;
+  background: #fff;
+  font: 400 16px/1.7 var(--font);
+  color: var(--ink);
+  resize: none;
+  box-shadow: 0 2px 16px rgba(108, 92, 231, .06);
+}
+.editor-area:focus { outline: 2px solid var(--lilac-border); border-color: var(--lilac-soft); }
+
+.files-add { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.files-add-input {
+  flex: 1;
+  min-width: 240px;
+  padding: 11px 14px;
+  border: 1px solid var(--grey-border);
+  border-radius: 10px;
+  font: 400 14.5px/1.4 var(--font);
+}
+
+.updates-screen { max-width: 860px; }
+.updates-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 8px; }
+.updates-header h1 { font: 700 30px/1.2 var(--font); letter-spacing: -.03em; color: var(--ink); margin: 0; }
+.updates-intro-text { font: 400 15.5px/1.6 var(--font); color: var(--ink-soft); margin: 0 0 24px; max-width: 48em; }

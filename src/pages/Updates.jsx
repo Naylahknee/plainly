@@ -9,6 +9,7 @@ import { useParams, Link } from 'react-router-dom'
 import { getUpdates, STATUS_LABEL } from '../utils/updateMemory'
 import { heroFor } from '../utils/heroFor'
 import { timeAgo } from '../utils/time'
+import { projectName } from '../utils/projectName'
 
 export default function Updates({ auth }) {
   const { repo } = useParams()
@@ -17,24 +18,22 @@ export default function Updates({ auth }) {
   const inProgressCount = updates.filter(u => u.status !== 'saved' && u.status !== 'paused').length
 
   return (
-    <div className="page">
-      <main className="page-main" style={{ maxWidth: '860px' }}>
-        {/* Intro section */}
-        <div className="updates-intro">
-          <p className="updates-intro-text">
-            An update is one thing you want to change, described in your words. Plainly keeps track
-            of what it touched, which AI worked on it, and whether it's saved.{' '}
-            <strong>{inProgressCount} updates in progress.</strong>
-          </p>
-        </div>
+    <div className="screen-padded updates-screen">
+      <div>
+        <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
 
-        {/* Header */}
         <div className="updates-header">
           <h1>Updates</h1>
           <Link to={`/p/${repo}/new-update`} className="pl-btn-primary">
             Make an update
           </Link>
         </div>
+
+        <p className="updates-intro-text">
+          An update is one thing you want to change, described in your words. Plainly keeps track
+          of what it touched, which AI worked on it, and whether it's saved.{' '}
+          {inProgressCount} {inProgressCount === 1 ? 'update' : 'updates'} in progress.
+        </p>
 
         {/* Empty state */}
         {updates.length === 0 && (
@@ -63,7 +62,7 @@ export default function Updates({ auth }) {
                     {u.goal && <p className="updates-row-goal">{u.goal}</p>}
                     <p className="updates-row-meta">
                       {u.ai && <>Worked on with <strong>{u.ai}</strong> · </>}
-                      {(u.files || []).length === 1 ? '1 file' : `${(u.files || []).length} files`}
+                      {(u.files || []).length === 1 ? '1 file affected' : `${(u.files || []).length} files affected`}
                       {' '}· Last activity {timeAgo(u.lastActivityAt)}
                     </p>
                   </div>
@@ -76,7 +75,7 @@ export default function Updates({ auth }) {
             })}
           </div>
         )}
-      </main>
+      </div>
     </div>
   )
 }

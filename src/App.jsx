@@ -21,8 +21,8 @@ import Help        from './pages/Help'
 import ProjectHome    from './pages/ProjectHome'
 import Updates        from './pages/Updates'
 import NewUpdate      from './pages/NewUpdate'
-import Files          from './pages/Files'
 import ProjectFiles   from './pages/ProjectFiles'
+import FileEditor     from './pages/FileEditor'
 import ReviewAndSave  from './pages/ReviewAndSave'
 import WhatChanged    from './pages/WhatChanged'
 import SavePoints     from './pages/SavePoints'
@@ -88,7 +88,7 @@ export default function App() {
         <Route path="/p/:repo/updates"     element={<Protected auth={auth}><Updates      auth={auth} /></Protected>} />
         <Route path="/p/:repo/new-update"  element={<Protected auth={auth}><NewUpdate    auth={auth} /></Protected>} />
         <Route path="/p/:repo/files"       element={<Protected auth={auth}><ProjectFiles auth={auth} /></Protected>} />
-        <Route path="/p/:repo/f/*"         element={<Protected auth={auth}><Files        auth={auth} /></Protected>} />
+        <Route path="/p/:repo/f/*"         element={<Protected auth={auth}><FileEditor   auth={auth} /></Protected>} />
         <Route path="/p/:repo/save"        element={<Protected auth={auth}><ReviewAndSave auth={auth} /></Protected>} />
         <Route path="/p/:repo/changed"     element={<Protected auth={auth}><WhatChanged  auth={auth} /></Protected>} />
         <Route path="/p/:repo/points"      element={<Protected auth={auth}><SavePoints   auth={auth} /></Protected>} />

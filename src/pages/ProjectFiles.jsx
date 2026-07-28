@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getContents } from '../api/github'
+import { getContents, createFile } from '../api/github'
 import { getDrafts } from '../utils/drafts'
 import { projectName } from '../utils/projectName'
 import { timeAgo } from '../utils/time'
@@ -46,6 +46,8 @@ export default function ProjectFiles({ auth }) {
   const [open, setOpen]       = useState({})     // path -> children | 'loading'
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
+  const [adding, setAdding]   = useState(false)
+  const [newName, setNewName] = useState('')
 
   useEffect(() => {
     if (!token || !owner) return
@@ -56,6 +58,22 @@ export default function ProjectFiles({ auth }) {
   }, [token, owner, repo])
 
   const drafts = owner ? getDrafts(owner, repo) : {}
+
+  async function addFile(e) {
+    e.preventDefault()
+    const name = newName.trim()
+    if (!name) return
+    setAdding(true)
+    try {
+      await createFile(token, owner, repo, name)
+      setEntries(await getContents(token, owner, repo))
+      setNewName('')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setAdding(false)
+    }
+  }
 
   async function toggleFolder(entry) {
     if (open[entry.path]) {
@@ -94,6 +112,19 @@ export default function ProjectFiles({ auth }) {
           File — you can open and edit it
         </span>
       </div>
+
+      <form className="files-add" onSubmit={addFile}>
+        <input
+          className="files-add-input"
+          placeholder="Add a file — e.g. NOTES.md"
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+          disabled={adding}
+        />
+        <button type="submit" className="pl-btn" disabled={adding || !newName.trim()}>
+          {adding ? 'Adding…' : 'Add a file'}
+        </button>
+      </form>
 
       {loading && <p className="state-loading">Getting your files from GitHub…</p>}
       {error && <p className="error-box">{error}</p>}
