@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getFileHistory } from '../api/github'
 import { formatCommitLabel } from '../utils/time'
 import { buildProjectPrompt, AI_TOOLS } from '../utils/aiPrompt'
+import { projectName } from '../utils/projectName'
 
 /**
  * ProjectAIModal
@@ -29,7 +30,7 @@ export default function ProjectAIModal({
   onHandoff,
 }) {
   const owner = auth.user?.login
-  const projectName = repo ? repo.replace(/-/g, ' ') : ''
+  const projectLabel = repo ? projectName(repo) : ''
   const fileNames = files.map(f => f.name)
 
   const [selectedTool, setSelectedTool] = useState('chatgpt')
@@ -63,7 +64,7 @@ export default function ProjectAIModal({
   }, [onClose])
 
   const prompt = buildProjectPrompt({
-    projectName,
+    projectName: projectLabel,
     description: repoInfo?.description || '',
     repoName: repo,
     fileNames,
@@ -118,7 +119,7 @@ export default function ProjectAIModal({
         <div className="ai-context-summary">
           <div className="ai-context-row">
             <span className="ai-context-label">Project</span>
-            <span className="ai-context-value">{projectName || '—'}</span>
+            <span className="ai-context-value">{projectLabel || '—'}</span>
           </div>
           <div className="ai-context-row">
             <span className="ai-context-label">Repository</span>

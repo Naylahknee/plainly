@@ -11,6 +11,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getUpdateById, updateUpdate, deleteUpdate, STATUS_LABEL, STATUSES } from '../utils/updateMemory'
 import { heroFor } from '../utils/heroFor'
 import { timeAgo } from '../utils/time'
+import { projectName } from '../utils/projectName'
 
 const LIFECYCLE = ['planned', 'ready_for_ai', 'sent_to_ai', 'changes_detected', 'waiting_for_review', 'ready_to_save', 'saved']
 
@@ -65,7 +66,7 @@ export default function UpdateWorkspace({ auth }) {
 
         {/* Context line */}
         <div className="update-workspace-context">
-          <span>{repo.replace(/-/g, ' ')}</span>
+          <span>{projectName(repo)}</span>
           <span>·</span>
           <span>Update</span>
           <span className={`pl-pill pl-pill--${update.status}`}>

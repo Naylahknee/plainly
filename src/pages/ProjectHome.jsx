@@ -11,6 +11,7 @@ import { getRepoInfo } from '../api/github'
 import { getActiveUpdate, getUpdates, STATUS_LABEL } from '../utils/updateMemory'
 import { heroFor, projectNextAction } from '../utils/heroFor'
 import { timeAgo } from '../utils/time'
+import { projectName } from '../utils/projectName'
 
 export default function ProjectHome({ auth }) {
   const { repo } = useParams()
@@ -31,7 +32,7 @@ export default function ProjectHome({ auth }) {
       .finally(() => setLoading(false))
   }, [token, owner, repo])
 
-  const projectTitle = repo.replace(/-/g, ' ')
+  const projectTitle = projectName(repo)
   const activeUpdate = owner ? getActiveUpdate(owner, repo) : null
   const allUpdates = owner ? getUpdates(owner, repo) : []
   const inProgressCount = allUpdates.filter(u => u.status !== 'saved' && u.status !== 'paused').length

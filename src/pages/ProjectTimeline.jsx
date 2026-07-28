@@ -4,6 +4,7 @@ import { getFiles, getFileHistory } from '../api/github'
 import { getMemory } from '../utils/projectMemory'
 import { getTasks } from '../utils/taskMemory'
 import { timeAgo, formatCommitLabel } from '../utils/time'
+import { projectName } from '../utils/projectName'
 
 const AI_LABELS = {
   chatgpt: 'ChatGPT',
@@ -22,7 +23,7 @@ export default function ProjectTimeline({ auth }) {
   const [activityLoading, setActivityLoading] = useState(true)
   const [activityError, setActivityError] = useState(null)
 
-  const projectTitle = repo.replace(/-/g, ' ')
+  const projectTitle = projectName(repo)
   const memory = owner ? getMemory(owner, repo) : {}
   const tasks = owner ? getTasks(owner, repo) : []
 

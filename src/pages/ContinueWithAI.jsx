@@ -18,6 +18,7 @@ import { getUpdateById, recordHandoffSent } from '../utils/updateMemory'
 import { buildProjectPrompt, AI_TOOLS } from '../utils/aiPrompt'
 import { getRepoInfo, getFiles, getFileContent } from '../api/github'
 import { timeAgo } from '../utils/time'
+import { projectName } from '../utils/projectName'
 
 const CONTEXT_OPTIONS = [
   { id: 'project_desc',     label: 'What this project is',          detail: 'Your project description and README', alwaysOn: true },
@@ -102,7 +103,7 @@ export default function ContinueWithAI({ auth }) {
       }
 
       const text = buildProjectPrompt({
-        projectName:      repoInfo?.name?.replace(/-/g, ' ') || repo.replace(/-/g, ' '),
+        projectName:      projectName(repoInfo?.name || repo),
         description:      checkedCtx.has('project_name') ? repoInfo?.description : undefined,
         repoName:         repo,
         fileNames:        checkedCtx.has('file_list') ? files.map(f => f.name) : [],

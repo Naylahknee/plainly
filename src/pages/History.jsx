@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { diffLines } from 'diff'
 import { getFileHistory, getFileAtCommit, getFileContent, saveFile } from '../api/github'
 import { timeAgo, formatCommitLabel, isUserLabel } from '../utils/time'
+import { projectName } from '../utils/projectName'
 
 export default function History({ auth }) {
   const { repo, '*': encodedPath } = useParams()
@@ -101,7 +102,7 @@ export default function History({ auth }) {
     <div className="page">
       <header className="topbar">
         <button className="back-btn" onClick={() => navigate(`/p/${repo}`)}>
-          <span aria-hidden="true">←</span> {repo.replace(/-/g, ' ')}
+          <span aria-hidden="true">←</span> {projectName(repo)}
         </button>
         <div className="topbar-title">History: {fileName}</div>
         <div className="topbar-actions">

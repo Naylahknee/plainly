@@ -13,6 +13,7 @@ import { recordFileOpen, recordSave, recordAIHandoff } from '../utils/projectMem
 import {
   getTasks, createTask, updateTask, deleteTask, getActiveTask
 } from '../utils/taskMemory'
+import { projectName } from '../utils/projectName'
 
 marked.setOptions({ breaks: true, gfm: true })
 
@@ -114,7 +115,7 @@ export default function Files({ auth }) {
   const isDirty = content !== savedContent
   const isMarkdown = activeFile?.name.toLowerCase().endsWith('.md')
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
-  const projectTitle = repo.replace(/-/g, ' ')
+  const projectTitle = projectName(repo)
 
   // Active task for summary bar
   const activeTask = owner ? getActiveTask(owner, repo) : null

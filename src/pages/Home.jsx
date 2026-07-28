@@ -18,6 +18,7 @@ import { getUpdates, getActiveUpdate, STATUS_LABEL } from '../utils/updateMemory
 import { heroFor } from '../utils/heroFor'
 import { greeting } from '../utils/time'
 import { getRepos } from '../api/github'
+import { projectName } from '../utils/projectName'
 
 const EXPLAINER_DISMISSED_KEY = 'plainly_home_explainer_dismissed'
 
@@ -118,7 +119,7 @@ export default function Home({ auth }) {
         {heroUpdate && heroRepo && hero && (
           <section className="home-hero-card">
             <div className="home-hero-context">
-              <span className="home-hero-project">{heroRepo.replace(/-/g, ' ')}</span>
+              <span className="home-hero-project">{projectName(heroRepo)}</span>
               <span className="home-hero-separator">·</span>
               <span className="home-hero-label">Update</span>
               <span className={`pl-pill pl-pill--${heroUpdate.status}`}>
@@ -206,7 +207,7 @@ export default function Home({ auth }) {
                 className="home-project-card"
               >
                 <div className="home-project-info">
-                  <p className="home-project-name">{repo.name.replace(/-/g, ' ')}</p>
+                  <p className="home-project-name">{projectName(repo.name)}</p>
                   <p className="home-project-desc">{repo.description || 'No description'}</p>
                   <p className="home-project-url">
                     <code>github.com/{owner}/{repo.name}</code>

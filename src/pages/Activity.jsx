@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 import { getRepos } from '../api/github'
 import { getUpdates, STATUS_LABEL } from '../utils/updateMemory'
 import { timeAgo } from '../utils/time'
+import { projectName } from '../utils/projectName'
 
 export default function Activity({ auth }) {
   const { user, token } = auth
@@ -65,7 +66,7 @@ export default function Activity({ auth }) {
                   </span>
                 </div>
                 <div className="activity-item-meta">
-                  {u.repoName.replace(/-/g, ' ')} &middot; {timeAgo(u.lastActivityAt)}
+                  {projectName(u.repoName)} &middot; {timeAgo(u.lastActivityAt)}
                 </div>
               </Link>
             </li>
