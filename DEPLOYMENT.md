@@ -60,11 +60,21 @@ npm run dev    # Start dev server
 ```
 
 ### 2. Environment Setup (Production)
+
+Three variables, from an **OAuth App** (github.com/settings/applications/new — *not*
+a GitHub App; the code uses OAuth App endpoints and `scope=repo`).
+
 ```
-VITE_API_BASE=https://api.github.com  # Already set
-VITE_GITHUB_CLIENT_ID=<from GH OAuth app>
-VITE_GITHUB_REDIRECT_URI=https://plainly.app/auth/callback
+VITE_GITHUB_CLIENT_ID=<Client ID>       # public: baked into the browser bundle
+GITHUB_CLIENT_ID=<the same Client ID>   # server: token exchange, revoke, check
+GITHUB_CLIENT_SECRET=<Client Secret>    # server only — never with a VITE_ prefix
 ```
+
+`VITE_` variables are read at build time, so adding them does nothing to a build that
+already exists — **redeploy after setting them**.
+
+The callback URL is not an environment variable. It comes from the OAuth App
+registration and must be exactly `https://<your-domain>/auth/callback`.
 
 ### 3. Deploy to Vercel
 ```bash

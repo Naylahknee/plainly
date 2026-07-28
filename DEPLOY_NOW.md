@@ -104,18 +104,23 @@ vercel logs --follow
 
 ## Environment Variables (Required on Vercel)
 
-Set in Vercel dashboard under Project Settings → Environment Variables:
+Set in Vercel dashboard under Project Settings → Environment Variables. All three
+come from one **OAuth App** at github.com/settings/applications/new — not a GitHub
+App, which uses different endpoints and expiring tokens.
 
 ```
-VITE_GITHUB_CLIENT_ID = <from GitHub OAuth App>
-VITE_GITHUB_REDIRECT_URI = https://plainly.vercel.app/auth/callback
+VITE_GITHUB_CLIENT_ID = <Client ID>        # public: baked into the browser bundle
+GITHUB_CLIENT_ID      = <same Client ID>   # server: token exchange, revoke, check
+GITHUB_CLIENT_SECRET  = <Client Secret>    # server only — never with a VITE_ prefix
 ```
 
-**Optional (for monitoring):**
-```
-SENTRY_AUTH_TOKEN = <from Sentry if using error tracking>
-VITE_API_BASE = https://api.github.com
-```
+Tick Production, Preview and Development, then **redeploy** — `VITE_` values are
+baked in at build time and won't reach a build that already exists.
+
+There is no redirect-URI variable: the callback comes from the OAuth App
+registration and must be exactly `https://<your-domain>/auth/callback`. Because an
+OAuth App has one callback URL, sign-in only works on the production domain — not
+on Vercel's per-deployment preview URLs.
 
 ---
 
