@@ -13,14 +13,17 @@ function key(owner, repo) {
 }
 
 const DEFAULTS = {
-  lastOpenedAt: null,
-  lastOpenedFile: null,
-  lastSaveLabel: null,
-  lastSaveAt: null,
-  lastAITool: null,
-  lastAIAt: null,
+  lastOpenedAt:      null,
+  lastOpenedFile:    null,
+  lastSaveLabel:     null,
+  lastSaveAt:        null,
+  lastAITool:        null,
+  lastAIAt:          null,
   lastAIInstruction: null,
-  openTaskId: null,
+  openTaskId:        null,
+  // Stores the HEAD commit SHA last seen by Plainly.
+  // Used for return-detection: compare against current HEAD after an AI handoff.
+  lastSeenCommitSha: null,
 }
 
 /**

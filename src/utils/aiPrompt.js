@@ -134,19 +134,30 @@ export function buildProjectPrompt({
     lines.push('')
   }
 
-  // ── Active task ────────────────────────────────────────────────────────────
+  // ── Active update ──────────────────────────────────────────────────────────
   if (activeTask) {
-    lines.push('## Current task')
+    lines.push('## Current update')
     lines.push('')
     lines.push(`**Title:** ${activeTask.title}`)
     if (activeTask.goal && activeTask.goal.trim()) {
       lines.push(`**Goal:** ${activeTask.goal.trim()}`)
     }
+    // Status labels for the new 9-state lifecycle
     const statusLabels = {
-      'open': 'Open',
-      'in-progress': 'In progress',
-      'review': 'Review',
-      'done': 'Done',
+      planned:            'Planned',
+      ready_for_ai:       'Ready for AI',
+      sent_to_ai:         'Sent to AI',
+      changes_detected:   'Changes detected',
+      waiting_for_review: 'Waiting for review',
+      ready_to_save:      'Ready to save',
+      saved:              'Saved',
+      needs_correction:   'Needs correction',
+      paused:             'Paused',
+      // legacy fallbacks
+      'open':             'Open',
+      'in-progress':      'In progress',
+      'review':           'Review',
+      'done':             'Done',
     }
     lines.push(`**Status:** ${statusLabels[activeTask.status] || activeTask.status}`)
     if (activeTask.notes && activeTask.notes.trim()) {
