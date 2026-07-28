@@ -4,7 +4,13 @@
  * This screen exists because the old sign-in never said what the product is
  * for. Two columns: what Plainly does on the left, the word-for-word
  * translation table on the right. Do not shorten it (HANDOFF §7.1).
+ *
+ * It also starts the OAuth flow, and it is where people land when something
+ * about that flow didn't work — so every failure gets a sentence saying what
+ * happened and what to do, never a silent bounce.
  */
+
+import { useState, useEffect } from 'react'
 
 // Repository → Project, and the rest. The whole product in six rows.
 const TRANSLATIONS = [
@@ -19,12 +25,29 @@ const TRANSLATIONS = [
 export default function Welcome() {
   const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
   const missingConfig = !clientId
+
+  // One-time value proving the browser that comes back is the one that left.
+  // AuthCallback refuses to exchange a code without it, so a crafted callback
+  // link can't sign someone into an account they didn't choose.
+  const [oauthState] = useState(() => crypto.randomUUID())
+  // Written in an effect, not in the useState initializer: StrictMode renders
+  // twice, and the discarded render's write would leave a value in storage that
+  // doesn't match the one in the link below.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('plainly_oauth_state', oauthState)
+    } catch { /* storage blocked — the callback will say sign-in can't be verified */ }
+  }, [oauthState])
+
   const authUrl = missingConfig
     ? null
-    : `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`
+    : `https://github.com/login/oauth/authorize?client_id=${clientId}` +
+      `&scope=repo&state=${encodeURIComponent(oauthState)}`
 
   // GitHub sends people back here with ?auth_error when sign-in doesn't finish.
-  const authError = new URLSearchParams(window.location.search).get('auth_error')
+  const params = new URLSearchParams(window.location.search)
+  const authError = params.get('auth_error')
+  const disconnectFailed = params.get('disconnect_failed') === '1'
 
   return (
     <div className="welcome-page">
@@ -40,9 +63,24 @@ export default function Welcome() {
             Your files stay in your real GitHub repositories. Nothing is copied anywhere else.
           </p>
 
-          {authError && (
+          {authError === 'state_mismatch' ? (
+            <p className="error-box welcome-error">
+              Plainly couldn't confirm that sign-in started here, so it stopped. Nothing was
+              lost — press the button below to start again.
+            </p>
+          ) : authError ? (
             <p className="error-box welcome-error">
               Sign-in didn't finish. Nothing was lost — please try again.
+            </p>
+          ) : null}
+
+          {disconnectFailed && (
+            <p className="error-box welcome-error">
+              You're signed out on this computer, but Plainly couldn't reach GitHub to
+              disconnect. GitHub may still list Plainly as connected — you can remove it at{' '}
+              <a href="https://github.com/settings/applications" target="_blank" rel="noopener noreferrer">
+                github.com/settings/applications
+              </a>.
             </p>
           )}
 

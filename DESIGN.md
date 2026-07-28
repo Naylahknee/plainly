@@ -166,6 +166,13 @@ something the app actually does — where it doesn't, Help says so (see §8).
 itself and asks what you want the AI to do; the update record is created when you mark it as
 sent, not before. `/p/:repo/u/:id/ai` is the same screen scoped to an update in flight.
 
+**Signing out disconnects.** It revokes the GitHub authorization, not just Plainly's copy of
+the token, so the next sign-in asks you to allow access again — otherwise Account's promise
+that "you can disconnect any time" would be false. Your files stay in GitHub and unsaved
+drafts stay on the computer; the screen says both before you press it. If the revoke can't
+reach GitHub you are still signed out here, and Welcome says GitHub may still list Plainly
+and where to remove it.
+
 Every route resolves. No dead links, no 404s. Old routes redirect to their designed
 replacement rather than disappearing.
 

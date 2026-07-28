@@ -1,5 +1,13 @@
+/**
+ * server.js — the OAuth endpoints for local development.
+ *
+ * In production these are Vercel functions under api/oauth/. Both import the
+ * same module, so `npm run dev` behaves like the deployed site.
+ */
+
 import express from 'express'
 import cors from 'cors'
+import { exchangeCode, revokeGrant } from './api/_lib/oauth.js'
 
 const app = express()
 const FRONTEND = process.env.FRONTEND_URL || 'http://localhost:5173'
@@ -8,24 +16,28 @@ app.use(cors({ origin: FRONTEND }))
 app.use(express.json())
 
 app.post('/api/oauth/exchange', async (req, res) => {
-  const { code } = req.body
+  const { code } = req.body || {}
   if (!code) return res.status(400).json({ error: 'no_code' })
 
   try {
-    const response = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
-        code
-      })
-    })
-    const data = await response.json()
-    if (data.error || !data.access_token) {
-      return res.status(400).json({ error: data.error_description || data.error || 'no_token' })
+    const token = await exchangeCode(code)
+    res.json({ token })
+  } catch (err) {
+    if (err.message === 'missing_oauth_config') {
+      return res.status(500).json({ error: 'server_error' })
     }
-    res.json({ token: data.access_token })
+    res.status(400).json({ error: err.message || 'no_token' })
+  }
+})
+
+app.post('/api/oauth/revoke', async (req, res) => {
+  const { token } = req.body || {}
+  if (!token) return res.status(400).json({ error: 'no_token' })
+
+  try {
+    const revoked = await revokeGrant(token)
+    if (!revoked) return res.status(502).json({ error: 'revoke_failed' })
+    res.status(204).end()
   } catch {
     res.status(500).json({ error: 'server_error' })
   }
