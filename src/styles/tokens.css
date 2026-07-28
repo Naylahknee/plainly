@@ -3466,3 +3466,12 @@ a:hover { color: var(--purple-dark); }
   .help-stepper { grid-template-columns: 1fr; }
   .help-result { grid-template-columns: 1fr; grid-template-areas: 'kind' 'title' 'body'; }
 }
+
+/* The GitHub connection state on Account. Deliberately plain text in --grey:
+   this is a fact Plainly asked GitHub for, not a status with a fixed colour
+   meaning, and green here would read as "saved in GitHub" (DESIGN.md §2). */
+.account-connection {
+  margin-top: 14px;
+  font: 400 14px/1.6 var(--font);
+  color: var(--grey);
+}

@@ -39,10 +39,16 @@ export default function Welcome() {
     } catch { /* storage blocked — the callback will say sign-in can't be verified */ }
   }, [oauthState])
 
+  // prompt=select_account forces GitHub's account picker every time, so signing
+  // in is a choice rather than whichever account the browser happens to hold.
+  //
+  // It does not bring back the authorize screen: GitHub skips that for anyone
+  // who has already approved these scopes, and the only thing that undoes it is
+  // deleting the authorization — which is what signing out now does.
   const authUrl = missingConfig
     ? null
     : `https://github.com/login/oauth/authorize?client_id=${clientId}` +
-      `&scope=repo&state=${encodeURIComponent(oauthState)}`
+      `&scope=repo&prompt=select_account&state=${encodeURIComponent(oauthState)}`
 
   // GitHub sends people back here with ?auth_error when sign-in doesn't finish.
   const params = new URLSearchParams(window.location.search)

@@ -1,4 +1,4 @@
-import { exchangeCode } from '../_lib/oauth.js'
+import { exchangeCode } from '../../lib/oauth.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

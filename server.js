@@ -7,7 +7,7 @@
 
 import express from 'express'
 import cors from 'cors'
-import { exchangeCode, revokeGrant } from './api/_lib/oauth.js'
+import { exchangeCode, revokeGrant, checkToken } from './lib/oauth.js'
 
 const app = express()
 const FRONTEND = process.env.FRONTEND_URL || 'http://localhost:5173'
@@ -35,11 +35,22 @@ app.post('/api/oauth/revoke', async (req, res) => {
   if (!token) return res.status(400).json({ error: 'no_token' })
 
   try {
-    const revoked = await revokeGrant(token)
-    if (!revoked) return res.status(502).json({ error: 'revoke_failed' })
+    const { revoked, status } = await revokeGrant(token)
+    if (!revoked) return res.status(502).json({ error: 'revoke_failed', github_status: status })
     res.status(204).end()
   } catch {
     res.status(500).json({ error: 'server_error' })
+  }
+})
+
+app.post('/api/oauth/check', async (req, res) => {
+  const { token } = req.body || {}
+  if (!token) return res.status(400).json({ error: 'no_token' })
+
+  try {
+    res.json(await checkToken(token))
+  } catch {
+    res.json({ connected: null })
   }
 })
 

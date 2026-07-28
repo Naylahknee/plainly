@@ -173,6 +173,14 @@ drafts stay on the computer; the screen says both before you press it. If the re
 reach GitHub you are still signed out here, and Welcome says GitHub may still list Plainly
 and where to remove it.
 
+This is the *only* way to make GitHub ask again. GitHub's own rule: someone who has already
+authorized these scopes "won't be shown the OAuth authorization page … this step of the flow
+will automatically complete". So a silent sign-in is not a bug in Plainly — it means the
+authorization is still there. Sign-in also sends `prompt=select_account`, which forces the
+account picker every time, and Account states whether GitHub still lists Plainly by asking
+GitHub rather than by assuming it — with "couldn't check" as its own answer, never rendered
+as connected.
+
 Every route resolves. No dead links, no 404s. Old routes redirect to their designed
 replacement rather than disappearing.
 

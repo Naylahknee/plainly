@@ -10,15 +10,34 @@
  * token and worth telling the user about, hence the button state and the note.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useShowGithubWords } from '../utils/settings'
 
 export default function Account({ auth }) {
-  const { user, signOut } = auth
+  const { user, token, signOut } = auth
   const navigate = useNavigate()
   const [showWords, toggleWords] = useShowGithubWords()
   const [signingOut, setSigningOut] = useState(false)
+
+  // Whether GitHub still holds an authorization for this account. Asked, not
+  // assumed — 'checking' until GitHub answers, and null if it couldn't be
+  // reached, which is shown as "couldn't check" rather than as connected.
+  const [connected, setConnected] = useState('checking')
+
+  useEffect(() => {
+    if (!token) return
+    let cancelled = false
+    fetch('/api/oauth/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    })
+      .then(r => (r.ok ? r.json() : { connected: null }))
+      .then(d => { if (!cancelled) setConnected(d.connected) })
+      .catch(() => { if (!cancelled) setConnected(null) })
+    return () => { cancelled = true }
+  }, [token])
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -49,6 +68,21 @@ export default function Account({ auth }) {
             Plainly can read and save to your projects. You can disconnect any time and your
             files stay in GitHub.
           </div>
+        </div>
+
+        {/* Asked of GitHub, not inferred from being signed in. */}
+        <div className="account-connection">
+          {connected === 'checking' && 'Checking with GitHub…'}
+          {connected === true && (
+            <>
+              GitHub lists Plainly as connected to this account. You can see it at{' '}
+              <a href="https://github.com/settings/applications" target="_blank" rel="noopener noreferrer">
+                github.com/settings/applications
+              </a>.
+            </>
+          )}
+          {connected === false && 'GitHub no longer lists Plainly as connected. Signing in again will ask you to allow access.'}
+          {connected === null && "Plainly couldn't check with GitHub just now, so it can't tell you whether the connection is still there."}
         </div>
       </div>
 
