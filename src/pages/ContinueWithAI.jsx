@@ -1,8 +1,13 @@
 /**
- * ContinueWithAI.jsx — /p/:repo/u/:updateId/ai (max-width 860px)
+ * ContinueWithAI.jsx — /p/:repo/ai and /p/:repo/u/:updateId/ai (max-width 860px)
  *
  * Four numbered steps: pick the AI, see what Plainly is packing, copy the
  * handoff, tell Plainly you sent it (HANDOFF §7.7).
+ *
+ * It works with or without an update. Without one, step 2 asks what you want
+ * the AI to do and the handoff carries everything else about the project —
+ * pressing "Mark as sent" is what turns that sentence into an update record.
+ * Nothing is written before that.
  *
  * The checklist is live: unticking an item removes that section from the
  * preview immediately. Marking as sent records the branch head at that moment
@@ -11,7 +16,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getUpdateById, recordHandoffSent } from '../utils/updateMemory'
+import { getUpdateById, recordHandoffSent, createUpdate } from '../utils/updateMemory'
 import { getMemory } from '../utils/projectMemory'
 import { AI_TOOLS } from '../utils/aiPrompt'
 import { CONTEXT_ITEMS, buildHandoff } from '../utils/handoff'
@@ -26,13 +31,28 @@ export default function ContinueWithAI({ auth }) {
   const { token, user } = auth
   const owner = user?.login
 
-  const update = owner ? getUpdateById(owner, repo, updateId) : null
+  const stored = owner && updateId ? getUpdateById(owner, repo, updateId) : null
+
+  // With no update yet, the handoff is built against a placeholder carrying
+  // what the user types. It becomes a real record only on "Mark as sent".
+  const [goal, setGoal] = useState('')
+  const [created, setCreated] = useState(null)
+  const update = stored || created || {
+    id: null,
+    title: goal.trim() || 'Work on this project',
+    goal: goal.trim(),
+    status: 'planned',
+    ai: null,
+    files: [],
+    handoff: null,
+    story: [],
+  }
 
   const [tool, setTool]         = useState(null)
   const [checked, setChecked]   = useState(() => new Set(CONTEXT_ITEMS.map(c => c.id)))
   const [copied, setCopied]     = useState(false)
   const [opened, setOpened]     = useState(false)
-  const [marked, setMarked]     = useState(Boolean(update?.handoff?.sentAt))
+  const [marked, setMarked]     = useState(Boolean(stored?.handoff?.sentAt))
 
   // Everything the handoff is built from.
   const [repoInfo, setRepoInfo]         = useState(null)
@@ -98,10 +118,10 @@ export default function ContinueWithAI({ auth }) {
     })
   }, [checked, update, owner, repo, repoInfo, tree, savePoints, instructions, memory.lastOpenedFile, memory.lastSaveLabel])
 
-  if (!update) {
+  if (updateId && !stored) {
     return (
       <div className="screen-padded ai-screen">
-        <p className="error-box">Update not found.</p>
+        <p className="error-box">That update could not be found.</p>
         <Link to={`/p/${repo}/updates`} className="pl-btn">Back to updates</Link>
       </div>
     )
@@ -133,13 +153,20 @@ export default function ContinueWithAI({ auth }) {
 
   async function handleMarkSent() {
     if (!owner || !tool) return
+    // No update yet — this is the moment one is created, from what you typed.
+    let id = stored?.id || created?.id
+    if (!id) {
+      const record = createUpdate(owner, repo, update.title, update.goal || null)
+      setCreated(record)
+      id = record.id
+    }
     // The branch head right now. Without it, "what changed while I was away"
     // cannot be computed later.
     let sha = null
     try {
       sha = await getCurrentHeadSha(token, owner, repo)
     } catch { /* recorded as null; the return screen will say it can't check */ }
-    recordHandoffSent(owner, repo, updateId, tool.label, sha)
+    recordHandoffSent(owner, repo, id, tool.label, sha)
     setMarked(true)
   }
 
@@ -154,7 +181,7 @@ export default function ContinueWithAI({ auth }) {
         Copy it, paste it into your AI, then come back and save what it produced.
       </p>
 
-      {update.handoff?.sentAt && (
+      {stored?.handoff?.sentAt && (
         <div className="ai-previous">
           <div>
             <div className="ai-previous-title">
@@ -164,7 +191,7 @@ export default function ContinueWithAI({ auth }) {
               Did you make changes? Plainly can only see them once they're in your files.
             </div>
           </div>
-          <Link to={`/p/${repo}/u/${updateId}/return`} className="pl-btn">Review project changes</Link>
+          <Link to={`/p/${repo}/u/${stored.id}/return`} className="pl-btn">Review project changes</Link>
         </div>
       )}
 
@@ -182,8 +209,27 @@ export default function ContinueWithAI({ auth }) {
         ))}
       </div>
 
+      {/* Without an update, this is where the AI's instruction comes from. */}
+      {!stored && !created && (
+        <>
+          <h2 className="ai-step-title">2. What do you want the AI to do?</h2>
+          <p className="ai-step-sub">
+            One sentence in your words. Plainly keeps it as an update once you mark this as
+            sent, so it can tell you what changed when you come back.
+          </p>
+          <textarea
+            className="newupdate-input ai-goal"
+            placeholder="Add a clearer welcome message to the homepage and make the main button easier to find."
+            value={goal}
+            onChange={e => { setGoal(e.target.value); setCopied(false) }}
+          />
+        </>
+      )}
+
       {/* 2 */}
-      <h2 className="ai-step-title">2. What Plainly is packing</h2>
+      <h2 className="ai-step-title">
+        {stored || created ? '2. What Plainly is packing' : '3. What Plainly is packing'}
+      </h2>
       <p className="ai-step-sub">
         This is the context the AI gets. You don't have to remember any of it — but you can
         leave things out, and the handoff below updates as you do.
@@ -216,7 +262,9 @@ export default function ContinueWithAI({ auth }) {
       </div>
 
       {/* 3 */}
-      <h2 className="ai-step-title">3. Your handoff</h2>
+      <h2 className="ai-step-title">
+        {stored || created ? '3. Your handoff' : '4. Your handoff'}
+      </h2>
       <p className="ai-step-sub">Copy this and paste it in as your first message.</p>
       <pre className="ai-preview">{loading ? 'Reading your project from GitHub…' : handoff}</pre>
       <div className="ai-actions">
@@ -238,7 +286,9 @@ export default function ContinueWithAI({ auth }) {
       {/* 4 */}
       <div className="ai-sent">
         <div>
-          <div className="ai-sent-title">4. Tell Plainly you've sent it</div>
+          <div className="ai-sent-title">
+            {stored || created ? "4. Tell Plainly you've sent it" : "5. Tell Plainly you've sent it"}
+          </div>
           <div className="ai-sent-note">
             {marked
               ? 'Plainly is now watching this project for changes. Come back when the AI is done.'

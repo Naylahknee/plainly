@@ -88,7 +88,13 @@ export default function App() {
         <Route path="/activity"  element={<Protected auth={auth}><Activity  auth={auth} /></Protected>} />
         <Route path="/account"   element={<Protected auth={auth}><Account   auth={auth} /></Protected>} />
         <Route path="/new"       element={<Protected auth={auth}><NewProject auth={auth} /></Protected>} />
-        <Route path="/help"      element={<Protected auth={auth}><Help      auth={auth} /></Protected>} />
+        {/* Help is a section: one page, six routes, so every topic is linkable. */}
+        <Route path="/help"                 element={<Protected auth={auth}><Help auth={auth} /></Protected>} />
+        <Route path="/help/how-it-works"    element={<Protected auth={auth}><Help auth={auth} /></Protected>} />
+        <Route path="/help/tasks"           element={<Protected auth={auth}><Help auth={auth} /></Protected>} />
+        <Route path="/help/glossary"        element={<Protected auth={auth}><Help auth={auth} /></Protected>} />
+        <Route path="/help/troubleshooting" element={<Protected auth={auth}><Help auth={auth} /></Protected>} />
+        <Route path="/help/contact"         element={<Protected auth={auth}><Help auth={auth} /></Protected>} />
 
         {/* ── Project pages ───────────────────────────────────────── */}
         <Route path="/p/:repo"             element={<Protected auth={auth}><ProjectHome  auth={auth} /></Protected>} />
@@ -102,6 +108,7 @@ export default function App() {
         <Route path="/p/:repo/versions"    element={<Protected auth={auth}><Versions     auth={auth} /></Protected>} />
         <Route path="/p/:repo/share"       element={<Protected auth={auth}><Share        auth={auth} /></Protected>} />
         <Route path="/p/:repo/settings"    element={<Protected auth={auth}><Settings     auth={auth} /></Protected>} />
+        <Route path="/p/:repo/ai"          element={<Protected auth={auth}><ContinueWithAI auth={auth} /></Protected>} />
         <Route path="/p/:repo/h/*"         element={<RedirectToSavePoints />} />
 
         {/* ── Update pages ────────────────────────────────────────── */}

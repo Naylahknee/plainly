@@ -7,6 +7,7 @@
  * Sidebar sections:
  *   - Wordmark + tagline
  *   - Global nav: Home · My Projects · Recent Activity · Account · Help
+ *   - Help topics (only when inside /help): the six Help sections
  *   - Project nav (only when inside /p/:repo): Project Home · Updates ·
  *     Make an Update · Project Files · What Changed · Save Points ·
  *     Separate Versions · Who Can See It · Continue with AI · Settings
@@ -15,9 +16,10 @@
  * This is the only navigation in the app. No page renders one of its own.
  */
 
-import { NavLink, useParams, Link } from 'react-router-dom'
+import { NavLink, useParams, useLocation, Link } from 'react-router-dom'
 import { getActiveUpdate } from '../utils/updateMemory'
 import { projectName } from '../utils/projectName'
+import { SECTIONS as HELP_SECTIONS } from '../help/content'
 
 function NavItem({ to, label, end }) {
   return (
@@ -35,8 +37,11 @@ function NavItem({ to, label, end }) {
 
 export default function AppShell({ auth, children }) {
   const { repo } = useParams()
+  const { pathname } = useLocation()
   // If the :repo param is present, we're inside a project
   const inProject = Boolean(repo)
+  // Help opens its own topic list, the same way a project opens its own nav.
+  const inHelp = pathname === '/help' || pathname.startsWith('/help/')
 
   const user = auth?.user
   const avatarUrl = user?.avatar_url
@@ -63,6 +68,16 @@ export default function AppShell({ auth, children }) {
           <NavItem to="/help" label="Help" />
         </div>
 
+        {/* Help topics — only while you're in Help */}
+        {inHelp && (
+          <div className="shell-nav-group">
+            <p className="shell-nav-heading">Help topics</p>
+            {HELP_SECTIONS.map(s => (
+              <NavItem key={s.path} to={s.path} end={s.path === '/help'} label={s.label} />
+            ))}
+          </div>
+        )}
+
         {/* Project nav — only when inside /p/:repo */}
         {inProject && repo && (
           <div className="shell-nav-group">
@@ -77,10 +92,10 @@ export default function AppShell({ auth, children }) {
             <NavItem to={`/p/${repo}/points`}         label="Save Points" />
             <NavItem to={`/p/${repo}/versions`}       label="Separate Versions" />
             <NavItem to={`/p/${repo}/share`}          label="Who Can See It" />
-            {/* Continue with AI belongs to an update. Go to the one in progress,
-                or to the updates list to pick one — never to a dead route. */}
+            {/* Opens the handoff for the update in progress, or for the project
+                itself when there isn't one yet. */}
             <NavItem
-              to={activeUpdate ? `/p/${repo}/u/${activeUpdate.id}/ai` : `/p/${repo}/updates`}
+              to={activeUpdate ? `/p/${repo}/u/${activeUpdate.id}/ai` : `/p/${repo}/ai`}
               label="Continue with AI"
             />
             <NavItem to={`/p/${repo}/settings`}       label="Settings" />

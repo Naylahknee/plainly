@@ -29,7 +29,7 @@ links are purple.
 
 | Token | Value | Used for |
 |---|---|---|
-| `--purple` | `#6C5CE7` | primary actions, active nav, links |
+| `--purple` | `#6C5CE7` | the wordmark, primary actions, active nav, links |
 | `--purple-dark` | `#5849c4` | primary hover |
 | `--ink` | `#1C1B22` | headings, body |
 | `--ink-soft` | `#4A4753` | body copy inside cards |
@@ -85,6 +85,10 @@ class plus a per-screen `max-width`.
 **There is exactly one navigation in the app**, `AppShell`. No page renders its own nav.
 This is worth stating because it was broken once: two screens kept an old sidebar and the
 app showed two side by side.
+
+The sidebar has two conditional groups, both built from the same `NavItem`: the project nav
+appears inside `/p/:repo`, and **Help topics** appears inside `/help`. A group is a grey
+uppercase heading followed by indented rows — no icons anywhere in the sidebar.
 
 ## 6. Buttons
 
@@ -151,6 +155,16 @@ Signed out: **Welcome**. Signed in, global: **Home**, **My Projects**, **Recent 
 **Updates**, **Make an Update**, **Project Files**, **file editor**, **Review and save**,
 **What Changed**, **Save Points**, **Separate Versions**, **Who Can See It**, **Continue
 with AI**, and per update: **workspace**, **Return from AI**, **Review AI changes**.
+
+**Help is a section, not a page.** Six routes — `/help` (getting started), `/help/how-it-works`,
+`/help/tasks`, `/help/glossary`, `/help/troubleshooting`, `/help/contact` — so every topic can
+be linked to, and search results can land on the exact answer. The writing lives in
+`src/help/content.js`; the section pages are layout only. Anything Help describes must be
+something the app actually does — where it doesn't, Help says so (see §8).
+
+**Continue with AI works without an update.** `/p/:repo/ai` opens the handoff for the project
+itself and asks what you want the AI to do; the update record is created when you mark it as
+sent, not before. `/p/:repo/u/:id/ai` is the same screen scoped to an update in flight.
 
 Every route resolves. No dead links, no 404s. Old routes redirect to their designed
 replacement rather than disappearing.

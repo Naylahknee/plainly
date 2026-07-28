@@ -45,10 +45,10 @@ body {
 
 /* ── Wordmark ── */
 .wordmark {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  color: var(--ink);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--purple);
 }
 
 /* ── Buttons ── */
@@ -2323,24 +2323,33 @@ body {
   display: flex;
   align-items: center;
   padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 14.5px;
+  font-weight: 500;
   color: var(--ink);
   text-decoration: none;
   position: relative;
   transition: background 0.1s, color 0.1s;
-  border-left: 3px solid transparent;
+}
+.shell-nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 2px;
+  background: transparent;
 }
 .shell-nav-item:hover {
   background: #F7F6FC;
   color: var(--purple);
 }
 .shell-nav-item--active {
-  border-left-color: var(--purple);
   font-weight: 500;
   color: var(--purple);
   background: transparent;
 }
+.shell-nav-item--active::before { background: var(--purple); }
 .shell-nav-item--active:hover { background: #F7F6FC; }
 
 /* Footer */
