@@ -1,0 +1,265 @@
+# Plainly — Project Status
+
+This file is maintained by every agent working in this repository. Update it after
+every substantial task. See `AGENTS.md` for the update protocol.
+
+---
+
+## Current State
+
+**Date of last update:** 2025-07-11
+**Updated by:** Help page redesign + HANDOFF.md
+**Branch:** main
+
+Plainly is a working application. The core feature set — GitHub OAuth sign-in, project
+list, file editor, save points, history, restore, project memory, task system, AI
+handoffs, project timeline, and goal-based help — is complete and deployable.
+
+The build passes cleanly (`npm run build`, 70 modules, zero errors).
+
+---
+
+## Changes in This Pass (2025-07-11 — Safety and Setup Repair)
+
+The following changes were made. No application architecture, routes, workflows, or
+visual design was altered.
+
+| # | Change | File(s) |
+|---|---|---|
+| 1 | `.env.example` rewritten — all five env vars documented with explanations of purpose, scope, and which are safe for the browser | `.env.example` |
+| 2 | DOMPurify added (`npm install dompurify`) — Markdown preview now sanitized via `DOMPurify.sanitize(marked.parse(...))` | `src/pages/Files.jsx`, `package.json` |
+| 3 | New repositories now default to `private: true` | `src/api/github.js` |
+| 4 | `plainly-app.jsx` deleted — confirmed not imported anywhere; was a disconnected prototype with an incomplete Anthropic integration and a missing `lucide-react` dependency | `plainly-app.jsx` (removed) |
+| 5 | `docs/SECURITY.md` created — documents SEC-001 (token in localStorage), SEC-002 (Markdown XSS, now resolved), SEC-003 (OAuth scope), SEC-004 (public repo default, now resolved) | `docs/SECURITY.md` |
+
+---
+
+## Changes in This Pass (2025-07-11 — "Continue with Another AI" Implementation)
+
+| # | Change | File(s) |
+|---|---|---|
+| 1 | `src/utils/aiPrompt.js` created — pure function `buildProjectPrompt()` and `AI_TOOLS` config | `src/utils/aiPrompt.js` (new) |
+| 2 | `src/components/ProjectAIModal.jsx` created — modal with context summary, AI selector, instruction editor, live prompt preview, Copy and Open AI buttons | `src/components/ProjectAIModal.jsx` (new) |
+| 3 | "Continue with Another AI" button added to Files page topbar — always visible when inside a project; opens the modal | `src/pages/Files.jsx` |
+| 4 | `showAIModal` state added to Files page | `src/pages/Files.jsx` |
+| 5 | CSS added for `.ai-modal`, `.ai-context-summary`, `.ai-tool-strip`, `.ai-tool-btn`, `.ai-prompt-preview`, `.ai-copied-hint` and supporting classes | `src/index.css` |
+
+---
+
+## Changes in This Pass (2025-07-11 — Help Page Redesign + HANDOFF.md)
+
+| # | Change | File(s) |
+|---|---|---|
+| 1 | `src/pages/Help.jsx` rewritten — goal-based navigation (8 user goals), expandable GitHub translation table (15 terms with "Do I need this now?" guidance), walkthroughs, public/private explanation, collaborator roles, AI handoff explanation | `src/pages/Help.jsx` |
+| 2 | ~325 lines of new CSS added — all Help page classes using existing design tokens | `src/index.css` |
+| 3 | `HANDOFF.md` created — AI continuation reference with full file map, translation table, data storage, constraints, and build instructions | `HANDOFF.md` |
+
+---
+
+## Working Features
+
+All of the following are present in the codebase and verified as implemented:
+
+### Authentication
+- GitHub OAuth sign-in (Authorization Code flow)
+- Token stored in `localStorage` under `plainly_token`
+- User profile loaded on mount to validate stored token
+- Sign out clears token and user state
+- Auth error displayed on sign-in page if OAuth fails
+
+### Projects
+- List of all user-owned GitHub repositories (sorted by last updated)
+- Create a new repository with a plain-language name (spaces converted to hyphens)
+- Project card shows name, optional description, last-touched time
+- Navigate into a project to see its files
+
+### Files
+- Sidebar listing of text files (`.txt`, `.md`, `.markdown`, `.mdx`, `.text`, `.rst`)
+- Create a new file with a modal (defaults to `.txt` if no extension given)
+- Open a file into the editor
+- Rename a file (copy + delete on GitHub)
+- Delete a file with a confirmation modal
+- Download the current file
+- Download all files as a ZIP archive (JSZip, client-side)
+- Copy a public GitHub link to the current file
+
+### Writing and Editing
+- Plain textarea editor
+- Markdown preview toggle (`.md` files only)
+- Font size controls (14 / 16 / 18 / 20px, persisted to localStorage)
+- Focus mode (hides all chrome except the editor)
+- Word count and character count in editor footer
+- Word goal with progress bar (persisted to localStorage)
+- Unsaved-changes indicator
+
+### Saving
+- Manual save point with optional plain-language label
+- Random auto-phrase when no label is given
+- Auto-save every 30 seconds when file is dirty
+- Cmd/Ctrl+S keyboard shortcut opens save dialog
+- Pulse animation on Save Point button when changes are unsaved
+- 409 conflict error surfaced in plain language
+
+### History
+- Full commit history for any file, displayed as a timeline (up to 50 commits)
+- Each entry shows a plain-language label, author name, and relative time
+- "Go back to this version" restores a past commit as a new commit
+- "Compare with now" opens a line-by-line diff panel
+- Diff stats (lines added, lines removed)
+- "Restored ✓" badge after a successful restore
+
+### Project Settings
+- Edit project description
+- Toggle public/private visibility
+- Danger-zone delete with name-confirmation input
+
+### Help
+- Step-by-step "How it works" guide (4 steps)
+- Plain-English glossary (5 terms)
+- Available before and after sign-in
+
+---
+
+## Known Issues
+
+The following issues were identified during the inspection on 2025-07-11.
+No code changes have been made to address them yet.
+
+### High Priority
+
+| ID | File | Issue | Status |
+|---|---|---|---|
+| ISS-001 | `.env.example` | Missing `VITE_GITHUB_CLIENT_ID`. New contributors following only this file will get a broken OAuth redirect URL with an empty `client_id`. | **Resolved 2025-07-11** |
+| ISS-002 | `src/pages/Files.jsx:677` | `dangerouslySetInnerHTML` passes `marked.parse(content)` without sanitisation. User-controlled Markdown could produce executable HTML. | **Resolved 2025-07-11** — DOMPurify added |
+
+### Medium Priority
+
+| ID | File | Issue | Status |
+|---|---|---|---|
+| ISS-003 | `src/api/github.js:51` | New repos are created with `private: false` (hardcoded). Users may unintentionally publish their writing publicly. | **Resolved 2025-07-11** — defaults to `private: true` |
+| ISS-004 | `src/pages/History.jsx:10` | `owner` is derived from `auth.user?.login`, which may be `undefined` before the user fetch completes. The guard prevents a crash but the page shows a blank state with no feedback. | Open |
+| ISS-005 | `src/pages/Files.jsx` | After a file rename, `savedContent` is not updated to match `content`, which can leave `isDirty` incorrectly `true` immediately after renaming. | Open |
+| ISS-006 | `src/api/github.js:36` | `getRepos` fetches all owner repositories. Users who have code repositories will see them mixed into the Projects list alongside their writing projects. | Open |
+| ISS-007 | `src/hooks/useAuth.js:6` | The GitHub OAuth token (with full `repo` scope) is stored in `localStorage`, where it is accessible to any JavaScript running on the page. | Open — see `docs/SECURITY.md` SEC-001 |
+
+### Low Priority
+
+| ID | File | Issue | Status |
+|---|---|---|---|
+| ISS-008 | `src/pages/Files.jsx` | Files in subdirectories of a repository are silently excluded. No UI indication that subdirectories exist. | Open |
+| ISS-009 | `src/pages/Projects.jsx:19` | `useEffect` depends on `auth.token` via closure but has an empty dependency array. Lint will flag this; it is intentional but undocumented. | Open |
+| ISS-010 | `src/pages/Files.jsx` | Word goal is stored globally in `localStorage`, not per-file. Switching files does not reset the goal state. | Open |
+| ISS-011 | `src/App.jsx` | No error boundary. A runtime error in any page component will produce a blank screen with no recovery path. | Open |
+
+---
+
+## Orphan File
+
+`plainly-app.jsx` (project root) is a disconnected prototype — a landing page / prompt
+generator with a Stripe payment link. It imports `lucide-react` (not in `package.json`)
+and calls the Anthropic API directly from the browser without an API key. It is not
+mounted anywhere in the application and has no effect on the running product.
+It can be deleted or archived in a future cleanup task.
+
+---
+
+## Technical Risks
+
+| Risk | Severity | Notes |
+|---|---|---|
+| Raw OAuth token in localStorage | High | Full `repo`-scope token accessible to any page-level JS. Mitigated only by HTTPS and absence of known XSS vectors. |
+| Unsanitised Markdown rendering | High | `dangerouslySetInnerHTML` without DOMPurify. Risk is only from the user's own content (they are both attacker and victim), but should still be fixed. |
+| GitHub API rate limits | Medium | All API calls are client-side. A heavy session (many file opens, history views, renames) could hit GitHub's 5,000 requests/hour unauthenticated limit per token. No rate-limit handling is implemented. |
+| OAuth scope too broad | Medium | `repo` scope grants full repository access. If the token is stolen, all of the user's repositories are at risk. |
+| No error boundary | Low | Any unhandled React error produces a blank screen. |
+
+---
+
+## "Continue with Another AI" Feature
+
+**Status:** Complete — implemented and build-verified 2025-07-11
+**Defined in:** `docs/DECISIONS.md` (D-006)
+
+### What it does
+
+A "Continue with Another AI" button in the Files page topbar — always visible when
+the user is inside a project (not gated to a file being open). Clicking it opens a
+modal that assembles full project context into a structured prompt the user can copy
+and take to any AI tool to continue work immediately.
+
+The feature is scoped to the whole **project**, not a single document. This is consistent
+with Plainly's identity as a plain-language interface for GitHub.
+
+### Implemented files
+
+| File | Status |
+|---|---|
+| `src/utils/aiPrompt.js` | Created — pure `buildProjectPrompt()` function, `AI_TOOLS` config, `CONTENT_LIMIT` constant |
+| `src/components/ProjectAIModal.jsx` | Created — context summary, AI tool selector (ChatGPT / Claude / Gemini / Bob / Generic AI), instruction editor, live prompt preview, Copy and Open AI buttons |
+| `src/pages/Files.jsx` | Modified — `showAIModal` state, "Continue with Another AI" button, `<ProjectAIModal>` render |
+| `src/index.css` | Modified — ~130 lines of new CSS for AI modal classes |
+
+### Version 1 limitations
+
+- Save-point label fetch is fire-and-forget; if history is unavailable, the prompt
+  omits that section gracefully with no error shown to the user
+- File content is truncated at 12,000 characters with a plain note; large files will
+  be cut. A future version could offer per-file selection
+- The prompt includes only the currently open file's content; other files are listed
+  by name only. A future version could offer multi-file content inclusion
+- Bob AI URL points to IBM watsonx Code Assistant marketing page — update when a direct
+  conversation URL is available
+- No analytics on which AI tool is most used (by design; no tracking in Plainly)
+
+---
+
+## Changes in This Pass (2025-07-12 — Project Intelligence Layer)
+
+| # | Change | File(s) |
+|---|---|---|
+| 1 | `src/utils/projectMemory.js` created — pure localStorage helper: `getMemory`, `setMemory`, `recordFileOpen`, `recordSave`, `recordAIHandoff` | `src/utils/projectMemory.js` (new) |
+| 2 | `src/utils/taskMemory.js` created — pure localStorage task CRUD: `getTasks`, `createTask`, `updateTask`, `deleteTask`, `getActiveTask`, `generateId` | `src/utils/taskMemory.js` (new) |
+| 3 | `src/pages/Projects.jsx` updated — "Continue where you left off" card using real memory data, recommended next action, active task display; all projects list shows memory timestamps and active task badges | `src/pages/Projects.jsx` |
+| 4 | `src/pages/Files.jsx` updated — `recordFileOpen` on file open, `recordSave` on save, `onHandoff` prop wired to `ProjectAIModal`; collapsible task panel in sidebar (new task form, task list, view-all sheet); active task shown in summary bar; Timeline button in topbar | `src/pages/Files.jsx` |
+| 5 | `src/pages/ProjectTimeline.jsx` created — new page at `/p/:repo/timeline`; shows recent save points (GitHub API, deduped by SHA), "where you left off" memory card, and all tasks | `src/pages/ProjectTimeline.jsx` (new) |
+| 6 | `src/components/ProjectAIModal.jsx` updated — optional `onHandoff(toolId, instruction)` prop; called in both `handleCopy` and `handleOpenAI` before the action fires | `src/components/ProjectAIModal.jsx` |
+| 7 | `src/utils/aiPrompt.js` updated — `buildProjectPrompt` now accepts optional `activeTask` and `projectInstructions` params; both included in generated prompt when present | `src/utils/aiPrompt.js` |
+| 8 | `src/index.css` updated — new classes added (no existing classes changed): `.continue-card`, `.continue-card-meta`, `.next-action`, `.task-panel`, `.task-item`, `.task-badge` (4 color variants), `.task-form`, `.task-detail`, `.timeline-page`, `.activity-entry`, and supporting classes | `src/index.css` |
+| 9 | `src/App.jsx` updated — `/p/:repo/timeline` route added; existing routes unchanged | `src/App.jsx` |
+
+---
+
+## Working Features (added 2025-07-12)
+
+### Project Memory (localStorage, no backend)
+- Last opened time, last file, last save label, last AI tool/instruction — recorded automatically as the user works
+- Data persists across sessions in `localStorage` keys `plainly_memory_${owner}_${repo}`
+
+### "Continue where you left off" dashboard
+- Most recently opened project shown prominently on the dashboard with all available memory data
+- Recommended next action computed from real stored data (active task > last save > last file > default)
+- Project cards in the "All projects" list show memory-based last-opened time and active task badge
+
+### Task memory (localStorage, no backend)
+- Full task CRUD: create, update status, edit notes, delete
+- Statuses: open, in-progress, review, done
+- Active task shown in the Files page summary bar
+- Collapsible task panel in the file sidebar — shows up to 3 tasks, "View all" opens a detail sheet
+- Task detail sheet: status dropdown, notes textarea, delete button
+
+### Project Timeline page (`/p/:repo/timeline`)
+- Recent save points fetched from GitHub API (commits for all files, deduplicated, most recent 10)
+- "Where you left off" memory card (last opened, last file, last save, last AI handoff)
+- Full task list with status badges
+- Honest empty states throughout
+
+### AI handoff memory
+- When the user opens an AI tool or copies the prompt from the AI modal, the tool ID and instruction are recorded in project memory
+- `buildProjectPrompt` now includes active task context and project instructions in the prompt
+
+---
+
+## In Progress
+
+No tasks are currently in progress. The Project Intelligence Layer is complete.
+The build is clean: **70 modules, 0 errors, 5.41s** (`npm run build`, 2025-07-12).

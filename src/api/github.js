@@ -44,7 +44,7 @@ export async function createRepo(token, name) {
   const r = await fetch(`${API}/user/repos`, {
     method: 'POST',
     headers: { ...headers(token), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, auto_init: true, private: false })
+    body: JSON.stringify({ name, auto_init: true, private: true })
   })
   if (r.status === 422) throw new Error('A project with that name already exists. Try a different name.')
   if (!r.ok) throw new Error('Could not create the project. Try again.')

@@ -11,7 +11,10 @@ export default function SignIn() {
   }, [location.search])
 
   const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
-  const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`
+  const missingConfig = !clientId
+  const authUrl = missingConfig
+    ? null
+    : `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`
 
   return (
     <div className="signin-page">
@@ -29,9 +32,19 @@ export default function SignIn() {
         </ul>
 
         {error && <p className="error-box">{error}</p>}
-        <a href={authUrl} className="btn-primary signin-btn">
-          Get started
-        </a>
+
+        {missingConfig ? (
+          <p className="error-box">
+            Local configuration is missing. Copy <code>.env.example</code> to{' '}
+            <code>.env</code> and set <code>VITE_GITHUB_CLIENT_ID</code> to your
+            GitHub OAuth App client ID, then restart the dev server.
+          </p>
+        ) : (
+          <a href={authUrl} className="btn-primary signin-btn">
+            Get started
+          </a>
+        )}
+
         <Link to="/help" className="signin-help-link">How it works →</Link>
       </div>
     </div>

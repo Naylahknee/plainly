@@ -1,12 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import JSZip from 'jszip'
 import { timeAgo } from '../utils/time'
 import {
   getFiles, getFileContent, saveFile, createFile, getRepoInfo,
   deleteFile, createFileWithContent, updateRepoSettings, deleteRepo
 } from '../api/github'
+import ProjectAIModal from '../components/ProjectAIModal'
+import { recordFileOpen, recordSave, recordAIHandoff } from '../utils/projectMemory'
+import {
+  getTasks, createTask, updateTask, deleteTask, getActiveTask
+} from '../utils/taskMemory'
 
 marked.setOptions({ breaks: true, gfm: true })
 
@@ -18,6 +24,13 @@ const FONT_SIZES = [14, 16, 18, 20]
 
 function randomPhrase() {
   return SAVE_PHRASES[Math.floor(Math.random() * SAVE_PHRASES.length)]
+}
+
+const STATUS_LABELS = {
+  'open': 'Open',
+  'in-progress': 'In progress',
+  'review': 'Review',
+  'done': 'Done',
 }
 
 export default function Files({ auth }) {
@@ -87,15 +100,37 @@ export default function Files({ auth }) {
 
   const [downloadingAll, setDownloadingAll] = useState(false)
 
+  const [showAIModal, setShowAIModal] = useState(false)
+
+  // ── Task panel state ──
+  const [tasks, setTasks] = useState([])
+  const [taskPanelOpen, setTaskPanelOpen] = useState(false)
+  const [showNewTaskForm, setShowNewTaskForm] = useState(false)
+  const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [newTaskGoal, setNewTaskGoal] = useState('')
+  const [selectedTask, setSelectedTask] = useState(null)
+  const [showTaskSheet, setShowTaskSheet] = useState(false)
+
   const isDirty = content !== savedContent
   const isMarkdown = activeFile?.name.toLowerCase().endsWith('.md')
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
   const projectTitle = repo.replace(/-/g, ' ')
 
+  // Active task for summary bar
+  const activeTask = owner ? getActiveTask(owner, repo) : null
+
+  // Reload tasks from localStorage
+  function refreshTasks() {
+    if (owner) {
+      setTasks(getTasks(owner, repo))
+    }
+  }
+
   useEffect(() => {
     if (!owner) return
     loadFiles()
     getRepoInfo(auth.token, owner, repo).then(setRepoInfo).catch(() => {})
+    refreshTasks()
   }, [owner, repo])
 
   useEffect(() => {
@@ -110,11 +145,12 @@ export default function Files({ auth }) {
       if (e.key === 'Escape') {
         if (focusMode) setFocusMode(false)
         else if (savingMode) setSavingMode(false)
+        else if (showTaskSheet) setShowTaskSheet(false)
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isDirty, saving, savingMode, focusMode])
+  }, [isDirty, saving, savingMode, focusMode, showTaskSheet])
 
   useEffect(() => {
     if (!isDirty || !activeFile) {
@@ -158,6 +194,7 @@ export default function Files({ auth }) {
     setSavingMode(false)
     setPreview(false)
     setLastAutoSaveTime(null)
+    if (owner) recordFileOpen(owner, repo, file.name)
     try {
       const { content: text, sha } = await getFileContent(auth.token, owner, repo, file.path)
       setContent(text)
@@ -184,6 +221,7 @@ export default function Files({ auth }) {
       const result = await saveFile(auth.token, owner, repo, activeFile.path, content, fileSha, message)
       setFileSha(result.content.sha)
       setSavedContent(content)
+      if (owner) recordSave(owner, repo, message)
       if (showSuccess) {
         setLastAutoSaveTime(null)
         showToast('success', `Saved: ${message}`)
@@ -417,6 +455,49 @@ export default function Files({ auth }) {
     setGoalInput('')
   }
 
+  // ── Task handlers ──
+
+  function handleCreateTask(e) {
+    e.preventDefault()
+    const title = newTaskTitle.trim()
+    if (!title || !owner) return
+    createTask(owner, repo, title, newTaskGoal.trim() || null)
+    setNewTaskTitle('')
+    setNewTaskGoal('')
+    setShowNewTaskForm(false)
+    refreshTasks()
+  }
+
+  function handleUpdateTaskStatus(id, status) {
+    if (!owner) return
+    updateTask(owner, repo, id, { status })
+    refreshTasks()
+    if (selectedTask?.id === id) {
+      setSelectedTask(prev => ({ ...prev, status }))
+    }
+  }
+
+  function handleUpdateTaskNotes(id, notes) {
+    if (!owner) return
+    updateTask(owner, repo, id, { notes })
+    refreshTasks()
+  }
+
+  function handleDeleteTask(id) {
+    if (!owner) return
+    deleteTask(owner, repo, id)
+    refreshTasks()
+    if (selectedTask?.id === id) {
+      setSelectedTask(null)
+      setShowTaskSheet(false)
+    }
+  }
+
+  function openTaskDetail(task) {
+    setSelectedTask(task)
+    setShowTaskSheet(true)
+  }
+
   return (
     <div className={`files-page${focusMode ? ' focus-mode' : ''}`}>
       <header className="topbar">
@@ -425,6 +506,20 @@ export default function Files({ auth }) {
         </button>
         <div className="topbar-title">{projectTitle}</div>
         <div className="topbar-actions">
+          <button
+            className="btn-ghost"
+            onClick={() => navigate(`/p/${repo}/timeline`)}
+          >
+            Timeline
+          </button>
+
+          <button
+            className="btn-ghost"
+            onClick={() => setShowAIModal(true)}
+          >
+            Continue with Another AI
+          </button>
+
           <button
             className="btn-ghost topbar-icon-btn"
             onClick={openSettings}
@@ -497,6 +592,17 @@ export default function Files({ auth }) {
           {repoInfo?.description && (
             <span className="project-summary-desc">{repoInfo.description}</span>
           )}
+          {activeTask && (
+            <>
+              <span className="project-summary-dot">·</span>
+              <span className="project-summary-task">
+                <span className={`task-badge task-badge-${activeTask.status}`}>
+                  {activeTask.status}
+                </span>
+                {activeTask.title}
+              </span>
+            </>
+          )}
         </div>
         <div className="project-summary-right">
           {!filesLoading && (
@@ -533,6 +639,99 @@ export default function Files({ auth }) {
 
       <div className="files-layout">
         <aside className="file-sidebar">
+          {/* ── Task panel ── */}
+          <div className="task-panel">
+            <button
+              className="task-panel-toggle"
+              onClick={() => setTaskPanelOpen(o => !o)}
+              aria-expanded={taskPanelOpen}
+            >
+              <span>Tasks</span>
+              {activeTask && (
+                <span className={`task-badge task-badge-${activeTask.status}`}>
+                  {activeTask.status}
+                </span>
+              )}
+              <span className="task-panel-arrow" aria-hidden="true">
+                {taskPanelOpen ? '▴' : '▾'}
+              </span>
+            </button>
+
+            {taskPanelOpen && (
+              <div className="task-panel-body">
+                {tasks.length === 0 && !showNewTaskForm && (
+                  <p className="task-panel-empty">No tasks yet.</p>
+                )}
+
+                {tasks.slice(0, 3).map(task => (
+                  <div key={task.id} className="task-item">
+                    <button
+                      className="task-item-title"
+                      onClick={() => openTaskDetail(task)}
+                    >
+                      <span className={`task-badge task-badge-${task.status}`}>
+                        {task.status}
+                      </span>
+                      {task.title}
+                    </button>
+                  </div>
+                ))}
+
+                {tasks.length > 3 && (
+                  <button
+                    className="task-panel-view-all"
+                    onClick={() => setShowTaskSheet(true)}
+                  >
+                    View all {tasks.length} tasks →
+                  </button>
+                )}
+
+                {showNewTaskForm ? (
+                  <form className="task-form" onSubmit={handleCreateTask}>
+                    <input
+                      autoFocus
+                      className="task-form-input"
+                      placeholder="Task title"
+                      value={newTaskTitle}
+                      onChange={e => setNewTaskTitle(e.target.value)}
+                    />
+                    <textarea
+                      className="task-form-input task-form-goal"
+                      placeholder="Goal (optional)"
+                      value={newTaskGoal}
+                      onChange={e => setNewTaskGoal(e.target.value)}
+                      rows={2}
+                    />
+                    <div className="task-form-actions">
+                      <button
+                        type="button"
+                        className="task-form-cancel"
+                        onClick={() => { setShowNewTaskForm(false); setNewTaskTitle(''); setNewTaskGoal('') }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="task-form-save"
+                        disabled={!newTaskTitle.trim()}
+                      >
+                        Add task
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    className="task-panel-new-btn"
+                    onClick={() => setShowNewTaskForm(true)}
+                  >
+                    + New task
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── File list ── */}
           <div className="sidebar-head">
             <span className="sidebar-label">Files</span>
             <button className="sidebar-new-btn" onClick={openNewFile}>+ New file</button>
@@ -673,7 +872,7 @@ export default function Files({ auth }) {
                 <div
                   className="markdown-preview"
                   style={{ fontSize: `${fontSize}px` }}
-                  dangerouslySetInnerHTML={{ __html: marked.parse(content || '') }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(content || '')) }}
                 />
               ) : (
                 <textarea
@@ -725,6 +924,89 @@ export default function Files({ auth }) {
           )}
         </main>
       </div>
+
+      {/* ── Task detail sheet ── */}
+      {showTaskSheet && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowTaskSheet(false)}
+        >
+          <div
+            className="modal task-detail"
+            role="dialog"
+            aria-modal="true"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2>Tasks</h2>
+            {tasks.length === 0 ? (
+              <p className="task-detail-empty">No tasks yet. Use the sidebar to add one.</p>
+            ) : (
+              <div className="task-detail-list">
+                {tasks.map(task => {
+                  const isSelected = selectedTask?.id === task.id
+                  return (
+                    <div
+                      key={task.id}
+                      className={`task-detail-item${isSelected ? ' selected' : ''}`}
+                    >
+                      <div
+                        className="task-detail-header"
+                        onClick={() => setSelectedTask(isSelected ? null : task)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <span className={`task-badge task-badge-${task.status}`}>
+                          {task.status}
+                        </span>
+                        <span className="task-detail-title">{task.title}</span>
+                      </div>
+                      {isSelected && (
+                        <div className="task-detail-body">
+                          {task.goal && (
+                            <p className="task-detail-goal">{task.goal}</p>
+                          )}
+                          <label className="task-detail-label">Status</label>
+                          <select
+                            className="task-detail-select"
+                            value={task.status}
+                            onChange={e => handleUpdateTaskStatus(task.id, e.target.value)}
+                          >
+                            {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                              <option key={val} value={val}>{label}</option>
+                            ))}
+                          </select>
+                          <label className="task-detail-label">Notes</label>
+                          <textarea
+                            className="task-detail-notes"
+                            rows={3}
+                            defaultValue={task.notes || ''}
+                            placeholder="Add notes about this task…"
+                            onBlur={e => handleUpdateTaskNotes(task.id, e.target.value)}
+                          />
+                          {task.lastAITool && (
+                            <p className="task-detail-ai">
+                              Last AI: {task.lastAITool}
+                              {task.lastAIAt ? ` · ${timeAgo(task.lastAIAt)}` : ''}
+                            </p>
+                          )}
+                          <button
+                            className="btn-danger task-detail-delete"
+                            onClick={() => handleDeleteTask(task.id)}
+                          >
+                            Delete task
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            <div className="modal-actions">
+              <button className="btn-ghost" onClick={() => setShowTaskSheet(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showNewFile && (
         <div className="modal-overlay" onClick={() => !newFileSaving && setShowNewFile(false)}>
@@ -855,6 +1137,21 @@ export default function Files({ auth }) {
             </div>
           </div>
         </div>
+      )}
+
+      {showAIModal && (
+        <ProjectAIModal
+          auth={auth}
+          repo={repo}
+          repoInfo={repoInfo}
+          files={files}
+          activeFile={activeFile}
+          content={content}
+          onClose={() => setShowAIModal(false)}
+          onHandoff={(toolId, instruction) => {
+            if (owner) recordAIHandoff(owner, repo, toolId, instruction)
+          }}
+        />
       )}
     </div>
   )
