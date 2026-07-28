@@ -15,8 +15,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getUpdates, getActiveUpdate, STATUS_LABEL } from '../utils/updateMemory'
 import { heroFor } from '../utils/heroFor'
 import { greeting, timeAgo } from '../utils/time'
-import { getRepos } from '../api/github'
+import { getRepos, getCommits } from '../api/github'
 import { getMemory } from '../utils/projectMemory'
+import { getDrafts } from '../utils/drafts'
+import { activityEvents } from '../utils/activity'
 import { projectName } from '../utils/projectName'
 import { projectStatus } from '../utils/projectStatus'
 
@@ -35,6 +37,8 @@ export default function Home({ auth }) {
     }
   })
 
+  const [commitsByRepo, setCommitsByRepo] = useState({})
+
   useEffect(() => {
     if (!token) return
     getRepos(token)
@@ -43,7 +47,24 @@ export default function Home({ auth }) {
       .finally(() => setLoading(false))
   }, [token])
 
+
   const owner = user?.login
+  const firstName = user?.name?.split(' ')[0] || user?.login || ''
+
+  // Recent Save Points for the projects on screen — this is what fills
+  // "what you and your AI tools have done" before any update exists.
+  useEffect(() => {
+    if (!token || !owner || repos.length === 0) return
+    let cancelled = false
+    Promise.all(repos.slice(0, 4).map(r =>
+      getCommits(token, owner, r.name, 5)
+        .then(c => [r.name, c])
+        .catch(() => [r.name, []])
+    )).then(pairs => {
+      if (!cancelled) setCommitsByRepo(Object.fromEntries(pairs))
+    })
+    return () => { cancelled = true }
+  }, [token, owner, repos])
 
   // Every update across every project, newest activity first.
   const allUpdates = []
@@ -73,11 +94,21 @@ export default function Home({ auth }) {
     ? heroFor(heroUpdate, { filesCount: (heroUpdate.files || []).length })
     : null
 
+  const mostRecent = owner
+    ? [...repos].sort((a, b) => {
+        const at = getMemory(owner, a.name).lastOpenedAt || a.updated_at || 0
+        const bt = getMemory(owner, b.name).lastOpenedAt || b.updated_at || 0
+        return new Date(bt) - new Date(at)
+      })[0]
+    : repos[0]
+
   const updateCount = allUpdates.filter(u => u.status !== 'saved' && u.status !== 'paused').length
 
   // What needs your attention: only real items. An update that has been
   // reviewed but not saved is the one thing Plainly can say for certain.
   const unsavedUpdate = allUpdates.find(u => u.status === 'ready_to_save')
+
+  const events = activityEvents({ owner, repos, commitsByRepo })
 
   const dismissExplainer = () => {
     try {
@@ -92,7 +123,7 @@ export default function Home({ auth }) {
       <div className="home-header">
         <div>
           <h1 className="home-greeting">
-            {greeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}.
+            {greeting()}{firstName ? `, ${firstName}` : ''}.
           </h1>
           <p className="home-subtitle">
             Here's where you left off, what changed, and what to do next.
@@ -159,14 +190,28 @@ export default function Home({ auth }) {
         </section>
       ) : (
         <section className="home-hero-card home-hero-empty">
+          {mostRecent && (
+            <div className="home-hero-context">
+              <span className="home-hero-project">{projectName(mostRecent.name)}</span>
+              <span className="home-hero-separator">·</span>
+              <span className="home-hero-label">Most recent project</span>
+            </div>
+          )}
           <p className="home-hero-empty-title">You haven't started an update yet.</p>
           <p className="home-hero-empty-next">Describe what you want to change.</p>
-          <Link
-            to={repos.length ? `/p/${repos[0].name}/new-update` : '/projects'}
-            className="pl-btn-primary"
-          >
-            Make an update
-          </Link>
+          <div className="home-hero-actions">
+            <Link
+              to={mostRecent ? `/p/${mostRecent.name}/new-update` : '/projects'}
+              className="pl-btn-primary home-hero-cta"
+            >
+              Make an update
+            </Link>
+            {mostRecent && (
+              <Link to={`/p/${mostRecent.name}`} className="pl-btn">
+                Open {projectName(mostRecent.name)}
+              </Link>
+            )}
+          </div>
         </section>
       )}
 
@@ -214,7 +259,10 @@ export default function Home({ auth }) {
           <div className="home-project-list">
             {repos.slice(0, 4).map(repo => {
               const mem = owner ? getMemory(owner, repo.name) : {}
-              const status = projectStatus(owner ? getUpdates(owner, repo.name) : [])
+              const status = projectStatus(
+                owner ? getUpdates(owner, repo.name) : [],
+                owner ? getDrafts(owner, repo.name) : {}
+              )
               const lastAction = mem.lastSaveLabel
                 ? `Last Save Point: ${mem.lastSaveLabel}`
                 : mem.lastOpenedAt
@@ -229,9 +277,9 @@ export default function Home({ auth }) {
                         <span className={`pl-pill pl-pill--${status.tone}`}>{status.label}</span>
                       )}
                     </span>
-                    {repo.description && (
-                      <span className="home-project-desc">{repo.description}</span>
-                    )}
+                    <span className="home-project-desc">
+                      {repo.description || 'No description yet — you can add one in project settings.'}
+                    </span>
                     <span className="home-project-action">{lastAction}</span>
                     <span className="home-project-url">github.com/{owner}/{repo.name}</span>
                   </span>
@@ -245,19 +293,18 @@ export default function Home({ auth }) {
         <div>
           <div className="section-label section-label--tight">Recent activity</div>
           <div className="home-activity">
-            {allUpdates.length === 0 && (
+            {events.length === 0 && (
               <p className="home-empty-note">
-                Nothing yet. Activity shows up here once you start an update.
+                Nothing yet. Anything you or an AI does shows up here.
               </p>
             )}
-            {allUpdates.slice(0, 5).map(u => (
-              <div key={`${u.repoName}-${u.id}`} className="home-activity-row">
+            {events.slice(0, 5).map((e, i) => (
+              <div key={`${e.repo}-${e.at}-${i}`} className="home-activity-row">
                 <span className="home-activity-dot" aria-hidden="true" />
                 <span>
-                  <span className="home-activity-what">{u.title}</span>
+                  <span className="home-activity-what">{e.what}</span>
                   <span className="home-activity-meta">
-                    {projectName(u.repoName)} · {STATUS_LABEL[u.status]}
-                    {u.lastActivityAt ? ` · ${timeAgo(u.lastActivityAt)}` : ''}
+                    {projectName(e.repo)} · {timeAgo(e.at)}
                   </span>
                 </span>
               </div>

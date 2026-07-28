@@ -3104,3 +3104,54 @@
 .updates-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 8px; }
 .updates-header h1 { font: 700 30px/1.2 var(--font); letter-spacing: -.03em; color: var(--ink); margin: 0; }
 .updates-intro-text { font: 400 15.5px/1.6 var(--font); color: var(--ink-soft); margin: 0 0 24px; max-width: 48em; }
+
+.editor-action { flex: none; padding: 9px 14px; font-size: 13.5px; border-radius: 9px; }
+
+.editor-area--preview {
+  overflow: auto;
+  font: 400 16px/1.7 var(--font);
+}
+.editor-area--preview h1,
+.editor-area--preview h2,
+.editor-area--preview h3 { letter-spacing: -.02em; margin: 1.2em 0 .4em; }
+.editor-area--preview h1 { font-size: 28px; }
+.editor-area--preview h2 { font-size: 22px; }
+.editor-area--preview h3 { font-size: 18px; }
+.editor-area--preview p,
+.editor-area--preview ul,
+.editor-area--preview ol { margin: 0 0 1em; color: var(--ink-soft); }
+.editor-area--preview code {
+  font: 400 13.5px/1.5 var(--font-mono);
+  background: var(--lilac-bg);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.editor-area--preview pre {
+  background: var(--lilac-bg);
+  border-radius: 10px;
+  padding: 14px 16px;
+  overflow-x: auto;
+}
+.editor-area--preview a { color: var(--purple); }
+
+.files-action--danger { color: var(--red); border-color: #E2B4AF; }
+.files-action--danger:hover:not(:disabled) { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+
+.files-inline {
+  padding: 14px 18px 16px 52px;
+  background: #FBFAFD;
+  border-top: 1px solid var(--lilac-bg);
+}
+.files-inline--danger { background: var(--red-bg); }
+.files-inline-label { font: 600 14.5px/1.4 var(--font); color: var(--ink); margin-bottom: 6px; }
+.files-inline-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.files-inline-note { font: 400 13px/1.5 var(--font); color: var(--grey); margin-top: 8px; max-width: 52em; }
+
+/* Links inherit the browser's blue unless told otherwise. The design has no
+   blue in it — purple is the link colour, and card-shaped links carry their
+   own colours on their children. */
+a { color: var(--purple); }
+a:hover { color: var(--purple-dark); }
+
+.activity-link { text-decoration: none; color: var(--ink); }
+.activity-link:hover { color: var(--purple); text-decoration: none; }

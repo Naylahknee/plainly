@@ -9,8 +9,10 @@
  * doesn't lose them and "Changes not saved yet" is true everywhere else.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { getFileContent } from '../api/github'
 import { getDraft, setDraft } from '../utils/drafts'
 import { recordFileOpen } from '../utils/projectMemory'
@@ -37,6 +39,7 @@ export default function FileEditor({ auth }) {
   const [sha, setSha]           = useState(null)
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
+  const [preview, setPreview]   = useState(false)
   const area = useRef(null)
 
   useEffect(() => {
@@ -70,6 +73,22 @@ export default function FileEditor({ auth }) {
   const name = path.split('/').pop()
   const note = NOTES[(name || '').toLowerCase()]
   const unsaved = content !== saved
+  const isMarkdown = /\.mdx?$/i.test(name || '')
+
+  // Rendered markdown is sanitised before it ever reaches the page.
+  const rendered = useMemo(
+    () => (preview && isMarkdown ? DOMPurify.sanitize(marked.parse(content)) : ''),
+    [preview, isMarkdown, content]
+  )
+
+  function download() {
+    const url = URL.createObjectURL(new Blob([content], { type: 'text/plain' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = name || 'file.txt'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="editor-screen">
@@ -86,13 +105,27 @@ export default function FileEditor({ auth }) {
             ? <span className="editor-pill editor-pill--unsaved">Changes not saved yet</span>
             : <span className="editor-pill editor-pill--saved">Saved in GitHub</span>
         )}
+        {isMarkdown && !loading && (
+          <button className="pl-btn editor-action" onClick={() => setPreview(!preview)}>
+            {preview ? 'Back to editing' : 'See it formatted'}
+          </button>
+        )}
+        {!loading && (
+          <button className="pl-btn editor-action" onClick={download}>Download</button>
+        )}
         <Link to={`/p/${repo}/save`} className="pl-btn-primary editor-save">Review and save</Link>
       </div>
 
       <div className="editor-body">
         {loading && <p className="state-loading">Opening {name}…</p>}
         {error && <p className="error-box">{error}</p>}
-        {!loading && !error && (
+        {!loading && !error && preview && isMarkdown && (
+          <div
+            className="editor-area editor-area--preview"
+            dangerouslySetInnerHTML={{ __html: rendered }}
+          />
+        )}
+        {!loading && !error && !(preview && isMarkdown) && (
           <textarea
             ref={area}
             className="editor-area"

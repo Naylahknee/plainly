@@ -11,8 +11,8 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getContents, createFile } from '../api/github'
-import { getDrafts } from '../utils/drafts'
+import { getContents, createFile, deleteFile, getFileContent, createFileWithContent } from '../api/github'
+import { getDrafts, clearDraft } from '../utils/drafts'
 import { projectName } from '../utils/projectName'
 import { timeAgo } from '../utils/time'
 
@@ -48,6 +48,10 @@ export default function ProjectFiles({ auth }) {
   const [error, setError]     = useState(null)
   const [adding, setAdding]   = useState(false)
   const [newName, setNewName] = useState('')
+  const [renaming, setRenaming] = useState(null)   // path being renamed
+  const [renameTo, setRenameTo] = useState('')
+  const [deleting, setDeleting] = useState(null)   // path awaiting confirmation
+  const [busy, setBusy]         = useState(false)
 
   useEffect(() => {
     if (!token || !owner) return
@@ -72,6 +76,59 @@ export default function ProjectFiles({ auth }) {
       setError(err.message)
     } finally {
       setAdding(false)
+    }
+  }
+
+  /* Rename is a copy under the new name and a delete of the old one — GitHub
+     has no rename. Both carry a message saying what happened. */
+  async function rename(e, entry) {
+    e.preventDefault()
+    const name = renameTo.trim()
+    if (!name || name === entry.name) { setRenaming(null); return }
+    const target = entry.path.includes('/')
+      ? `${entry.path.slice(0, entry.path.lastIndexOf('/'))}/${name}`
+      : name
+    setBusy(true)
+    try {
+      const file = await getFileContent(token, owner, repo, entry.path)
+      await createFileWithContent(token, owner, repo, target, file.content, `Renamed ${entry.name} to ${name}`)
+      await deleteFile(token, owner, repo, entry.path, file.sha, `Renamed ${entry.name} to ${name}`)
+      clearDraft(owner, repo, entry.path)
+      setEntries(await getContents(token, owner, repo))
+      setRenaming(null)
+    } catch (err) {
+      setError(err.message || 'Could not rename that file.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function remove(entry) {
+    setBusy(true)
+    try {
+      const file = await getFileContent(token, owner, repo, entry.path)
+      await deleteFile(token, owner, repo, entry.path, file.sha, `Deleted ${entry.name}`)
+      clearDraft(owner, repo, entry.path)
+      setEntries(await getContents(token, owner, repo))
+      setDeleting(null)
+    } catch (err) {
+      setError(err.message || 'Could not delete that file.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function download(entry) {
+    try {
+      const file = await getFileContent(token, owner, repo, entry.path)
+      const url = URL.createObjectURL(new Blob([file.content], { type: 'text/plain' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = entry.name
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err.message || 'Could not download that file.')
     }
   }
 
@@ -176,9 +233,67 @@ export default function ProjectFiles({ auth }) {
                   <>
                     <Link to={`/p/${repo}/f/${entry.path}`} className="pl-btn files-action">Open</Link>
                     <Link to={`/p/${repo}/changed`} className="pl-btn files-action">History</Link>
+                    <button
+                      className="pl-btn files-action"
+                      onClick={() => { setRenaming(entry.path); setRenameTo(entry.name); setDeleting(null) }}
+                    >
+                      Rename
+                    </button>
+                    <button className="pl-btn files-action" onClick={() => download(entry)}>
+                      Download
+                    </button>
+                    <button
+                      className="pl-btn files-action files-action--danger"
+                      onClick={() => { setDeleting(entry.path); setRenaming(null) }}
+                    >
+                      Delete
+                    </button>
                   </>
                 )}
               </div>
+
+              {renaming === entry.path && (
+                <form className="files-inline" onSubmit={e => rename(e, entry)}>
+                  <label className="files-inline-label" htmlFor={`rename-${entry.path}`}>
+                    What should this file be called?
+                  </label>
+                  <div className="files-inline-row">
+                    <input
+                      id={`rename-${entry.path}`}
+                      className="files-add-input"
+                      value={renameTo}
+                      onChange={e => setRenameTo(e.target.value)}
+                      disabled={busy}
+                      autoFocus
+                    />
+                    <button type="submit" className="pl-btn-primary files-action" disabled={busy}>
+                      {busy ? 'Renaming…' : 'Rename it'}
+                    </button>
+                    <button type="button" className="pl-btn files-action" onClick={() => setRenaming(null)}>
+                      Cancel
+                    </button>
+                  </div>
+                  <div className="files-inline-note">
+                    The old name stops working. Every Save Point that used it stays in your history.
+                  </div>
+                </form>
+              )}
+
+              {deleting === entry.path && (
+                <div className="files-inline files-inline--danger">
+                  <div className="files-inline-label">Delete {entry.name}?</div>
+                  <div className="files-inline-note">
+                    It goes from your project, but every Save Point that included it stays in your
+                    history — so you can put it back from Save Points.
+                  </div>
+                  <div className="files-inline-row">
+                    <button className="pl-btn files-action files-action--danger" disabled={busy} onClick={() => remove(entry)}>
+                      {busy ? 'Deleting…' : 'Yes, delete it'}
+                    </button>
+                    <button className="pl-btn files-action" onClick={() => setDeleting(null)}>Keep it</button>
+                  </div>
+                </div>
+              )}
 
               {isOpen && (
                 <div className="files-children">
