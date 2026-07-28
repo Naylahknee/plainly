@@ -1,12 +1,12 @@
 /**
- * ContinueWithAI.jsx — /p/:repo/u/:updateId/ai
+ * ContinueWithAI.jsx — /p/:repo/u/:updateId/ai (max-width 860px)
  *
- * Full-page "Continue with AI" screen (replaces the ProjectAIModal).
+ * Full-page handoff process for sending work to an AI.
  * Four numbered steps:
- *   1. Choose an AI tool
- *   2. Select context to include
- *   3. Review and copy the prompt
- *   4. Mark as sent and open the AI
+ *   1. Which AI are you using? (chips)
+ *   2. What Plainly is packing (checklist, first 3 always-on)
+ *   3. Your handoff (monospace preview, scrollable)
+ *   4. Tell Plainly you've sent it
  *
  * Re-uses aiPrompt.js for prompt building.
  * Re-uses updateMemory.js recordHandoffSent for state transition.
@@ -14,17 +14,20 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getUpdateById, updateUpdate, recordHandoffSent } from '../utils/updateMemory'
+import { getUpdateById, recordHandoffSent } from '../utils/updateMemory'
 import { buildProjectPrompt, AI_TOOLS } from '../utils/aiPrompt'
 import { getRepoInfo, getFiles, getFileContent } from '../api/github'
 import { timeAgo } from '../utils/time'
 
 const CONTEXT_OPTIONS = [
-  { id: 'project_name',   label: 'Project name and description' },
-  { id: 'file_list',      label: 'List of all files' },
-  { id: 'update_title',   label: 'Update title and goal' },
-  { id: 'open_file',      label: 'Contents of the currently open file' },
-  { id: 'save_history',   label: 'Latest save point label' },
+  { id: 'project_desc',     label: 'What this project is',          detail: 'Your project description and README', alwaysOn: true },
+  { id: 'update_goal',      label: 'What you asked for',            detail: 'The goal of this update, in your words', alwaysOn: true },
+  { id: 'left_off',         label: 'Where you left off',            detail: 'Last file, last Save Point, last AI', alwaysOn: true },
+  { id: 'project_design',   label: 'Your project instructions',     detail: 'DESIGN.md and AGENTS.md', alwaysOn: false },
+  { id: 'update_files',     label: '{n} files you picked',          detail: 'the update\'s file list', alwaysOn: false },
+  { id: 'recent_changes',   label: 'Recent changes',                detail: 'Your last 3 Save Points and what they changed', alwaysOn: false },
+  { id: 'scope_limits',     label: 'What not to touch',             detail: 'Do not change anything outside this update', alwaysOn: false },
+  { id: 'report_format',    label: 'How to report back',            detail: 'List the files changed, in plain English', alwaysOn: false },
 ]
 
 export default function ContinueWithAI({ auth }) {
@@ -143,117 +146,154 @@ export default function ContinueWithAI({ auth }) {
     navigate(`/p/${repo}/u/${updateId}/return`)
   }
 
-  return (
-    <div className="screen-padded screen-narrow">
-      <div className="screen-header">
-        <h1>Continue with AI</h1>
-        <p className="screen-subtitle">
-          Build a context prompt for an AI tool, then mark it as sent so Plainly can detect what changed when you return.
-        </p>
+  if (!update) {
+    return (
+      <div className="page">
+        <main className="page-main" style={{ maxWidth: '860px' }}>
+          <p className="error-box">Update not found.</p>
+          <Link to={`/p/${repo}/updates`} className="pl-btn">
+            Back to updates
+          </Link>
+        </main>
       </div>
+    )
+  }
 
-      {/* Step 1: Choose AI tool */}
-      <section className={`ai-step ${step >= 1 ? 'ai-step--active' : ''}`}>
-        <h2 className="ai-step-heading"><span className="ai-step-num">1</span> Choose an AI</h2>
-        <div className="ai-tool-grid">
-          {AI_TOOLS.filter(t => t.id !== 'generic').map(t => (
-            <button
-              key={t.id}
-              className={`ai-tool-btn ${selectedTool?.id === t.id ? 'ai-tool-btn--selected' : ''}`}
-              onClick={() => { setSelectedTool(t); if (step === 1) setStep(2) }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        {!selectedTool && (
-          <p className="ai-step-hint">Select the AI you'll paste this into.</p>
+  return (
+    <div className="page">
+      <main className="page-main" style={{ maxWidth: '860px' }}>
+        {/* Intro */}
+        <p className="ai-intro">
+          Plainly writes a handoff with everything the AI needs to pick up where you left off.
+          Copy it, paste it into your AI, then come back and save what it produced.
+        </p>
+
+        {/* Previous handoff reminder */}
+        {update.handoff?.sentAt && (
+          <div className="ai-previous-handoff">
+            <p className="ai-previous-text">
+              <strong>You continued this project with {update.ai} {timeAgo(update.handoff.sentAt)}.</strong>
+            </p>
+            <p className="ai-previous-hint">
+              Did you make changes? Plainly can only see them once they're in your files.
+            </p>
+            <Link to={`/p/${repo}/u/${updateId}/return`} className="pl-btn">
+              Review project changes
+            </Link>
+          </div>
         )}
-      </section>
 
-      {/* Step 2: Choose context */}
-      {step >= 2 && (
-        <section className="ai-step ai-step--active">
-          <h2 className="ai-step-heading"><span className="ai-step-num">2</span> Choose what to include</h2>
-          <ul className="ctx-checklist">
-            {CONTEXT_OPTIONS.map(opt => (
-              <li key={opt.id} className="ctx-item">
-                <label className="ctx-label">
-                  <input
-                    type="checkbox"
-                    checked={checkedCtx.has(opt.id)}
-                    onChange={() => toggleCtx(opt.id)}
-                    className="ctx-checkbox"
-                  />
-                  {opt.label}
-                </label>
-              </li>
-            ))}
-          </ul>
-          <div className="ai-step-actions">
-            <button
-              className="btn-primary"
-              onClick={buildPrompt}
-              disabled={building || !ctxLoaded}
-            >
-              {building ? 'Building…' : 'Build the prompt'}
-            </button>
-          </div>
-          {buildError && <p className="error-box" style={{ marginTop: 12 }}>{buildError}</p>}
-        </section>
-      )}
-
-      {/* Step 3: Review and copy */}
-      {step >= 3 && (
-        <section className="ai-step ai-step--active">
-          <h2 className="ai-step-heading"><span className="ai-step-num">3</span> Copy the prompt</h2>
-          <p className="ai-step-hint">
-            Copy this and paste it into {selectedTool?.label || 'the AI tool'}.
-          </p>
-          <pre className="prompt-preview">{prompt}</pre>
-          <div className="ai-step-actions">
-            <button className="btn-primary" onClick={handleCopy}>
-              {copied ? 'Copied!' : 'Copy to clipboard'}
-            </button>
-            <button className="btn-ghost" onClick={() => setStep(2)}>
-              Change context
-            </button>
-          </div>
-        </section>
-      )}
-
-      {/* Step 4: Mark as sent */}
-      {step >= 3 && (
-        <section className={`ai-step ${step >= 4 ? 'ai-step--done' : 'ai-step--active'}`}>
-          <h2 className="ai-step-heading"><span className="ai-step-num">4</span> Mark as sent</h2>
-          <p className="ai-step-hint">
-            Once you've pasted it in, mark this update as sent. Plainly will watch for
-            changes in GitHub and alert you when {selectedTool?.label || 'the AI'} has saved work.
-          </p>
-          {!marked ? (
-            <div className="ai-step-actions">
+        {/* Step 1: Choose AI tool */}
+        <section className="ai-step">
+          <h2 className="ai-step-heading">
+            <span className="ai-step-num">1</span> Which AI are you using?
+          </h2>
+          <div className="ai-tool-chips">
+            {AI_TOOLS.filter(t => t.id !== 'generic').map(t => (
               <button
-                className="btn-primary"
-                onClick={handleMarkSent}
-                disabled={!selectedTool}
+                key={t.id}
+                className={`ai-tool-chip ${selectedTool?.id === t.id ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedTool(t)
+                  if (step === 1) setStep(2)
+                }}
               >
-                Mark as sent to {selectedTool?.label || 'AI'}
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Step 2: Context checklist */}
+        {step >= 2 && (
+          <section className="ai-step">
+            <h2 className="ai-step-heading">
+              <span className="ai-step-num">2</span> What Plainly is packing
+            </h2>
+            <ul className="ai-context-list">
+              {CONTEXT_OPTIONS.map(opt => (
+                <li key={opt.id} className="ai-context-item">
+                  <label className="ai-context-label">
+                    <input
+                      type="checkbox"
+                      checked={checkedCtx.has(opt.id)}
+                      onChange={() => {
+                        if (opt.alwaysOn) return
+                        toggleCtx(opt.id)
+                      }}
+                      disabled={opt.alwaysOn}
+                      className="ai-context-checkbox"
+                    />
+                    <div className="ai-context-text">
+                      <span className="ai-context-name">{opt.label}</span>
+                      <span className="ai-context-detail">{opt.detail}</span>
+                    </div>
+                    {opt.alwaysOn && (
+                      <span className="ai-context-always">Always included</span>
+                    )}
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <div className="ai-step-action">
+              <button
+                className="pl-btn-primary"
+                onClick={buildPrompt}
+                disabled={building || !ctxLoaded}
+              >
+                {building ? 'Building…' : 'Build handoff'}
               </button>
             </div>
-          ) : (
-            <div className="ai-sent-confirmation">
-              <p className="ai-sent-text">
-                ✓ Marked as sent to {selectedTool?.label}. Now open the AI and paste the prompt.
-              </p>
-              <div className="ai-step-actions">
-                <button className="btn-primary" onClick={handleOpenAI}>
-                  Open {selectedTool?.label} and go to return screen
-                </button>
-              </div>
+            {buildError && (
+              <p className="error-box" style={{ marginTop: 12 }}>{buildError}</p>
+            )}
+          </section>
+        )}
+
+        {/* Step 3: Handoff preview */}
+        {step >= 3 && (
+          <section className="ai-step">
+            <h2 className="ai-step-heading">
+              <span className="ai-step-num">3</span> Your handoff
+            </h2>
+            <div className="ai-handoff-preview">
+              <pre>{prompt}</pre>
             </div>
-          )}
-        </section>
-      )}
+            <div className="ai-step-actions">
+              <button className="pl-btn-primary" onClick={handleCopy}>
+                {copied ? 'Copied ✓' : 'Copy handoff'}
+              </button>
+              <Link to={selectedTool?.url || '#'} target="_blank" rel="noopener,noreferrer" className="pl-btn">
+                Open {selectedTool?.label || 'AI'}
+              </Link>
+              <p className="ai-copy-hint">
+                {copied ? 'Copied to your clipboard.' : 'Copy the handoff above and paste it into your AI.'}
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* Step 4: Mark as sent */}
+        {step >= 3 && (
+          <section className="ai-step">
+            <div className="ai-mark-sent-strip">
+              <p>
+                <strong>Tell Plainly you've sent it</strong>
+              </p>
+              <button
+                className="pl-btn-primary"
+                onClick={handleMarkSent}
+                disabled={marked || !selectedTool}
+              >
+                {marked ? '✓ Marked as sent' : `Mark as sent to ${selectedTool?.label || 'AI'}`}
+              </button>
+            </div>
+            <p className="ai-mark-sent-note">
+              Do this so Plainly knows to watch for changes when you come back.
+            </p>
+          </section>
+        )}
+      </main>
     </div>
   )
 }

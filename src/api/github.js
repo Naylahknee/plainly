@@ -152,3 +152,58 @@ export async function deleteRepo(token, owner, repo) {
   })
   if (!r.ok) throw new Error('Could not delete the project. Try again.')
 }
+
+/**
+ * Get the current HEAD SHA for the repo's default branch
+ */
+export async function getCurrentHeadSha(token, owner, repo) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}`, { headers: headers(token) })
+  if (!r.ok) throw new Error('Could not get repo info.')
+  const data = await r.json()
+  const branch = data.default_branch || 'main'
+
+  const br = await fetch(`${API}/repos/${owner}/${repo}/branches/${branch}`, { headers: headers(token) })
+  if (!br.ok) throw new Error('Could not get branch info.')
+  const branchData = await br.json()
+  return branchData.commit.sha
+}
+
+/**
+ * Compare two commits and return files that changed between them
+ * Returns: { filesChanged: number, commitCount: number, commits: [] }
+ */
+export async function compareCommits(token, owner, repo, baseSha, headSha) {
+  if (!baseSha || !headSha) return { filesChanged: 0, commitCount: 0, commits: [] }
+  if (baseSha === headSha) return { filesChanged: 0, commitCount: 0, commits: [] }
+
+  try {
+    const r = await fetch(
+      `${API}/repos/${owner}/${repo}/compare/${baseSha}...${headSha}`,
+      { headers: headers(token) }
+    )
+    if (!r.ok) return { filesChanged: 0, commitCount: 0, commits: [] }
+
+    const data = await r.json()
+    return {
+      filesChanged: data.files?.length || 0,
+      commitCount: data.commits?.length || 0,
+      commits: data.commits || [],
+      files: data.files || []
+    }
+  } catch {
+    throw new Error('Could not compare commits.')
+  }
+}
+
+/**
+ * Get commit details including author
+ */
+export async function getCommitDetails(token, owner, repo, sha) {
+  try {
+    const r = await fetch(`${API}/repos/${owner}/${repo}/commits/${sha}`, { headers: headers(token) })
+    if (!r.ok) throw new Error('Could not get commit details.')
+    return r.json()
+  } catch {
+    return null
+  }
+}

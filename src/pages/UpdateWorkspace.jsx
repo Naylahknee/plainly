@@ -1,16 +1,18 @@
 /**
- * UpdateWorkspace.jsx — /p/:repo/u/:updateId
+ * UpdateWorkspace.jsx — /p/:repo/u/:updateId (max-width 880px)
  *
  * Main workspace for a single update.
- * Shows the four hero fields, lifecycle indicator, and action buttons
- * for the next step in the update's lifecycle.
+ * Shows: back link, context, title/goal, lifecycle indicator, hero fields,
+ * details cards, story, and footer actions.
  */
 
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getUpdateById, updateUpdate, deleteUpdate, STATUS_LABEL } from '../utils/updateMemory'
+import { getUpdateById, updateUpdate, deleteUpdate, STATUS_LABEL, STATUSES } from '../utils/updateMemory'
 import { heroFor } from '../utils/heroFor'
 import { timeAgo } from '../utils/time'
+
+const LIFECYCLE = ['planned', 'ready_for_ai', 'sent_to_ai', 'changes_detected', 'waiting_for_review', 'ready_to_save', 'saved']
 
 export default function UpdateWorkspace({ auth }) {
   const { repo, updateId } = useParams()
@@ -18,23 +20,24 @@ export default function UpdateWorkspace({ auth }) {
   const owner = auth?.user?.login
 
   const update = owner ? getUpdateById(owner, repo, updateId) : null
-
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [deleting, setDeleting]           = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   if (!update) {
     return (
-      <div className="screen-padded">
-        <p className="error-box">This update could not be found.</p>
-        <Link to={`/p/${repo}/updates`} className="btn-ghost" style={{ marginTop: 16, display: 'inline-flex' }}>
-          Back to updates
-        </Link>
+      <div className="page">
+        <main className="page-main" style={{ maxWidth: '880px' }}>
+          <p className="error-box">This update could not be found.</p>
+          <Link to={`/p/${repo}/updates`} className="pl-btn">
+            Back to updates
+          </Link>
+        </main>
       </div>
     )
   }
 
   const hero = heroFor(update, { filesCount: (update.files || []).length })
-  const activity = update.lastActivityAt ? timeAgo(update.lastActivityAt) : 'recently'
+  const currentStatusIndex = LIFECYCLE.indexOf(update.status)
 
   function handleDelete() {
     if (!owner) return
@@ -43,89 +46,179 @@ export default function UpdateWorkspace({ auth }) {
     navigate(`/p/${repo}/updates`, { replace: true })
   }
 
+  function handlePause() {
+    if (owner) {
+      updateUpdate(owner, repo, updateId, {
+        status: 'paused',
+        storyEntry: 'You paused this update',
+      })
+    }
+  }
+
   return (
-    <div className="screen-padded">
-      {/* Update identity */}
-      <div className="update-workspace-header">
-        <div className="update-workspace-title-row">
-          <h1 className="update-workspace-title">{update.title}</h1>
-          <span className={`status-pill status-pill--${update.status}`}>
+    <div className="page">
+      <main className="page-main" style={{ maxWidth: '880px' }}>
+        {/* Back link */}
+        <Link to={`/p/${repo}/updates`} className="update-workspace-back">
+          ← All updates
+        </Link>
+
+        {/* Context line */}
+        <div className="update-workspace-context">
+          <span>{repo.replace(/-/g, ' ')}</span>
+          <span>·</span>
+          <span>Update</span>
+          <span className={`pl-pill pl-pill--${update.status}`}>
             {STATUS_LABEL[update.status]}
           </span>
         </div>
+
+        {/* Title and goal */}
+        <h1 className="update-workspace-title">{update.title}</h1>
         {update.goal && (
           <p className="update-workspace-goal">{update.goal}</p>
         )}
-      </div>
 
-      {/* Hero fields */}
-      <section className="hero-card">
-        <div className="hero-card-rows">
-          <div className="hero-row">
-            <span className="hero-label">Where you left off</span>
-            <span className="hero-value">{hero.left}</span>
-          </div>
-          <div className="hero-row">
-            <span className="hero-label">Since then</span>
-            <span className="hero-value">{hero.since}</span>
-          </div>
-          <div className="hero-row">
-            <span className="hero-label">Next step</span>
-            <span className="hero-value">{hero.next}</span>
+        {/* Lifecycle indicator */}
+        <div className="update-lifecycle">
+          <p className="update-lifecycle-label">Where this update is up to</p>
+          <div className="update-lifecycle-steps">
+            {LIFECYCLE.map((status, i) => {
+              const isDone = i < currentStatusIndex
+              const isCurrent = i === currentStatusIndex
+              const isFuture = i > currentStatusIndex
+              return (
+                <div key={status} className="update-lifecycle-step">
+                  <div className={`update-lifecycle-dot ${isDone ? 'done' : isCurrent ? 'current' : 'future'}`} />
+                  <p className={`update-lifecycle-step-label ${isCurrent ? 'current' : ''}`}>
+                    {STATUS_LABEL[status]}
+                  </p>
+                </div>
+              )
+            })}
           </div>
         </div>
-        <div className="hero-cta-row">
+
+        {/* Recommended next step */}
+        <section className="update-recommendation">
+          <p className="update-recommendation-text">{hero.next}</p>
           <button
-            className="btn-primary"
+            className="pl-btn-primary"
             onClick={() => navigate(`/p/${repo}/u/${updateId}/${hero.route}`)}
           >
             {hero.cta}
           </button>
-        </div>
-      </section>
-
-      {/* Story / activity log */}
-      {update.story && update.story.length > 0 && (
-        <section className="update-story">
-          <h2 className="update-story-heading">History</h2>
-          <ul className="story-list">
-            {[...update.story].reverse().map((entry, i) => (
-              <li key={i} className="story-entry">
-                <span className="story-what">{entry.what}</span>
-                <span className="story-when">{timeAgo(entry.at)}</span>
-              </li>
-            ))}
-          </ul>
         </section>
-      )}
 
-      {/* Danger zone */}
-      <section className="update-danger">
-        {!confirmDelete ? (
+        {/* Two cards: Details + Files */}
+        <div className="update-cards">
+          <section className="update-card">
+            <h2 className="update-card-title">Details</h2>
+            <div className="update-card-content">
+              <div className="update-card-row">
+                <span className="update-card-label">AI used</span>
+                <span className="update-card-value">{update.ai || '—'}</span>
+              </div>
+              <div className="update-card-row">
+                <span className="update-card-label">Files affected</span>
+                <span className="update-card-value">
+                  {(update.files || []).length === 1 ? '1 file' : `${(update.files || []).length} files`}
+                </span>
+              </div>
+              <div className="update-card-row">
+                <span className="update-card-label">Last activity</span>
+                <span className="update-card-value">{timeAgo(update.lastActivityAt)}</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="update-card">
+            <h2 className="update-card-title">Files in this update</h2>
+            <div className="update-card-content">
+              {(update.files || []).length === 0 ? (
+                <p className="update-card-empty">No files yet</p>
+              ) : (
+                <ul className="update-files-list">
+                  {(update.files || []).map((file, i) => (
+                    <li key={i} className="update-file-item">
+                      <code>{file}</code>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* Story / History */}
+        <section className="update-story">
+          <h2 className="update-story-title">
+            The story of this update
+            {(!update.story || update.story.length === 0) && (
+              <span className="pl-todo">Requires implementation</span>
+            )}
+          </h2>
+          {update.story && update.story.length > 0 ? (
+            <div className="update-story-list">
+              {[...update.story].reverse().map((entry, i) => (
+                <div key={i} className="update-story-entry">
+                  <span className="update-story-dot">·</span>
+                  <span className="update-story-text">{entry.what}</span>
+                  <span className="update-story-time">{timeAgo(entry.at)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="update-story-empty">No activity recorded yet.</p>
+          )}
+        </section>
+
+        {/* Footer actions */}
+        <div className="update-workspace-footer">
           <button
-            className="btn-ghost btn-danger"
+            className="pl-btn-primary"
+            onClick={() => navigate(`/p/${repo}/u/${updateId}/${hero.route}`)}
+          >
+            {hero.cta}
+          </button>
+          {update.status !== 'saved' && update.status !== 'paused' && (
+            <button
+              className="pl-btn"
+              onClick={handlePause}
+            >
+              Pause this update
+            </button>
+          )}
+          <button
+            className="pl-btn"
             onClick={() => setConfirmDelete(true)}
           >
-            Delete this update
+            Delete
           </button>
-        ) : (
-          <div className="danger-confirm">
+        </div>
+
+        {/* Delete confirmation */}
+        {confirmDelete && (
+          <div className="update-delete-confirm">
             <p>Delete <strong>{update.title}</strong>? This cannot be undone.</p>
-            <div className="danger-confirm-actions">
+            <div className="update-delete-actions">
               <button
-                className="btn-primary btn-destructive"
+                className="pl-btn-primary"
                 onClick={handleDelete}
                 disabled={deleting}
               >
                 {deleting ? 'Deleting…' : 'Yes, delete it'}
               </button>
-              <button className="btn-ghost" onClick={() => setConfirmDelete(false)}>
+              <button
+                className="pl-btn"
+                onClick={() => setConfirmDelete(false)}
+              >
                 Cancel
               </button>
             </div>
           </div>
         )}
-      </section>
+      </main>
     </div>
   )
 }

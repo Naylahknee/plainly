@@ -1,0 +1,124 @@
+/* Plainly design tokens — drop in at src/styles/tokens.css and import once in main.jsx
+   Values marked EXISTING are already in src/index.css; keep them as the single source. */
+
+:root {
+  /* Brand + core — EXISTING */
+  --purple:       #6C5CE7;  /* primary actions, active nav, links */
+  --purple-dark:  #5849c4;  /* primary hover */
+  --ink:          #1C1B22;  /* headings, body */
+  --canvas:       #FBFAF8;  /* page background */
+  --grey:         #8A8794;  /* secondary text, uppercase labels */
+  --grey-light:   #ECEAF4;  /* card borders */
+  --grey-border:  #D8D6E3;  /* input + secondary button borders */
+  --success:      #00B894;  /* saved / all-clear */
+
+  /* Added by the redesign */
+  --lilac-bg:     #F4F2FB;  /* guidance strips, selected chips */
+  --lilac-border: #E4E0F7;  /* emphasised card borders (hero) */
+  --lilac-soft:   #C9C2F0;  /* folder glyphs, chevrons, hover borders */
+  --panel:        #FBFAFE;  /* inset panel inside the hero card */
+  --row:          #FBFAFD;  /* nested/expanded rows */
+
+  --amber:        #A3702A;  /* attention text */
+  --amber-bg:     #FAF1E1;  /* attention pill */
+  --amber-edge:   #E3B14C;  /* 4px left border on attention cards */
+
+  --red:          #8C3A33;  /* destructive / conflict text */
+  --red-bg:       #FBEBEA;  /* conflict pill, removed diff lines */
+  --red-border:   #F3D9D6;  /* destructive card border */
+  --red-edge:     #C0392B;  /* 4px left border on conflict cards */
+
+  --green-deep:   #008B70;  /* "saved" pill text */
+  --green-bg:     #E6F9F4;  /* success surface */
+  --green-ink:    #0A4F41;  /* text on success surface */
+  --green-add-bg: #E9F8F1;  /* added diff lines */
+  --green-add-fg: #0A5A44;
+
+  --ink-soft:     #4A4753;  /* body copy inside cards */
+  --ink-mid:      #5C5866;  /* neutral pill text */
+
+  /* Shape */
+  --radius:       10px;     /* EXISTING — buttons, inputs */
+  --radius-card:  14px;     /* standard cards, list rows */
+  --radius-hero:  18px;     /* the one hero card per screen */
+  --radius-pill:  99px;     /* status pills */
+
+  --shadow-card:  0 4px 18px rgba(108, 92, 231, .08);
+  --shadow-hero:  0 8px 34px rgba(108, 92, 231, .12);
+  --shadow-btn:   0 6px 18px rgba(108, 92, 231, .26);
+
+  /* Layout */
+  --sidebar-w:    248px;
+  --page-pad:     44px 48px 64px;
+
+  /* Type — Inter, already loaded */
+  --font: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Courier New', ui-monospace, monospace; /* filenames, sha, diffs */
+}
+
+/* ---- Type scale. Use these sizes; never go below 13px. ----
+   Page title ............ 30px / 700 / -.03em
+   Hero update title ..... 34px / 700 / -.03em  (home hero only)
+   Section heading ....... 22px / 700 / -.02em
+   Card title ........... 16.5px / 600
+   Body ................. 15–16.5px / 1.5
+   Meta / secondary ..... 13.5–14px / var(--grey)
+   Uppercase label ....... 12px / 600 / .08em / var(--grey)
+   Status pill .......... 12.5px / 600
+*/
+
+/* ---- Button rules ----
+   Exactly ONE purple button per screen — the recommended next step.
+   Everything else: white bg, 1px var(--grey-border).
+   Secondary hover: border-color and color both -> var(--purple).
+   Minimum height 44px on touch.
+*/
+.pl-btn-primary {
+  padding: 15px 26px;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font: 600 16px/1 var(--font);
+  cursor: pointer;
+  box-shadow: var(--shadow-btn);
+}
+.pl-btn-primary:hover { background: var(--purple-dark); }
+
+.pl-btn {
+  padding: 14px 20px;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--grey-border);
+  border-radius: 12px;
+  font: 600 15px/1 var(--font);
+  cursor: pointer;
+}
+.pl-btn:hover { border-color: var(--purple); color: var(--purple); }
+
+/* ---- Status pills: one class per update status ---- */
+.pl-pill {
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  font: 600 12.5px/1.35 var(--font);
+  white-space: nowrap;
+}
+.pl-pill--planned,
+.pl-pill--paused             { background: var(--grey-light); color: var(--ink-mid); }
+.pl-pill--ready_for_ai,
+.pl-pill--sent_to_ai         { background: var(--lilac-bg);   color: var(--purple); }
+.pl-pill--changes_detected,
+.pl-pill--waiting_for_review { background: var(--amber-bg);   color: var(--amber); }
+.pl-pill--needs_correction   { background: var(--red-bg);     color: var(--red); }
+.pl-pill--ready_to_save,
+.pl-pill--saved              { background: var(--green-bg);   color: var(--green-deep); }
+
+/* ---- The "not built yet" badge. Use wherever a value can't be computed
+        for real yet. Never print a fake number instead. ---- */
+.pl-todo {
+  padding: 3px 8px;
+  border: 1px dashed var(--lilac-soft);
+  border-radius: 6px;
+  color: var(--purple);
+  font: 600 11px/1.4 var(--font);
+}

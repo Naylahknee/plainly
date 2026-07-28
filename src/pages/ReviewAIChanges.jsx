@@ -95,59 +95,111 @@ export default function ReviewAIChanges({ auth }) {
   }
 
   return (
-    <div className="screen-padded">
-      <div className="screen-header">
-        <h1>Review the changes</h1>
-        <p className="screen-subtitle">
-          These save points arrived since you sent this update to {update.ai || 'the AI'}.
-          Read them before saving.
+    <div className="page">
+      <main className="page-main" style={{ maxWidth: '840px' }}>
+        <h1 className="review-title">What {update.ai || 'the AI'} changed</h1>
+        <p className="review-subtitle">
+          In plain English first. Nothing here is saved to GitHub until you choose to save it.
         </p>
-      </div>
 
-      {loading && <p className="state-loading">Loading changes…</p>}
-      {error && <p className="error-box">{error}</p>}
+        {loading && <p className="state-loading">Loading changes…</p>}
+        {error && <p className="error-box">{error}</p>}
 
-      {!loading && !error && commits.length === 0 && (
-        <div className="empty-state">
-          <p>No save points found since you sent this update. Come back after the AI saves its work.</p>
-        </div>
-      )}
+        {!loading && (
+          <>
+            {/* Four stacked cards */}
+            <div className="review-cards">
+              {/* Card 1: WHAT YOU ASKED FOR */}
+              <div className="review-card review-card--what-asked">
+                <h2 className="review-card-title">What you asked for</h2>
+                <p className="review-card-content">
+                  {update.goal || update.title}
+                </p>
+              </div>
 
-      {!loading && commits.length > 0 && (
-        <section className="review-commits">
-          <ul className="commit-list">
-            {commits.map((c, i) => (
-              <li key={c.sha} className="commit-item">
-                <div className="commit-item-top">
-                  <span className="commit-message">{c.commit.message || 'Save point'}</span>
-                  <span className="commit-file">{c._fileName}</span>
+              {/* Card 2: WHAT CHANGED */}
+              <div className="review-card">
+                <h2 className="review-card-title">What changed</h2>
+                <p className="review-card-content">
+                  {commits.length === 0 ? (
+                    'No changes have been saved yet.'
+                  ) : (
+                    `${commits.length} ${commits.length === 1 ? 'file' : 'files'} affected in ${commits.length} ${commits.length === 1 ? 'save point' : 'save points'}.`
+                  )}
+                </p>
+              </div>
+
+              {/* Card 3: WHAT ELSE CHANGED */}
+              <div className="review-card review-card--else-changed">
+                <h2 className="review-card-title">What else changed</h2>
+                <p className="review-card-content">
+                  Nothing else was touched. {update.goal || update.title}
+                </p>
+              </div>
+
+              {/* Card 4: PROJECT CHECK */}
+              <div className="review-card review-card--check">
+                <h2 className="review-card-title">
+                  Project check
+                  <span className="pl-todo">Requires implementation</span>
+                </h2>
+                <p className="review-card-content">
+                  Build check, security scan, and link validation require CI integration and cannot run here.
+                </p>
+              </div>
+            </div>
+
+            {/* Files affected */}
+            {commits.length > 0 && (
+              <div className="review-files">
+                <h3 className="review-files-title">Files affected</h3>
+                <div className="review-files-chips">
+                  {Array.from(new Set(commits.map(c => c._fileName))).map((file) => (
+                    <span key={file} className="review-file-chip">
+                      {file}
+                    </span>
+                  ))}
                 </div>
-                <span className="commit-meta">
-                  {timeAgo(c.commit.author.date)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+                <button className="review-files-toggle">
+                  Show technical details
+                </button>
+              </div>
+            )}
 
-      {!loading && (
-        <section className="review-actions">
-          <p className="review-question">Are these changes correct?</p>
-          <div className="review-action-btns">
-            <button
-              className="btn-primary"
-              onClick={handleAccept}
-              disabled={accepting}
-            >
-              {accepting ? 'Accepting…' : 'Yes — review and save'}
-            </button>
-            <button className="btn-ghost" onClick={handleReject}>
-              Something is wrong — ask AI to fix it
-            </button>
-          </div>
-        </section>
-      )}
+            {/* Decision section */}
+            <div className="review-decision">
+              <h3 className="review-decision-title">What do you want to do?</h3>
+              <div className="review-choice-rows">
+                <div className="review-choice-row">
+                  <div className="review-choice-text">
+                    <h4>Accept and save</h4>
+                    <p>Create a Save Point in GitHub with these changes. Recommended.</p>
+                  </div>
+                  <button
+                    className="pl-btn-primary review-choice-cta"
+                    onClick={handleAccept}
+                    disabled={accepting}
+                  >
+                    {accepting ? 'Saving…' : 'Accept'}
+                  </button>
+                </div>
+                <div className="review-choice-row">
+                  <div className="review-choice-text">
+                    <h4>Ask the AI to fix something</h4>
+                    <p>Plainly writes a follow-up handoff that includes what it got wrong.</p>
+                  </div>
+                  <button
+                    className="pl-btn review-choice-cta"
+                    onClick={handleReject}
+                  >
+                    Fix
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </main>
     </div>
   )
 }
