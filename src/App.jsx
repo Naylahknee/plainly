@@ -14,6 +14,7 @@ import Projects    from './pages/Projects'
 import Activity    from './pages/Activity'
 import Account     from './pages/Account'
 import NewProject  from './pages/NewProject'
+import ChooseProjects from './pages/ChooseProjects'
 import Help        from './pages/Help'
 
 // Project pages
@@ -146,7 +147,8 @@ export default function App() {
         />
 
         {/* ── Global pages ────────────────────────────────────────── */}
-        <Route path="/projects"  element={<Protected auth={auth}><Projects  auth={auth} /></Protected>} />
+        <Route path="/projects"        element={<Protected auth={auth}><Projects       auth={auth} /></Protected>} />
+        <Route path="/projects/choose" element={<Protected auth={auth}><ChooseProjects auth={auth} /></Protected>} />
         <Route path="/activity"  element={<Protected auth={auth}><Activity  auth={auth} /></Protected>} />
         <Route path="/account"   element={<Protected auth={auth}><Account   auth={auth} /></Protected>} />
         <Route path="/new"       element={<Protected auth={auth}><NewProject auth={auth} /></Protected>} />

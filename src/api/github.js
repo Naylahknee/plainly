@@ -32,12 +32,41 @@ export async function getUser(token) {
   return r.json()
 }
 
+/**
+ * Every project this account can reach.
+ *
+ * No `affiliation` parameter, deliberately. GitHub's own default is
+ * `owner,collaborator,organization_member`; this used to narrow it to `owner`,
+ * which meant a project shared with you, or belonging to a team, had never
+ * once appeared in Plainly.
+ *
+ * Paged, because that change can turn four projects into several hundred. The
+ * cap exists so a very large account can't hang the screen — and `truncated`
+ * says so rather than presenting a partial list as the whole truth.
+ */
+const REPO_PAGE_CAP = 5   // 500 projects
+
 export async function getRepos(token) {
-  const r = await fetch(`${API}/user/repos?sort=updated&per_page=100&affiliation=owner`, {
-    headers: headers(token)
-  })
-  if (!r.ok) throw new Error('Could not load your projects. Try refreshing the page.')
-  return r.json()
+  const all = []
+  let truncated = false
+
+  for (let page = 1; page <= REPO_PAGE_CAP; page++) {
+    const r = await fetch(`${API}/user/repos?sort=updated&per_page=100&page=${page}`, {
+      headers: headers(token),
+    })
+    if (!r.ok) {
+      if (page === 1) throw new Error('Could not load your projects. Try refreshing the page.')
+      break                        // keep what we already have
+    }
+    const batch = await r.json()
+    if (!Array.isArray(batch) || batch.length === 0) break
+    all.push(...batch)
+    if (batch.length < 100) break  // that was the last page
+    if (page === REPO_PAGE_CAP) truncated = true
+  }
+
+  all.truncated = truncated
+  return all
 }
 
 export async function createRepo(token, name) {

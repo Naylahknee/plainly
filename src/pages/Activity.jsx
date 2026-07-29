@@ -11,7 +11,8 @@
 
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getRepos, getCommits } from '../api/github'
+import { getCommits } from '../api/github'
+import { useProjects } from '../hooks/useProjects'
 import { activityEvents } from '../utils/activity'
 import { timeAgo } from '../utils/time'
 import { projectName } from '../utils/projectName'
@@ -20,17 +21,8 @@ export default function Activity({ auth }) {
   const { user, token } = auth
   const owner = user?.login
 
-  const [repos, setRepos] = useState([])
+  const { projects: repos, loading } = useProjects(auth)
   const [commitsByRepo, setCommitsByRepo] = useState({})
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!token) return
-    getRepos(token)
-      .then(r => setRepos(r || []))
-      .catch(() => setRepos([]))
-      .finally(() => setLoading(false))
-  }, [token])
 
   // Real Save Points from GitHub, alongside what Plainly recorded itself.
   useEffect(() => {

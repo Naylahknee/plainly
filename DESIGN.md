@@ -228,6 +228,21 @@ account picker every time, and Account states whether GitHub still lists Plainly
 GitHub rather than by assuming it — with "couldn't check" as its own answer, never rendered
 as connected.
 
+**Plainly shows every project the account can reach** — yours, ones shared with you, and
+every repository in every organisation you belong to. `getRepos()` sends no `affiliation`
+parameter; it used to narrow to `owner`, which hid shared work entirely.
+
+Because that can mean hundreds, **you can choose which appear** (`/projects/choose`), and two
+rules keep the choice honest: choosing nothing shows everything, so no one opens Plainly to
+an empty list because of a setting they don't remember making; and while a choice is active
+the list says *"Showing 2 of 4"* rather than presenting a filtered list as the whole truth.
+A stale choice that matches nothing falls back to showing everything. Hiding affects lists
+only — a direct link to a hidden project still opens.
+
+`useProjects()` is the one place that loads projects and applies the choice. Home, My
+Projects and Recent Activity all call it; they each called `getRepos()` separately before,
+which is the shape of duplication that let `aiRouteFor` drift.
+
 **A project URL carries its owner:** `/p/:owner/:repo`. Not the signed-in user — the
 account the project actually belongs to, because a project shared with you or owned by a
 team belongs to somebody else and every GitHub call needs to know whose. Screens read the

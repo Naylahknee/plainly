@@ -3693,3 +3693,56 @@ a:hover { color: var(--purple-dark); }
   }
 }
 
+
+/* ═══ Choose which projects appear ══════════════════════════════════════════ */
+.choose-screen { max-width: 800px; }
+.choose-title { font: 700 30px/1.2 var(--font); letter-spacing: -.03em; color: var(--ink); margin: 0 0 8px; }
+.choose-intro { font: 400 16px/1.55 var(--font); color: var(--ink-soft); margin: 0 0 20px; max-width: 40em; }
+.choose-state {
+  padding: 14px 18px;
+  background: var(--lilac-bg);
+  border: 1px solid var(--lilac-border);
+  border-radius: var(--radius-card);
+  font: 400 14.5px/1.5 var(--font);
+  color: var(--ink-soft);
+}
+.choose-truncated { margin: 12px 0 0; font: 400 14px/1.6 var(--font); color: var(--grey); }
+.choose-controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 16px; }
+.choose-filter {
+  flex: 1;
+  min-width: 200px;
+  padding: 11px 14px;
+  border: 1px solid var(--grey-border);
+  border-radius: 10px;
+  font: 400 14.5px/1.4 var(--font);
+  color: var(--ink);
+  background: #fff;
+}
+.choose-filter:focus { outline: 2px solid var(--lilac-border); border-color: var(--purple); }
+.choose-empty { font: 400 15px/1.6 var(--font); color: var(--grey); }
+
+.choose-list { display: flex; flex-direction: column; gap: 8px; }
+.choose-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid var(--grey-light);
+  border-radius: var(--radius-card);
+  cursor: pointer;
+}
+.choose-row:hover { border-color: var(--lilac-soft); }
+.choose-row--on { border-color: var(--purple); background: var(--lilac-bg); }
+.choose-check { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--purple); }
+.choose-row-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.choose-row-name { font: 600 15.5px/1.35 var(--font); color: var(--ink); }
+.choose-row-owner {
+  margin-left: 8px;
+  font: 400 13px/1 var(--font);
+  color: var(--grey);
+}
+.choose-row-meta { font: 400 13px/1.4 var(--font); color: var(--grey); overflow-wrap: anywhere; }
+.choose-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+
+.projects-count { margin: 0 0 18px; font: 400 14px/1.5 var(--font); color: var(--grey); }

@@ -15,7 +15,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getUpdates, getActiveUpdate, STATUS_LABEL } from '../utils/updateMemory'
 import { heroFor } from '../utils/heroFor'
 import { greeting, timeAgo } from '../utils/time'
-import { getRepos, getCommits } from '../api/github'
+import { getCommits } from '../api/github'
+import { useProjects } from '../hooks/useProjects'
 import { getMemory } from '../utils/projectMemory'
 import { getDrafts } from '../utils/drafts'
 import { activityEvents } from '../utils/activity'
@@ -28,8 +29,8 @@ const EXPLAINER_DISMISSED_KEY = 'plainly_home_explainer_dismissed'
 export default function Home({ auth }) {
   const { user, token } = auth
   const navigate = useNavigate()
-  const [repos, setRepos] = useState([])
-  const [loading, setLoading] = useState(true)
+  // Same list, same choice, as My Projects and Recent Activity.
+  const { projects: repos, loading } = useProjects(auth)
   const [explainerDismissed, setExplainerDismissed] = useState(() => {
     try {
       return localStorage.getItem(EXPLAINER_DISMISSED_KEY) === 'true'
@@ -40,13 +41,6 @@ export default function Home({ auth }) {
 
   const [commitsByRepo, setCommitsByRepo] = useState({})
 
-  useEffect(() => {
-    if (!token) return
-    getRepos(token)
-      .then(r => setRepos(r || []))
-      .catch(() => setRepos([]))
-      .finally(() => setLoading(false))
-  }, [token])
 
 
   const owner = user?.login

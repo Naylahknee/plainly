@@ -10,9 +10,8 @@
  * meta line only prints the parts that exist (HANDOFF §0).
  */
 
-import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getRepos } from '../api/github'
+import { useProjects } from '../hooks/useProjects'
 import { timeAgo } from '../utils/time'
 import { getMemory, setMemory } from '../utils/projectMemory'
 import { getUpdates } from '../utils/updateMemory'
@@ -22,16 +21,9 @@ import { ownerOf } from '../utils/useProject'
 
 export default function Projects({ auth }) {
   const owner = auth.user?.login
-  const [repos, setRepos] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    getRepos(auth.token)
-      .then(r => setRepos(r || []))
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
-  }, [auth.token])
+  // Shared with Home and Recent Activity, so all three agree on which
+  // projects exist and which of them you asked to see.
+  const { projects: repos, allProjects, hiddenCount, loading, error } = useProjects(auth)
 
   // Remember which project was opened last — this is what feeds "where you left off".
   function rememberOpen(repoName) {
@@ -45,8 +37,20 @@ export default function Projects({ auth }) {
         <Link to="/new" className="pl-btn-primary projects-new">Start a new project</Link>
       </div>
       <p className="projects-subtitle">
-        Every project here is a real GitHub repository on your account.
+        Every project here is a real GitHub repository — yours, plus anything shared with you
+        or belonging to an organisation you're in.
       </p>
+
+      {/* A filtered list presented as the whole list is a false statement. */}
+      {!loading && !error && allProjects.length > 0 && (
+        <p className="projects-count">
+          {hiddenCount > 0
+            ? `Showing ${repos.length} of ${allProjects.length} projects.`
+            : `${allProjects.length} ${allProjects.length === 1 ? 'project' : 'projects'}.`}
+          {' '}
+          <Link to="/projects/choose" className="text-link">Choose which appear</Link>
+        </p>
+      )}
 
       {loading && <p className="state-loading">Getting your projects from GitHub…</p>}
 
