@@ -87,15 +87,17 @@ export default function Glossary() {
             </tr>
           </thead>
           <tbody>
+            {/* data-label carries the column name so each cell can still say
+                what it is once the table restacks on a narrow screen. */}
             {sorted.map(g => (
               <tr key={g.term}>
-                <td className="help-gloss-cell-term">
+                <td className="help-gloss-cell-term" data-label={first}>
                   {direction === 'github' ? g.github : g.term}
                 </td>
-                <td className="help-gloss-cell-other">
+                <td className="help-gloss-cell-other" data-label={second}>
                   {direction === 'github' ? g.term : g.github}
                 </td>
-                <td className="help-gloss-cell-def">{g.def}</td>
+                <td className="help-gloss-cell-def" data-label="What it means">{g.def}</td>
               </tr>
             ))}
           </tbody>

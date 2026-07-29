@@ -82,6 +82,20 @@ important card on a screen. Nothing else casts a shadow.
 `padding: 44px 48px 64px` with a max-width per screen (660–1000px). Use the `.screen-padded`
 class plus a per-screen `max-width`.
 
+**On a phone** (≤720px) the sidebar folds into a menu: a sticky bar with the wordmark and a
+**Menu** button, opening the same nav with the same groups and headings. Still one `<nav>`.
+It used to become a horizontal scrolling strip with the headings hidden, which put up to
+twenty-one items in a sideways swipe — Project Files was genuinely unreachable.
+
+Controls a thumb aims at are at least **44px** tall on phones. The 12–12.5px sizes above are
+uppercase labels, pills and badges, and they stay — the 13px floor is about prose. Anything
+laid out as columns on a desktop stacks, and the glossary stops being a table and becomes
+one card per word, because three columns in 390px clipped the meaning entirely.
+
+The mobile rules live at the **end of `tokens.css`**, the last stylesheet `main.jsx` imports.
+A media query carries no extra specificity, so an override only wins by loading after the
+rule it overrides. Half of them did nothing when they sat in `index.css`.
+
 **There is exactly one navigation in the app**, `AppShell`. No page renders its own nav.
 This is worth stating because it was broken once: two screens kept an old sidebar and the
 app showed two side by side.

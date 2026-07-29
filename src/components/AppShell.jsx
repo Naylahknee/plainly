@@ -16,6 +16,7 @@
  * This is the only navigation in the app. No page renders one of its own.
  */
 
+import { useState, useEffect } from 'react'
 import { NavLink, useParams, useLocation, Link } from 'react-router-dom'
 import { getActiveUpdate } from '../utils/updateMemory'
 import { projectName } from '../utils/projectName'
@@ -50,10 +51,37 @@ export default function AppShell({ auth, children }) {
 
   const activeUpdate = inProject ? getActiveUpdate(owner, repo) : null
 
+  // On a phone the sidebar folds into this. It used to become a horizontal
+  // strip, which put twenty-one items in a sideways scroll with their headings
+  // hidden — Project Files was unreachable without swiping a menu bar. It is a
+  // panel now: same nav, same groups, same headings, just closed by default.
+  const [menuOpen, setMenuOpen] = useState(false)
+  useEffect(() => { setMenuOpen(false) }, [pathname])
+
   return (
     <div className="shell">
+      {/* Only on narrow screens — see the media block in tokens.css. */}
+      <div className="shell-mobilebar">
+        <Link to="/" className="shell-mobilebar-brand" aria-label="Plainly home">
+          <span className="wordmark">plainly</span>
+        </Link>
+        <button
+          type="button"
+          className="shell-menu-toggle"
+          aria-expanded={menuOpen}
+          aria-controls="plainly-nav"
+          onClick={() => setMenuOpen(open => !open)}
+        >
+          {menuOpen ? 'Close' : 'Menu'}
+        </button>
+      </div>
+
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
-      <nav className="shell-sidebar" aria-label="Main navigation">
+      <nav
+        id="plainly-nav"
+        className={`shell-sidebar${menuOpen ? ' shell-sidebar--open' : ''}`}
+        aria-label="Main navigation"
+      >
         {/* Wordmark */}
         <Link to="/" className="shell-wordmark" aria-label="Plainly home">
           <span className="wordmark">plainly</span>

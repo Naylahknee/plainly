@@ -626,12 +626,9 @@
 }
 
 .project-update-goal {
-  font: 400 13px/1.4 var(--font);
+  font: 400 13px/1.45 var(--font);
   color: var(--grey);
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .project-update-meta {
@@ -3547,3 +3544,152 @@ a:hover { color: var(--purple-dark); }
   text-transform: none;
   color: var(--grey);
 }
+
+/* ═══ Phones ═════════════════════════════════════════════════════════════
+   Last in the last stylesheet, deliberately: media queries carry no extra
+   specificity, so these only win by being loaded after the rules they
+   override. Living in index.css, half of them silently did nothing. */
+
+/* The mobile bar exists only on phones. Declared before the media block so the
+   media rule wins — order matters at equal specificity. */
+.shell-mobilebar { display: none; }
+.shell-menu-toggle {
+  min-height: 44px;
+  padding: 0 18px;
+  background: #fff;
+  border: 1px solid var(--grey-border);
+  border-radius: 10px;
+  font: 600 15px/1 var(--font);
+  color: var(--ink);
+  cursor: pointer;
+}
+.shell-menu-toggle[aria-expanded="true"] { border-color: var(--purple); color: var(--purple); }
+
+/*
+   The sidebar used to become a horizontal scrolling strip with its headings
+   hidden, which put up to twenty-one nav items in a sideways swipe — Project
+   Files was genuinely unreachable. It folds into a menu panel instead: the
+   same nav, the same groups, the same headings, closed by default. */
+@media (max-width: 720px) {
+  .shell { flex-direction: column; }
+
+  .shell-mobilebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #fff;
+    border-bottom: 1px solid var(--grey-light);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .shell-mobilebar-brand { text-decoration: none; display: flex; align-items: center; }
+
+  /* Closed by default; the toggle is the only way in, so it can't be missed. */
+  .shell-sidebar {
+    display: none;
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    position: sticky;
+    top: 65px;
+    z-index: 19;
+    border-right: none;
+    border-bottom: 1px solid var(--grey-light);
+    box-shadow: var(--shadow-card);
+    padding: 8px 0 16px;
+  }
+  .shell-sidebar--open { display: flex; }
+  /* The wordmark lives in the bar above on a phone. */
+  .shell-wordmark { display: none; }
+
+  .shell-nav-item { min-height: 44px; display: flex; align-items: center; }
+  .shell-footer { padding: 14px 20px 0; }
+
+  .screen-padded { padding: 24px 16px 48px; }
+  .screen-home { padding: 24px 16px 48px; }
+
+  /* ── Touch targets ──────────────────────────────────────────────────
+     44px is the smallest thing a finger hits reliably. These are all below
+     it at desktop sizes, which is fine with a mouse and not with a thumb. */
+  .pl-btn,
+  .pl-btn-primary,
+  .ai-tool,
+  .changed-toggle,
+  .points-action,
+  .help-toggle-btn,
+  .help-kind-btn,
+  .home-explainer-dismiss {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .back-link { display: inline-flex; align-items: center; min-height: 44px; }
+  .text-link, .activity-link { display: inline-block; padding: 6px 0; }
+
+  /* Buttons that sit beside each other should wrap, not squeeze. */
+  .ai-actions, .ai-tools, .home-hero-actions, .project-update-actions,
+  .newupdate-actions, .help-next-row, .points-confirm {
+    flex-wrap: wrap;
+  }
+  .pl-btn, .pl-btn-primary { flex: 0 1 auto; }
+
+  /* ── Rows that are two columns on a desktop ───────────────────────── */
+  .changed-entry-main, .updates-row, .points-row, .home-attention-card,
+  .updates-header, .home-header, .ai-sent {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .updates-row-next { border-left: none; padding-left: 0; }
+
+  /* Dangling separators read as broken once the row wraps. */
+  .project-status { gap: 6px 14px; }
+  .project-status-sep { display: none; }
+
+  /* ── The glossary stops being a table ─────────────────────────────────
+     Three columns in 390px clipped the meaning column entirely — the one
+     column that matters. Each word becomes a small card instead, with
+     data-label carrying the heading the <th> used to give it. */
+  .help-gloss-table, .help-gloss-table tbody, .help-gloss-table tr, .help-gloss-table td {
+    display: block;
+    width: 100%;
+  }
+  .help-gloss-table { border: none; background: none; overflow: visible; }
+  .help-gloss-table thead { display: none; }
+  .help-gloss-table tr {
+    background: #fff;
+    border: 1px solid var(--grey-light);
+    border-radius: var(--radius-card);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .help-gloss-table td { border: none; padding: 0 0 8px; white-space: normal; }
+  .help-gloss-table tr td:last-child { padding-bottom: 0; }
+  .help-gloss-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font: 600 12px/1 var(--font);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--grey);
+  }
+  .help-gloss-cell-term { white-space: normal; }
+
+  .help-roles-table { display: block; overflow-x: auto; }
+
+  /* The handoff is a block of text someone reads before pasting it. 12.5px
+     monospace is fine on a desktop and tight on a phone. */
+  .ai-preview { font-size: 13px; max-height: 46vh; }
+
+  /* Long identifiers — file paths, shas, repository addresses. */
+  .ai-preview, .changed-details-tech, .project-status-url, .share-address-url,
+  .home-project-url, .projects-card-url {
+    overflow-wrap: anywhere;
+  }
+}
+
