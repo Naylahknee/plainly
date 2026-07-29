@@ -9,7 +9,8 @@
  *   - Global nav: Home · My Projects · Recent Activity · Account · Help
  *   - Help topics (only when inside /help): the six Help sections
  *   - Project nav (only when inside /p/:repo): Project Home · Updates ·
- *     Make an Update · Project Files · What Changed · Save Points ·
+ *     Things to Do · Make an Update · Project Files · What Changed ·
+ *     Save Points ·
  *     Separate Versions · Who Can See It · Continue with AI · Settings
  *   - Footer: avatar + GitHub login + connection status
  *
@@ -117,6 +118,7 @@ export default function AppShell({ auth, children }) {
             </p>
             <NavItem to={`/p/${owner}/${repo}`}          end   label="Project Home" />
             <NavItem to={`/p/${owner}/${repo}/updates`}        label="Updates" />
+            <NavItem to={`/p/${owner}/${repo}/todo`}           label="Things to Do" />
             <NavItem to={`/p/${owner}/${repo}/new-update`}     label="Make an Update" />
             <NavItem to={`/p/${owner}/${repo}/files`}          label="Project Files" />
             <NavItem to={`/p/${owner}/${repo}/changed`}        label="What Changed" />

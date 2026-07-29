@@ -305,3 +305,48 @@ export async function getCommits(token, owner, repo, perPage = 20) {
   const data = await r.json()
   return Array.isArray(data) ? data : []
 }
+
+/* ── Things to do ──────────────────────────────────────────────────────────
+   GitHub Issues, which is where a project's to-do list actually lives. */
+
+/**
+ * Open (or closed) things to do.
+ *
+ * GitHub's own note on this endpoint: "every pull request is an issue, but not
+ * every issue is a pull request … 'Issues' endpoints may return both". A pull
+ * request is not a thing to do, so anything carrying `pull_request` is dropped.
+ */
+export async function getIssues(token, owner, repo, state = 'open') {
+  const r = await fetch(
+    `${API}/repos/${owner}/${repo}/issues?state=${state}&sort=updated&per_page=50`,
+    { headers: headers(token) }
+  )
+  if (r.status === 404 || r.status === 410) return []   // no repo, or issues turned off
+  if (!r.ok) throw new Error('Could not load the things to do for this project.')
+  const all = await r.json()
+  return Array.isArray(all) ? all.filter(i => !i.pull_request) : []
+}
+
+export async function createIssue(token, owner, repo, title, body) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/issues`, {
+    method: 'POST',
+    headers: { ...headers(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, body: body || undefined }),
+  })
+  if (r.status === 410) throw new Error('This project has its to-do list turned off on GitHub.')
+  if (r.status === 403) throw new Error("You don't have permission to add to this project's list.")
+  if (!r.ok) throw new Error('Could not add that. Try again.')
+  return r.json()
+}
+
+/** Tick one off, or put it back. `state` is 'closed' or 'open'. */
+export async function setIssueState(token, owner, repo, number, state) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/issues/${number}`, {
+    method: 'PATCH',
+    headers: { ...headers(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state }),
+  })
+  if (r.status === 403) throw new Error("You don't have permission to change this project's list.")
+  if (!r.ok) throw new Error('Could not change that. Try again.')
+  return r.json()
+}

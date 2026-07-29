@@ -150,6 +150,19 @@ These are design rules, not engineering ones. Breaking them makes the product li
 - **Nothing reaches GitHub without the user pressing a button that says so.** Edits are
   drafts on this computer until Review and save.
 
+## 8a-i. Things to do live in GitHub, not in a browser
+
+**Things to do** (`/p/:owner/:repo/todo`) is GitHub Issues in plain words, and it is the
+first screen in Plainly that stores nothing locally. An update lives in `localStorage`,
+which is why a project worked on all week can open looking empty — the record was on a
+different machine. A thing to do survives a new laptop and is visible to anyone you share
+the project with.
+
+Because it holds no state, there is nothing to fall out of step: every item came from
+GitHub and every change goes straight back. One caveat is load-bearing — GitHub's issues
+endpoint returns pull requests too ("every pull request is an issue"), and a pull request
+is not a thing to do, so anything carrying `pull_request` is dropped.
+
 ## 8a. Updates and Save Points are different things
 
 An **update** is something Plainly followed start to finish: you described it, it went to an

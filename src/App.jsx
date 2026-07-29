@@ -20,6 +20,7 @@ import Help        from './pages/Help'
 // Project pages
 import ProjectHome    from './pages/ProjectHome'
 import Updates        from './pages/Updates'
+import ThingsToDo     from './pages/ThingsToDo'
 import NewUpdate      from './pages/NewUpdate'
 import ProjectFiles   from './pages/ProjectFiles'
 import FileEditor     from './pages/FileEditor'
@@ -60,7 +61,7 @@ function Protected({ auth, children }) {
  * link shape from the new one — see ProjectArea.
  */
 const PROJECT_PAGES = new Set([
-  'updates', 'new-update', 'files', 'f', 'save', 'changed', 'points',
+  'updates', 'todo', 'new-update', 'files', 'f', 'save', 'changed', 'points',
   'versions', 'share', 'settings', 'ai', 'u', 'h',
 ])
 
@@ -95,6 +96,7 @@ function ProjectArea({ auth }) {
     <Routes>
       <Route path=":owner/:repo"             element={<Protected auth={auth}><ProjectHome    auth={auth} /></Protected>} />
       <Route path=":owner/:repo/updates"     element={<Protected auth={auth}><Updates        auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/todo"        element={<Protected auth={auth}><ThingsToDo     auth={auth} /></Protected>} />
       <Route path=":owner/:repo/new-update"  element={<Protected auth={auth}><NewUpdate      auth={auth} /></Protected>} />
       <Route path=":owner/:repo/files"       element={<Protected auth={auth}><ProjectFiles   auth={auth} /></Protected>} />
       <Route path=":owner/:repo/f/*"         element={<Protected auth={auth}><FileEditor     auth={auth} /></Protected>} />

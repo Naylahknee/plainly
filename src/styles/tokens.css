@@ -3746,3 +3746,53 @@ a:hover { color: var(--purple-dark); }
 .choose-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 
 .projects-count { margin: 0 0 18px; font: 400 14px/1.5 var(--font); color: var(--grey); }
+
+/* ═══ Things to do ══════════════════════════════════════════════════════════
+   GitHub Issues, in plain words. Nothing here is stored locally. */
+.todo-screen { max-width: 800px; }
+.todo-title { font: 700 30px/1.2 var(--font); letter-spacing: -.03em; color: var(--ink); margin: 0 0 8px; }
+.todo-intro { font: 400 16px/1.55 var(--font); color: var(--ink-soft); margin: 0 0 24px; max-width: 42em; }
+
+.todo-add {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 20px 22px;
+  background: var(--lilac-bg);
+  border: 1px solid var(--lilac-border);
+  border-radius: var(--radius-hero);
+  margin-bottom: 30px;
+}
+.todo-add-title, .todo-add-detail {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--grey-border);
+  border-radius: 10px;
+  font: 400 15px/1.5 var(--font);
+  color: var(--ink);
+  background: #fff;
+}
+.todo-add-detail { min-height: 70px; resize: vertical; }
+.todo-add-title:focus, .todo-add-detail:focus { outline: 2px solid var(--lilac-border); border-color: var(--purple); }
+
+.todo-section { margin-top: 30px; }
+.todo-list { display: flex; flex-direction: column; gap: 10px; }
+.todo-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid var(--grey-light);
+  border-radius: var(--radius-card);
+}
+.todo-row--done { background: var(--panel); }
+.todo-row--done .todo-row-title { color: var(--grey); }
+.todo-row-text { flex: 1; min-width: 0; }
+.todo-row-title { font: 600 16px/1.4 var(--font); color: var(--ink); overflow-wrap: anywhere; }
+.todo-row-meta { font: 400 13px/1.4 var(--font); color: var(--grey); margin-top: 5px; }
+.todo-row-actions { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.todo-row-link { font-size: 13px; }
+.todo-empty { font: 400 15px/1.6 var(--font); color: var(--grey); }
