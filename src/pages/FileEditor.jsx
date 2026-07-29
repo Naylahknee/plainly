@@ -29,10 +29,10 @@ const NOTES = {
 
 export default function FileEditor({ auth }) {
   const params = useParams()
+  const owner = params.owner
   const repo = params.repo
   const path = params['*'] || ''
-  const { token, user } = auth
-  const owner = user?.login
+  const { token } = auth
 
   const [content, setContent]   = useState('')
   const [saved, setSaved]       = useState('')   // what GitHub currently holds
@@ -93,7 +93,7 @@ export default function FileEditor({ auth }) {
   return (
     <div className="editor-screen">
       <div className="editor-bar">
-        <Link to={`/p/${repo}/files`} className="text-link editor-back">← All files</Link>
+        <Link to={`/p/${owner}/${repo}/files`} className="text-link editor-back">← All files</Link>
         <div className="editor-bar-file">
           <div className="editor-bar-name">{name || 'Untitled'}</div>
           <div className="editor-bar-note">
@@ -113,7 +113,7 @@ export default function FileEditor({ auth }) {
         {!loading && (
           <button className="pl-btn editor-action" onClick={download}>Download</button>
         )}
-        <Link to={`/p/${repo}/save`} className="pl-btn-primary editor-save">Review and save</Link>
+        <Link to={`/p/${owner}/${repo}/save`} className="pl-btn-primary editor-save">Review and save</Link>
       </div>
 
       <div className="editor-body">

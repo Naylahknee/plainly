@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 
 // Layout
@@ -38,12 +38,12 @@ import ReviewAIChanges  from './pages/ReviewAIChanges'
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * The old per-file history screen lived at /p/:repo/h/*. Save Points covers it
- * now, so old links land there instead of nowhere.
+ * The old per-file history screen lived at .../h/*. Save Points covers it now,
+ * so old links land there instead of nowhere.
  */
 function RedirectToSavePoints() {
-  const { repo } = useParams()
-  return <Navigate to={`/p/${repo}/points`} replace />
+  const { owner, repo } = useParams()
+  return <Navigate to={`/p/${owner}/${repo}/points`} replace />
 }
 
 /**
@@ -52,6 +52,68 @@ function RedirectToSavePoints() {
 function Protected({ auth, children }) {
   if (!auth.token) return <Navigate to="/" replace />
   return <AppShell auth={auth}>{children}</AppShell>
+}
+
+/**
+ * Every page name that can follow a project in the URL. Used to tell the old
+ * link shape from the new one — see ProjectArea.
+ */
+const PROJECT_PAGES = new Set([
+  'updates', 'new-update', 'files', 'f', 'save', 'changed', 'points',
+  'versions', 'share', 'settings', 'ai', 'u', 'h',
+])
+
+/**
+ * Everything under /p/.
+ *
+ * Project URLs carry the owner — /p/:owner/:repo — because a project shared
+ * with you, or owned by a team, belongs to somebody else, and every GitHub
+ * call needs to know whose. Links made before that change carry only the repo,
+ * so those are recognised and redirected rather than 404ing.
+ *
+ * Telling the two apart: /p/a/b is the old shape when `b` is a page name, and
+ * the new shape otherwise. The one genuinely ambiguous case is a project
+ * actually named "settings" or "files" — resolved by treating a first segment
+ * that matches the signed-in user as the new shape, which it always is.
+ */
+function ProjectArea({ auth }) {
+  const { pathname } = useLocation()
+  const login = auth.user?.login
+  const parts = pathname.replace(/^\/p\/?/, '').split('/').filter(Boolean)
+
+  const looksOld =
+    parts.length > 0 &&
+    parts[0] !== login &&
+    (parts.length === 1 || PROJECT_PAGES.has(parts[1]))
+
+  if (looksOld && login) {
+    return <Navigate to={`/p/${login}/${parts.join('/')}`} replace />
+  }
+
+  return (
+    <Routes>
+      <Route path=":owner/:repo"             element={<Protected auth={auth}><ProjectHome    auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/updates"     element={<Protected auth={auth}><Updates        auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/new-update"  element={<Protected auth={auth}><NewUpdate      auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/files"       element={<Protected auth={auth}><ProjectFiles   auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/f/*"         element={<Protected auth={auth}><FileEditor     auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/save"        element={<Protected auth={auth}><ReviewAndSave  auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/changed"     element={<Protected auth={auth}><WhatChanged    auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/points"      element={<Protected auth={auth}><SavePoints     auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/versions"    element={<Protected auth={auth}><Versions       auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/share"       element={<Protected auth={auth}><Share          auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/settings"    element={<Protected auth={auth}><Settings       auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/ai"          element={<Protected auth={auth}><ContinueWithAI auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/h/*"         element={<RedirectToSavePoints />} />
+
+      <Route path=":owner/:repo/u/:updateId"        element={<Protected auth={auth}><UpdateWorkspace auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/u/:updateId/ai"     element={<Protected auth={auth}><ContinueWithAI  auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/u/:updateId/return" element={<Protected auth={auth}><ReturnFromAI    auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/u/:updateId/review" element={<Protected auth={auth}><ReviewAIChanges auth={auth} /></Protected>} />
+
+      <Route path="*" element={<Navigate to="/projects" replace />} />
+    </Routes>
+  )
 }
 
 // ── App ──────────────────────────────────────────────────────────────────────
@@ -96,26 +158,8 @@ export default function App() {
         <Route path="/help/troubleshooting" element={<Protected auth={auth}><Help auth={auth} /></Protected>} />
         <Route path="/help/contact"         element={<Protected auth={auth}><Help auth={auth} /></Protected>} />
 
-        {/* ── Project pages ───────────────────────────────────────── */}
-        <Route path="/p/:repo"             element={<Protected auth={auth}><ProjectHome  auth={auth} /></Protected>} />
-        <Route path="/p/:repo/updates"     element={<Protected auth={auth}><Updates      auth={auth} /></Protected>} />
-        <Route path="/p/:repo/new-update"  element={<Protected auth={auth}><NewUpdate    auth={auth} /></Protected>} />
-        <Route path="/p/:repo/files"       element={<Protected auth={auth}><ProjectFiles auth={auth} /></Protected>} />
-        <Route path="/p/:repo/f/*"         element={<Protected auth={auth}><FileEditor   auth={auth} /></Protected>} />
-        <Route path="/p/:repo/save"        element={<Protected auth={auth}><ReviewAndSave auth={auth} /></Protected>} />
-        <Route path="/p/:repo/changed"     element={<Protected auth={auth}><WhatChanged  auth={auth} /></Protected>} />
-        <Route path="/p/:repo/points"      element={<Protected auth={auth}><SavePoints   auth={auth} /></Protected>} />
-        <Route path="/p/:repo/versions"    element={<Protected auth={auth}><Versions     auth={auth} /></Protected>} />
-        <Route path="/p/:repo/share"       element={<Protected auth={auth}><Share        auth={auth} /></Protected>} />
-        <Route path="/p/:repo/settings"    element={<Protected auth={auth}><Settings     auth={auth} /></Protected>} />
-        <Route path="/p/:repo/ai"          element={<Protected auth={auth}><ContinueWithAI auth={auth} /></Protected>} />
-        <Route path="/p/:repo/h/*"         element={<RedirectToSavePoints />} />
-
-        {/* ── Update pages ────────────────────────────────────────── */}
-        <Route path="/p/:repo/u/:updateId"        element={<Protected auth={auth}><UpdateWorkspace auth={auth} /></Protected>} />
-        <Route path="/p/:repo/u/:updateId/ai"     element={<Protected auth={auth}><ContinueWithAI  auth={auth} /></Protected>} />
-        <Route path="/p/:repo/u/:updateId/return" element={<Protected auth={auth}><ReturnFromAI    auth={auth} /></Protected>} />
-        <Route path="/p/:repo/u/:updateId/review" element={<Protected auth={auth}><ReviewAIChanges auth={auth} /></Protected>} />
+        {/* ── Everything about a project ──────────────────────────── */}
+        <Route path="/p/*" element={<ProjectArea auth={auth} />} />
 
         {/* ── Catch-all ───────────────────────────────────────────── */}
         <Route path="*" element={<Navigate to="/" replace />} />

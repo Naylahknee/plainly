@@ -17,9 +17,8 @@ import { splitCommitMessage, commitAuthor } from '../utils/commitText'
 import { projectName } from '../utils/projectName'
 
 export default function SavePoints({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const { token, user } = auth
-  const owner = user?.login
 
   const [commits, setCommits]   = useState([])
   const [loading, setLoading]   = useState(true)
@@ -80,7 +79,7 @@ export default function SavePoints({ auth }) {
 
   return (
     <div className="screen-padded points-screen">
-      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
       <h1 className="points-title">Restore an earlier version</h1>
       <p className="points-intro">
         Pick the Save Point you want to go back to. Plainly puts those files back and saves that
@@ -95,7 +94,7 @@ export default function SavePoints({ auth }) {
               Restored — your files now look the way they did at "{restored.title}". This is saved
               as a new Save Point.
             </div>
-            <Link to={`/p/${repo}/files`} className="text-link">Open the file</Link>
+            <Link to={`/p/${owner}/${repo}/files`} className="text-link">Open the file</Link>
           </div>
         </div>
       )}
@@ -109,7 +108,7 @@ export default function SavePoints({ auth }) {
       <div className="points-list">
         {commits.map((c, i) => {
           const { title } = splitCommitMessage(c.commit?.message)
-          const who = commitAuthor(c, owner)
+          const who = commitAuthor(c, user?.login)
           const when = c.commit?.author?.date
           // Page one, newest first, so the top row is the latest Save Point.
           const version = total ? total - i : null

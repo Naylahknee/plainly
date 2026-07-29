@@ -37,10 +37,10 @@ function NavItem({ to, label, end }) {
 }
 
 export default function AppShell({ auth, children }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const { pathname } = useLocation()
   // If the :repo param is present, we're inside a project
-  const inProject = Boolean(repo)
+  const inProject = Boolean(owner && repo)
   // Help opens its own topic list, the same way a project opens its own nav.
   const inHelp = pathname === '/help' || pathname.startsWith('/help/')
 
@@ -48,7 +48,7 @@ export default function AppShell({ auth, children }) {
   const avatarUrl = user?.avatar_url
   const login = user?.login
 
-  const activeUpdate = inProject && login ? getActiveUpdate(login, repo) : null
+  const activeUpdate = inProject ? getActiveUpdate(owner, repo) : null
 
   return (
     <div className="shell">
@@ -80,23 +80,25 @@ export default function AppShell({ auth, children }) {
         )}
 
         {/* Project nav — only when inside /p/:repo */}
-        {inProject && repo && (
+        {inProject && (
           <div className="shell-nav-group">
             <p className="shell-nav-heading">
               {projectName(repo)}
+              {/* Whose it is, but only when that isn't obvious. */}
+              {owner !== login && <span className="shell-nav-owner">{owner}</span>}
             </p>
-            <NavItem to={`/p/${repo}`}          end   label="Project Home" />
-            <NavItem to={`/p/${repo}/updates`}        label="Updates" />
-            <NavItem to={`/p/${repo}/new-update`}     label="Make an Update" />
-            <NavItem to={`/p/${repo}/files`}          label="Project Files" />
-            <NavItem to={`/p/${repo}/changed`}        label="What Changed" />
-            <NavItem to={`/p/${repo}/points`}         label="Save Points" />
-            <NavItem to={`/p/${repo}/versions`}       label="Separate Versions" />
-            <NavItem to={`/p/${repo}/share`}          label="Who Can See It" />
+            <NavItem to={`/p/${owner}/${repo}`}          end   label="Project Home" />
+            <NavItem to={`/p/${owner}/${repo}/updates`}        label="Updates" />
+            <NavItem to={`/p/${owner}/${repo}/new-update`}     label="Make an Update" />
+            <NavItem to={`/p/${owner}/${repo}/files`}          label="Project Files" />
+            <NavItem to={`/p/${owner}/${repo}/changed`}        label="What Changed" />
+            <NavItem to={`/p/${owner}/${repo}/points`}         label="Save Points" />
+            <NavItem to={`/p/${owner}/${repo}/versions`}       label="Separate Versions" />
+            <NavItem to={`/p/${owner}/${repo}/share`}          label="Who Can See It" />
             {/* Opens the handoff for the update in progress, or for the project
                 itself when there isn't one yet. Same helper as Project Home. */}
-            <NavItem to={aiRouteFor(repo, activeUpdate)} label="Continue with AI" />
-            <NavItem to={`/p/${repo}/settings`}       label="Settings" />
+            <NavItem to={aiRouteFor(owner, repo, activeUpdate)} label="Continue with AI" />
+            <NavItem to={`/p/${owner}/${repo}/settings`}       label="Settings" />
           </div>
         )}
 

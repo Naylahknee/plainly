@@ -21,10 +21,9 @@ import { useShowGithubWords } from '../utils/settings'
 import { aiRouteFor } from '../utils/aiRoute'
 
 export default function ProjectHome({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const navigate = useNavigate()
   const { token, user } = auth
-  const owner = user?.login
   const [showWords] = useShowGithubWords()
 
   const [repoData, setRepoData] = useState(null)
@@ -74,14 +73,14 @@ export default function ProjectHome({ auth }) {
   // Continue with AI opens for the update in progress, or for the project
   // itself when there isn't one. Shared with the sidebar so the two can't
   // disagree about where the same words lead.
-  const aiRoute = aiRouteFor(repo, activeUpdate)
+  const aiRoute = aiRouteFor(owner, repo, activeUpdate)
 
   const ACTIONS = [
-    { title: 'Make an update',            body: "Describe what you want to change. You don't need to know which file controls it.", cta: 'Describe an update', to: `/p/${repo}/new-update` },
+    { title: 'Make an update',            body: "Describe what you want to change. You don't need to know which file controls it.", cta: 'Describe an update', to: `/p/${owner}/${repo}/new-update` },
     { title: 'Continue with AI',          body: 'Hand this project to Claude, ChatGPT, Gemini, Manus, DeepSeek or another AI — with all the context it needs.', cta: 'Continue with AI', to: aiRoute },
-    { title: 'Review what changed',       body: 'See recent Save Points and understand what each one changed.', cta: 'View changes', to: `/p/${repo}/changed` },
-    { title: 'Browse project files',      body: 'Open and edit the files stored in this GitHub project.', cta: 'Browse files', to: `/p/${repo}/files` },
-    { title: 'Restore an earlier version', body: 'Go back to a previous Save Point. Nothing newer is deleted.', cta: 'View Save Points', to: `/p/${repo}/points` },
+    { title: 'Review what changed',       body: 'See recent Save Points and understand what each one changed.', cta: 'View changes', to: `/p/${owner}/${repo}/changed` },
+    { title: 'Browse project files',      body: 'Open and edit the files stored in this GitHub project.', cta: 'Browse files', to: `/p/${owner}/${repo}/files` },
+    { title: 'Restore an earlier version', body: 'Go back to a previous Save Point. Nothing newer is deleted.', cta: 'View Save Points', to: `/p/${owner}/${repo}/points` },
   ]
 
   if (loading) {
@@ -171,15 +170,15 @@ export default function ProjectHome({ auth }) {
             <div className="project-update-actions">
               <button
                 className="pl-btn-primary"
-                onClick={() => navigate(`/p/${repo}/u/${activeUpdate.id}/${hero.route}`)}
+                onClick={() => navigate(`/p/${owner}/${repo}/u/${activeUpdate.id}/${hero.route}`)}
               >
                 {hero.cta}
               </button>
-              <Link to={`/p/${repo}/u/${activeUpdate.id}`} className="pl-btn">
+              <Link to={`/p/${owner}/${repo}/u/${activeUpdate.id}`} className="pl-btn">
                 Open the update
               </Link>
               {inProgressCount > 1 && (
-                <Link to={`/p/${repo}/updates`} className="text-link">
+                <Link to={`/p/${owner}/${repo}/updates`} className="text-link">
                   {inProgressCount} updates in progress →
                 </Link>
               )}
@@ -203,7 +202,7 @@ export default function ProjectHome({ auth }) {
                     <div className="project-recent-title">{title}</div>
                     {summary && <div className="project-recent-summary">{summary}</div>}
                     <div className="project-recent-meta">
-                      {commitAuthor(c, owner)}
+                      {commitAuthor(c, user?.login)}
                       {c.commit?.author?.date && <> · {timeAgo(c.commit.author.date)}</>}
                       {version > 0 ? <> · v{version}</> : null}
                     </div>
@@ -218,8 +217,8 @@ export default function ProjectHome({ auth }) {
             </p>
 
             <div className="project-update-actions">
-              <Link to={`/p/${repo}/new-update`} className="pl-btn-primary">Make an update</Link>
-              <Link to={`/p/${repo}/changed`} className="text-link">
+              <Link to={`/p/${owner}/${repo}/new-update`} className="pl-btn-primary">Make an update</Link>
+              <Link to={`/p/${owner}/${repo}/changed`} className="text-link">
                 See everything that changed →
               </Link>
             </div>
@@ -229,7 +228,7 @@ export default function ProjectHome({ auth }) {
         <section className="project-update-card project-update-card--empty">
           <p className="project-update-empty-title">You haven't started an update yet.</p>
           <p className="project-update-empty-next">Describe what you want to change.</p>
-          <Link to={`/p/${repo}/new-update`} className="pl-btn-primary">Make an update</Link>
+          <Link to={`/p/${owner}/${repo}/new-update`} className="pl-btn-primary">Make an update</Link>
         </section>
       )}
 

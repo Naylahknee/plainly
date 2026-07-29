@@ -24,9 +24,8 @@ import { projectName } from '../utils/projectName'
 import { useShowGithubWords } from '../utils/settings'
 
 export default function WhatChanged({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const { token, user } = auth
-  const owner = user?.login
   const [showWords] = useShowGithubWords()
 
   const [commits, setCommits] = useState([])
@@ -67,7 +66,7 @@ export default function WhatChanged({ auth }) {
 
   return (
     <div className="screen-padded changed-screen">
-      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
       <h1 className="changed-title">What changed</h1>
       <p className="changed-intro">
         Every Save Point in this project, newest first — written the way you wrote it, not in
@@ -85,7 +84,7 @@ export default function WhatChanged({ auth }) {
       <div className="changed-list">
         {commits.map((c, i) => {
           const { title, summary, body } = splitCommitMessage(c.commit?.message)
-          const who = commitAuthor(c, owner)
+          const who = commitAuthor(c, user?.login)
           const when = c.commit?.author?.date
           // Page one, newest first — so the top row is the newest Save Point.
           const version = total ? total - i : null

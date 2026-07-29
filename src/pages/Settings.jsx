@@ -14,10 +14,9 @@ import { getRepoInfo, updateRepoSettings, deleteRepo } from '../api/github'
 import { projectName } from '../utils/projectName'
 
 export default function Settings({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const navigate = useNavigate()
   const { token, user } = auth
-  const owner = user?.login
 
   const [repoData, setRepoData] = useState(null)
   const [name, setName]         = useState(repo)
@@ -54,7 +53,7 @@ export default function Settings({ auth }) {
       })
       setSaved(true)
       if (updated?.name && updated.name !== repo) {
-        navigate(`/p/${updated.name}/settings`, { replace: true })
+        navigate(`/p/${owner}/${updated.name}/settings`, { replace: true })
       }
       setTimeout(() => setSaved(false), 2500)
     } catch (e) {
@@ -82,7 +81,7 @@ export default function Settings({ auth }) {
 
   return (
     <div className="screen-padded settings-screen">
-      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
       <h1 className="settings-title">Project settings</h1>
 
       <form className="settings-card" onSubmit={handleSave}>
@@ -130,7 +129,7 @@ export default function Settings({ auth }) {
         <div className="settings-body">
           Right now: {repoData?.private ? 'only you. Anyone you add as a collaborator in GitHub can also see it.' : 'anyone with the link — this project is public.'}
         </div>
-        <Link to={`/p/${repo}/share`} className="pl-btn">Change who can see it</Link>
+        <Link to={`/p/${owner}/${repo}/share`} className="pl-btn">Change who can see it</Link>
       </div>
 
       {error && <p className="error-box">{error}</p>}

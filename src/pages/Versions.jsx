@@ -32,9 +32,8 @@ async function getBranches(token, owner, repo) {
 }
 
 export default function Versions({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const { token, user } = auth
-  const owner = user?.login
 
   const [branches, setBranches] = useState([])
   const [repoData, setRepoData] = useState(null)
@@ -77,7 +76,7 @@ export default function Versions({ auth }) {
 
   return (
     <div className="screen-padded versions-screen">
-      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
       <h1 className="versions-title">Separate versions</h1>
       <p className="versions-intro">
         A separate version is a safe copy of the whole project. You can try something risky in it

@@ -42,9 +42,8 @@ const SETTINGS = {
 }
 
 export default function Share({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const { token, user } = auth
-  const owner = user?.login
 
   const [repoData, setRepoData] = useState(null)
   const [loading, setLoading]   = useState(true)
@@ -104,7 +103,7 @@ export default function Share({ auth }) {
 
   return (
     <div className="screen-padded share-screen">
-      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
       <h1 className="share-title">Who can see it</h1>
       <p className="share-intro">
         Pick a setting and Plainly tells you exactly what it means — in normal words, before

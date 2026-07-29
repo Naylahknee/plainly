@@ -38,9 +38,8 @@ function noteFor(entry) {
 }
 
 export default function ProjectFiles({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const { token, user } = auth
-  const owner = user?.login
 
   const [entries, setEntries] = useState([])
   const [open, setOpen]       = useState({})     // path -> children | 'loading'
@@ -152,7 +151,7 @@ export default function ProjectFiles({ auth }) {
 
   return (
     <div className="screen-padded files-screen">
-      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
       <h1 className="files-title">Project files</h1>
       <p className="files-intro">
         These are the real files in your GitHub project. Names stay exactly as they are — the
@@ -231,8 +230,8 @@ export default function ProjectFiles({ auth }) {
                   </button>
                 ) : (
                   <>
-                    <Link to={`/p/${repo}/f/${entry.path}`} className="pl-btn files-action">Open</Link>
-                    <Link to={`/p/${repo}/changed`} className="pl-btn files-action">History</Link>
+                    <Link to={`/p/${owner}/${repo}/f/${entry.path}`} className="pl-btn files-action">Open</Link>
+                    <Link to={`/p/${owner}/${repo}/changed`} className="pl-btn files-action">History</Link>
                     <button
                       className="pl-btn files-action"
                       onClick={() => { setRenaming(entry.path); setRenameTo(entry.name); setDeleting(null) }}
@@ -316,7 +315,7 @@ export default function ProjectFiles({ auth }) {
                       </div>
                       {kid.type === 'dir'
                         ? <span className="files-child-note">Folder</span>
-                        : <Link to={`/p/${repo}/f/${kid.path}`} className="pl-btn files-action">Open</Link>}
+                        : <Link to={`/p/${owner}/${repo}/f/${kid.path}`} className="pl-btn files-action">Open</Link>}
                     </div>
                   ))}
                 </div>

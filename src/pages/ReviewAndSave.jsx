@@ -20,10 +20,9 @@ import { projectName } from '../utils/projectName'
 import { timeAgo } from '../utils/time'
 
 export default function ReviewAndSave({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const navigate = useNavigate()
   const { token, user } = auth
-  const owner = user?.login
 
   const update = owner ? getActiveUpdate(owner, repo) : null
 
@@ -122,10 +121,10 @@ export default function ReviewAndSave({ auth }) {
           </div>
         </div>
         <div className="save-done-actions">
-          <Link to={`/p/${repo}`} className="pl-btn-primary">Back to {projectName(repo)}</Link>
-          <Link to={`/p/${repo}/changed`} className="pl-btn">See what changed</Link>
+          <Link to={`/p/${owner}/${repo}`} className="pl-btn-primary">Back to {projectName(repo)}</Link>
+          <Link to={`/p/${owner}/${repo}/changed`} className="pl-btn">See what changed</Link>
           {update && (
-            <Link to={`/p/${repo}/u/${update.id}/ai`} className="pl-btn">Continue with AI</Link>
+            <Link to={`/p/${owner}/${repo}/u/${update.id}/ai`} className="pl-btn">Continue with AI</Link>
           )}
         </div>
       </div>
@@ -134,7 +133,7 @@ export default function ReviewAndSave({ auth }) {
 
   return (
     <div className="screen-padded save-screen">
-      <Link to={`/p/${repo}/files`} className="back-link">← Back to the file</Link>
+      <Link to={`/p/${owner}/${repo}/files`} className="back-link">← Back to the file</Link>
       <h1 className="save-title">Review and save</h1>
       <p className="save-intro">
         Here's exactly what will be saved to GitHub. Nothing leaves this screen until you press
@@ -153,7 +152,7 @@ export default function ReviewAndSave({ auth }) {
             need to decide which version wins.
           </p>
           <div className="save-conflict-choices">
-            <Link to={`/p/${repo}/changed`} className="save-conflict-choice">
+            <Link to={`/p/${owner}/${repo}/changed`} className="save-conflict-choice">
               <span>
                 <span className="save-conflict-choice-name">Show me the other version first</span>
                 <span className="save-conflict-choice-body">
@@ -176,7 +175,7 @@ export default function ReviewAndSave({ auth }) {
               </span>
               <span aria-hidden="true">›</span>
             </button>
-            <Link to={`/p/${repo}/points`} className="save-conflict-choice">
+            <Link to={`/p/${owner}/${repo}/points`} className="save-conflict-choice">
               <span>
                 <span className="save-conflict-choice-name">Keep their version</span>
                 <span className="save-conflict-choice-body">
@@ -198,7 +197,7 @@ export default function ReviewAndSave({ auth }) {
             Everything you've edited is already in GitHub. Open a file to make a change and it
             will show up here before anything is saved.
           </p>
-          <Link to={`/p/${repo}/files`} className="pl-btn-primary">Browse project files</Link>
+          <Link to={`/p/${owner}/${repo}/files`} className="pl-btn-primary">Browse project files</Link>
         </div>
       )}
 
@@ -258,7 +257,7 @@ export default function ReviewAndSave({ auth }) {
             <button type="submit" className="pl-btn-primary" disabled={saving}>
               {saving ? 'Saving…' : 'Create Save Point and save to GitHub'}
             </button>
-            <button type="button" className="pl-btn" onClick={() => navigate(`/p/${repo}/files`)}>
+            <button type="button" className="pl-btn" onClick={() => navigate(`/p/${owner}/${repo}/files`)}>
               Keep editing
             </button>
           </div>

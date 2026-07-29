@@ -9,8 +9,8 @@
  * Anything that offers "Continue with AI" outside an update calls this.
  */
 
-export function aiRouteFor(repo, activeUpdate) {
+export function aiRouteFor(owner, repo, activeUpdate) {
   return activeUpdate
-    ? `/p/${repo}/u/${activeUpdate.id}/ai`   // the update in progress
-    : `/p/${repo}/ai`                        // the project itself
+    ? `/p/${owner}/${repo}/u/${activeUpdate.id}/ai`   // the update in progress
+    : `/p/${owner}/${repo}/ai`                        // the project itself
 }

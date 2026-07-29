@@ -71,10 +71,10 @@ export default function NewProject({ auth }) {
             have. Either way Plainly keeps every version from here on.
           </p>
           <div className="newproject-empty-actions">
-            <Link to={`/p/${created.name}/new-update`} className="pl-btn-primary">
+            <Link to={`/p/${ownerOf(created, owner)}/${created.name}/new-update`} className="pl-btn-primary">
               Describe what you want to build
             </Link>
-            <Link to={`/p/${created.name}/files`} className="pl-btn">Add files</Link>
+            <Link to={`/p/${ownerOf(created, owner)}/${created.name}/files`} className="pl-btn">Add files</Link>
           </div>
         </div>
       </div>

@@ -24,9 +24,8 @@ function titleFrom(text) {
 }
 
 export default function NewUpdate({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const navigate = useNavigate()
-  const owner = auth?.user?.login
 
   const [text, setText] = useState('')
   const [created, setCreated] = useState(null)
@@ -40,7 +39,7 @@ export default function NewUpdate({ auth }) {
 
   return (
     <div className="screen-padded newupdate-screen">
-      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
       <h1 className="newupdate-title">What do you want to change?</h1>
       <p className="newupdate-intro">
         Describe the result you want. You do not need to know which file or technical step
@@ -61,7 +60,7 @@ export default function NewUpdate({ auth }) {
             <button type="submit" className="pl-btn-primary" disabled={!text.trim()}>
               Continue
             </button>
-            <button type="button" className="pl-btn" onClick={() => navigate(`/p/${repo}`)}>
+            <button type="button" className="pl-btn" onClick={() => navigate(`/p/${owner}/${repo}`)}>
               Cancel
             </button>
           </div>
@@ -84,11 +83,11 @@ export default function NewUpdate({ auth }) {
           </div>
 
           <div className="newupdate-summary-actions">
-            <Link to={`/p/${repo}/u/${created.id}/ai`} className="pl-btn-primary">
+            <Link to={`/p/${owner}/${repo}/u/${created.id}/ai`} className="pl-btn-primary">
               Continue with AI
             </Link>
-            <Link to={`/p/${repo}/files`} className="pl-btn">Browse project files</Link>
-            <Link to={`/p/${repo}`} className="pl-btn">Save task for later</Link>
+            <Link to={`/p/${owner}/${repo}/files`} className="pl-btn">Browse project files</Link>
+            <Link to={`/p/${owner}/${repo}`} className="pl-btn">Save task for later</Link>
           </div>
         </section>
       )}

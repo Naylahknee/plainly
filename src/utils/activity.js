@@ -42,33 +42,36 @@ export function activityEvents({ owner, repos = [], commitsByRepo = {} }) {
   const events = []
   const seen = new Set()
 
-  const add = (what, repo, at) => {
+  // repoOwner travels with the event: a project in this list may belong to
+  // someone else, and the link into it needs to say whose.
+  const add = (what, repo, at, repoOwner) => {
     if (!what || !at) return
     const key = `${repo}|${what}`
     if (seen.has(key)) return
     seen.add(key)
-    events.push({ what, repo, at })
+    events.push({ what, repo, at, owner: repoOwner || owner })
   }
 
   for (const repo of repos) {
     const name = repo.name
-    const mem = getMemory(owner, name)
+    const repoOwner = repo.owner?.login || owner
+    const mem = getMemory(repoOwner, name)
 
     // Commits first, so a Save Point GitHub knows about wins over the local
     // note about the same save.
     for (const commit of commitsByRepo[name] || []) {
-      add(`Created a Save Point — "${firstLine(commit)}"`, name, commit.commit?.author?.date)
+      add(`Created a Save Point — "${firstLine(commit)}"`, name, commit.commit?.author?.date, repoOwner)
     }
 
-    if (mem.lastSaveLabel) add(`Created a Save Point — "${mem.lastSaveLabel}"`, name, mem.lastSaveAt)
-    if (mem.lastOpenedFile) add(`Opened ${mem.lastOpenedFile}`, name, mem.lastOpenedAt)
-    else if (mem.lastOpenedAt) add('Opened this project', name, mem.lastOpenedAt)
+    if (mem.lastSaveLabel) add(`Created a Save Point — "${mem.lastSaveLabel}"`, name, mem.lastSaveAt, repoOwner)
+    if (mem.lastOpenedFile) add(`Opened ${mem.lastOpenedFile}`, name, mem.lastOpenedAt, repoOwner)
+    else if (mem.lastOpenedAt) add('Opened this project', name, mem.lastOpenedAt, repoOwner)
     if (mem.lastAITool) {
-      add(`Continued work with ${AI_LABEL[mem.lastAITool] || mem.lastAITool}`, name, mem.lastAIAt)
+      add(`Continued work with ${AI_LABEL[mem.lastAITool] || mem.lastAITool}`, name, mem.lastAIAt, repoOwner)
     }
 
-    for (const update of getUpdates(owner, name) || []) {
-      for (const step of update.story || []) add(step.what, name, step.at)
+    for (const update of getUpdates(repoOwner, name) || []) {
+      for (const step of update.story || []) add(step.what, name, step.at, repoOwner)
     }
   }
 

@@ -214,6 +214,15 @@ account picker every time, and Account states whether GitHub still lists Plainly
 GitHub rather than by assuming it — with "couldn't check" as its own answer, never rendered
 as connected.
 
+**A project URL carries its owner:** `/p/:owner/:repo`. Not the signed-in user — the
+account the project actually belongs to, because a project shared with you or owned by a
+team belongs to somebody else and every GitHub call needs to know whose. Screens read the
+pair from `useProject()`, lists link with `ownerOf(repo)`, and stored memory is keyed by
+the project's owner. Links from before this shape redirect (`ProjectArea` in `App.jsx`).
+
+The one ambiguity — a project genuinely named `settings` or `files` — resolves by treating
+a first segment that matches the signed-in user as the new shape, which it always is.
+
 Every route resolves. No dead links, no 404s. Old routes redirect to their designed
 replacement rather than disappearing.
 

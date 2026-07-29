@@ -27,9 +27,8 @@ import { projectName } from '../utils/projectName'
 const LOCKED = CONTEXT_ITEMS.filter(c => c.locked).map(c => c.id)
 
 export default function ContinueWithAI({ auth }) {
-  const { repo, updateId } = useParams()
+  const { owner, repo, updateId } = useParams()
   const { token, user } = auth
-  const owner = user?.login
 
   const stored = owner && updateId ? getUpdateById(owner, repo, updateId) : null
 
@@ -122,7 +121,7 @@ export default function ContinueWithAI({ auth }) {
     return (
       <div className="screen-padded ai-screen">
         <p className="error-box">That update could not be found.</p>
-        <Link to={`/p/${repo}/updates`} className="pl-btn">Back to updates</Link>
+        <Link to={`/p/${owner}/${repo}/updates`} className="pl-btn">Back to updates</Link>
       </div>
     )
   }
@@ -174,7 +173,7 @@ export default function ContinueWithAI({ auth }) {
 
   return (
     <div className="screen-padded ai-screen">
-      <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+      <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
       <h1 className="ai-title">Continue with AI</h1>
       <p className="ai-intro">
         Plainly writes a handoff with everything the AI needs to pick up where you left off.
@@ -191,7 +190,7 @@ export default function ContinueWithAI({ auth }) {
               Did you make changes? Plainly can only see them once they're in your files.
             </div>
           </div>
-          <Link to={`/p/${repo}/u/${stored.id}/return`} className="pl-btn">Review project changes</Link>
+          <Link to={`/p/${owner}/${repo}/u/${stored.id}/return`} className="pl-btn">Review project changes</Link>
         </div>
       )}
 

@@ -16,9 +16,8 @@ import { projectName } from '../utils/projectName'
 const LIFECYCLE = ['planned', 'ready_for_ai', 'sent_to_ai', 'changes_detected', 'waiting_for_review', 'ready_to_save', 'saved']
 
 export default function UpdateWorkspace({ auth }) {
-  const { repo, updateId } = useParams()
+  const { owner, repo, updateId } = useParams()
   const navigate = useNavigate()
-  const owner = auth?.user?.login
 
   const update = owner ? getUpdateById(owner, repo, updateId) : null
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -28,7 +27,7 @@ export default function UpdateWorkspace({ auth }) {
     return (
       <div className="screen-padded workspace-screen">
         <p className="error-box">This update could not be found.</p>
-        <Link to={`/p/${repo}/updates`} className="pl-btn">Back to updates</Link>
+        <Link to={`/p/${owner}/${repo}/updates`} className="pl-btn">Back to updates</Link>
       </div>
     )
   }
@@ -40,7 +39,7 @@ export default function UpdateWorkspace({ auth }) {
     if (!owner) return
     setDeleting(true)
     deleteUpdate(owner, repo, updateId)
-    navigate(`/p/${repo}/updates`, { replace: true })
+    navigate(`/p/${owner}/${repo}/updates`, { replace: true })
   }
 
   function handlePause() {
@@ -56,7 +55,7 @@ export default function UpdateWorkspace({ auth }) {
     <div className="screen-padded workspace-screen">
       <div>
         {/* Back link */}
-        <Link to={`/p/${repo}/updates`} className="update-workspace-back">
+        <Link to={`/p/${owner}/${repo}/updates`} className="update-workspace-back">
           ← All updates
         </Link>
 
@@ -104,7 +103,7 @@ export default function UpdateWorkspace({ auth }) {
           </div>
           <button
             className="pl-btn-primary"
-            onClick={() => navigate(`/p/${repo}/u/${updateId}/${hero.route}`)}
+            onClick={() => navigate(`/p/${owner}/${repo}/u/${updateId}/${hero.route}`)}
           >
             {hero.cta}
           </button>
@@ -141,7 +140,7 @@ export default function UpdateWorkspace({ auth }) {
                 <ul className="update-files-list">
                   {(update.files || []).map((file, i) => (
                     <li key={i}>
-                      <Link to={`/p/${repo}/f/${file}`} className="update-file-item">
+                      <Link to={`/p/${owner}/${repo}/f/${file}`} className="update-file-item">
                         <code>{file}</code>
                         <span className="update-file-open">Open</span>
                       </Link>
@@ -178,10 +177,10 @@ export default function UpdateWorkspace({ auth }) {
 
         {/* Footer actions */}
         <div className="update-workspace-footer">
-          <Link to={`/p/${repo}/u/${updateId}/ai`} className="pl-btn-primary">
+          <Link to={`/p/${owner}/${repo}/u/${updateId}/ai`} className="pl-btn-primary">
             Continue with AI
           </Link>
-          <Link to={`/p/${repo}/u/${updateId}/review`} className="pl-btn">
+          <Link to={`/p/${owner}/${repo}/u/${updateId}/review`} className="pl-btn">
             Review the changes
           </Link>
           {update.status !== 'saved' && update.status !== 'paused' && (

@@ -17,9 +17,8 @@ import { getMemory } from '../utils/projectMemory'
 import { getCurrentHeadSha, compareCommits } from '../api/github'
 
 export default function ReturnFromAI({ auth }) {
-  const { repo, updateId } = useParams()
+  const { owner, repo, updateId } = useParams()
   const { token, user } = auth
-  const owner = user?.login
 
   const update = owner ? getUpdateById(owner, repo, updateId) : null
   const sentSha = update?.handoff?.commitShaAtSend
@@ -84,17 +83,17 @@ export default function ReturnFromAI({ auth }) {
     return (
       <div className="screen-padded return-screen">
         <p className="error-box">Update not found.</p>
-        <Link to={`/p/${repo}/updates`} className="pl-btn">Back to updates</Link>
+        <Link to={`/p/${owner}/${repo}/updates`} className="pl-btn">Back to updates</Link>
       </div>
     )
   }
 
   const ai = update.ai || 'the AI'
-  const reviewLink = `/p/${repo}/u/${updateId}/review`
+  const reviewLink = `/p/${owner}/${repo}/u/${updateId}/review`
 
   return (
     <div className="screen-padded return-screen">
-      <Link to={`/p/${repo}/u/${updateId}`} className="back-link">← {update.title}</Link>
+      <Link to={`/p/${owner}/${repo}/u/${updateId}`} className="back-link">← {update.title}</Link>
 
       <div className="return-head">
         <span className="section-label section-label--tight">Welcome back</span>
@@ -156,7 +155,7 @@ export default function ReturnFromAI({ auth }) {
           </p>
           <div className="return-actions">
             <button className="pl-btn-primary" onClick={check}>Check again</button>
-            <Link to={`/p/${repo}/u/${updateId}/ai`} className="pl-btn">Send the handoff again</Link>
+            <Link to={`/p/${owner}/${repo}/u/${updateId}/ai`} className="pl-btn">Send the handoff again</Link>
           </div>
         </section>
       )}
@@ -176,7 +175,7 @@ export default function ReturnFromAI({ auth }) {
           </p>
           <div className="return-actions">
             <Link to={reviewLink} className="pl-btn-primary">Read what changed</Link>
-            <Link to={`/p/${repo}/changed`} className="pl-btn">See the Save Points</Link>
+            <Link to={`/p/${owner}/${repo}/changed`} className="pl-btn">See the Save Points</Link>
           </div>
         </section>
       )}
@@ -192,7 +191,7 @@ export default function ReturnFromAI({ auth }) {
             Plainly would have to ask you to choose between them later.
           </p>
           <div className="return-actions">
-            <Link to={`/p/${repo}/versions`} className="pl-btn-primary">Get latest version</Link>
+            <Link to={`/p/${owner}/${repo}/versions`} className="pl-btn-primary">Get latest version</Link>
             <Link to={reviewLink} className="pl-btn">See what's different first</Link>
           </div>
         </section>
@@ -208,7 +207,7 @@ export default function ReturnFromAI({ auth }) {
           </p>
           <div className="return-actions">
             <button className="pl-btn-primary" onClick={check}>Try again</button>
-            <Link to={`/p/${repo}/u/${updateId}`} className="pl-btn">Back to the update</Link>
+            <Link to={`/p/${owner}/${repo}/u/${updateId}`} className="pl-btn">Back to the update</Link>
           </div>
         </section>
       )}
@@ -223,8 +222,8 @@ export default function ReturnFromAI({ auth }) {
             exactly what changed.
           </p>
           <div className="return-actions">
-            <Link to={`/p/${repo}/u/${updateId}/ai`} className="pl-btn-primary">Continue with AI</Link>
-            <Link to={`/p/${repo}/u/${updateId}`} className="pl-btn">Back to the update</Link>
+            <Link to={`/p/${owner}/${repo}/u/${updateId}/ai`} className="pl-btn-primary">Continue with AI</Link>
+            <Link to={`/p/${owner}/${repo}/u/${updateId}`} className="pl-btn">Back to the update</Link>
           </div>
         </section>
       )}

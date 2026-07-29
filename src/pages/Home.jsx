@@ -21,6 +21,7 @@ import { getDrafts } from '../utils/drafts'
 import { activityEvents } from '../utils/activity'
 import { projectName } from '../utils/projectName'
 import { projectStatus } from '../utils/projectStatus'
+import { ownerOf } from '../utils/useProject'
 
 const EXPLAINER_DISMISSED_KEY = 'plainly_home_explainer_dismissed'
 
@@ -70,8 +71,8 @@ export default function Home({ auth }) {
   const allUpdates = []
   if (owner) {
     for (const r of repos) {
-      for (const u of getUpdates(owner, r.name) || []) {
-        allUpdates.push({ ...u, repoName: r.name })
+      for (const u of getUpdates(ownerOf(r, owner), r.name) || []) {
+        allUpdates.push({ ...u, repoName: r.name, repoOwner: ownerOf(r, owner) })
       }
     }
   }
@@ -80,12 +81,15 @@ export default function Home({ auth }) {
   // The hero is one update — the most recently active one still in flight.
   let heroUpdate = null
   let heroRepo = null
+  let heroOwner = null
   if (owner) {
     for (const r of repos) {
-      const active = getActiveUpdate(owner, r.name)
+      const rOwner = ownerOf(r, owner)
+      const active = getActiveUpdate(rOwner, r.name)
       if (active && (!heroUpdate || new Date(active.lastActivityAt || 0) > new Date(heroUpdate.lastActivityAt || 0))) {
         heroUpdate = active
         heroRepo = r.name
+        heroOwner = rOwner
       }
     }
   }
@@ -96,8 +100,8 @@ export default function Home({ auth }) {
 
   const mostRecent = owner
     ? [...repos].sort((a, b) => {
-        const at = getMemory(owner, a.name).lastOpenedAt || a.updated_at || 0
-        const bt = getMemory(owner, b.name).lastOpenedAt || b.updated_at || 0
+        const at = getMemory(ownerOf(a, owner), a.name).lastOpenedAt || a.updated_at || 0
+        const bt = getMemory(ownerOf(b, owner), b.name).lastOpenedAt || b.updated_at || 0
         return new Date(bt) - new Date(at)
       })[0]
     : repos[0]
@@ -180,12 +184,12 @@ export default function Home({ auth }) {
           <div className="home-hero-actions">
             <button
               className="pl-btn-primary home-hero-cta"
-              onClick={() => navigate(`/p/${heroRepo}/u/${heroUpdate.id}/${hero.route}`)}
+              onClick={() => navigate(`/p/${heroOwner}/${heroRepo}/u/${heroUpdate.id}/${hero.route}`)}
             >
               {hero.cta}
             </button>
-            <Link to={`/p/${heroRepo}/u/${heroUpdate.id}`} className="pl-btn">Open the update</Link>
-            <Link to={`/p/${heroRepo}/updates`} className="pl-btn">Something else</Link>
+            <Link to={`/p/${heroOwner}/${heroRepo}/u/${heroUpdate.id}`} className="pl-btn">Open the update</Link>
+            <Link to={`/p/${heroOwner}/${heroRepo}/updates`} className="pl-btn">Something else</Link>
           </div>
         </section>
       ) : (
@@ -201,13 +205,13 @@ export default function Home({ auth }) {
           <p className="home-hero-empty-next">Describe what you want to change.</p>
           <div className="home-hero-actions">
             <Link
-              to={mostRecent ? `/p/${mostRecent.name}/new-update` : '/projects'}
+              to={mostRecent ? `/p/${ownerOf(mostRecent, owner)}/${mostRecent.name}/new-update` : '/projects'}
               className="pl-btn-primary home-hero-cta"
             >
               Make an update
             </Link>
             {mostRecent && (
-              <Link to={`/p/${mostRecent.name}`} className="pl-btn">
+              <Link to={`/p/${ownerOf(mostRecent, owner)}/${mostRecent.name}`} className="pl-btn">
                 Open {projectName(mostRecent.name)}
               </Link>
             )}
@@ -234,7 +238,7 @@ export default function Home({ auth }) {
               and you can't go back to them later.
             </div>
           </div>
-          <Link to={`/p/${unsavedUpdate.repoName}/save`} className="pl-btn-primary home-attention-cta">
+          <Link to={`/p/${unsavedUpdate.repoOwner || owner}/${unsavedUpdate.repoName}/save`} className="pl-btn-primary home-attention-cta">
             Review and save
           </Link>
         </div>
@@ -258,10 +262,10 @@ export default function Home({ auth }) {
           )}
           <div className="home-project-list">
             {repos.slice(0, 4).map(repo => {
-              const mem = owner ? getMemory(owner, repo.name) : {}
+              const mem = owner ? getMemory(ownerOf(repo, owner), repo.name) : {}
               const status = projectStatus(
-                owner ? getUpdates(owner, repo.name) : [],
-                owner ? getDrafts(owner, repo.name) : {}
+                owner ? getUpdates(ownerOf(repo, owner), repo.name) : [],
+                owner ? getDrafts(ownerOf(repo, owner), repo.name) : {}
               )
               const lastAction = mem.lastSaveLabel
                 ? `Last Save Point: ${mem.lastSaveLabel}`
@@ -269,7 +273,7 @@ export default function Home({ auth }) {
                   ? `Opened ${timeAgo(mem.lastOpenedAt)}`
                   : `Last touched ${timeAgo(repo.updated_at)}`
               return (
-                <Link key={repo.id || repo.name} to={`/p/${repo.name}`} className="home-project-card">
+                <Link key={repo.id || repo.name} to={`/p/${ownerOf(repo, owner)}/${repo.name}`} className="home-project-card">
                   <span className="home-project-body">
                     <span className="home-project-top">
                       <span className="home-project-name">{projectName(repo.name)}</span>

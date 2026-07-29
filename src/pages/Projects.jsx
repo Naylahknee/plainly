@@ -18,6 +18,7 @@ import { getMemory, setMemory } from '../utils/projectMemory'
 import { getUpdates } from '../utils/updateMemory'
 import { projectName } from '../utils/projectName'
 import { projectStatus } from '../utils/projectStatus'
+import { ownerOf } from '../utils/useProject'
 
 export default function Projects({ auth }) {
   const owner = auth.user?.login
@@ -77,7 +78,7 @@ export default function Projects({ auth }) {
             return (
               <Link
                 key={repo.id || repo.name}
-                to={`/p/${repo.name}`}
+                to={`/p/${ownerOf(repo, owner)}/${repo.name}`}
                 className="projects-card"
                 onClick={() => rememberOpen(repo.name)}
               >

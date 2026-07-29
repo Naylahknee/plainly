@@ -66,7 +66,7 @@ export default function Activity({ auth }) {
             <div key={`${event.repo}-${event.at}-${i}`} className="home-activity-row">
               <span className="home-activity-dot" aria-hidden="true" />
               <span>
-                <Link to={`/p/${event.repo}`} className="home-activity-what activity-link">
+                <Link to={`/p/${event.owner || owner}/${event.repo}`} className="home-activity-what activity-link">
                   {event.what}
                 </Link>
                 <span className="home-activity-meta">

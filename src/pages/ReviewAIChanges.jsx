@@ -17,10 +17,9 @@ import { getCurrentHeadSha, compareCommits } from '../api/github'
 const NOT_CHECKED = 'Not checked — Plainly cannot run this yet.'
 
 export default function ReviewAIChanges({ auth }) {
-  const { repo, updateId } = useParams()
+  const { owner, repo, updateId } = useParams()
   const navigate = useNavigate()
   const { token, user } = auth
-  const owner = user?.login
 
   const update = owner ? getUpdateById(owner, repo, updateId) : null
 
@@ -55,7 +54,7 @@ export default function ReviewAIChanges({ auth }) {
     return (
       <div className="screen-padded review-screen">
         <p className="error-box">Update not found.</p>
-        <Link to={`/p/${repo}/updates`} className="pl-btn">Back to updates</Link>
+        <Link to={`/p/${owner}/${repo}/updates`} className="pl-btn">Back to updates</Link>
       </div>
     )
   }
@@ -77,7 +76,7 @@ export default function ReviewAIChanges({ auth }) {
       files: changedFiles.length ? changedFiles : update.files,
       storyEntry: 'You reviewed and accepted the changes',
     })
-    navigate(`/p/${repo}/save`)
+    navigate(`/p/${owner}/${repo}/save`)
   }
 
   function askForFix() {
@@ -85,7 +84,7 @@ export default function ReviewAIChanges({ auth }) {
       status: 'needs_correction',
       storyEntry: 'You asked the AI to fix something',
     })
-    navigate(`/p/${repo}/u/${updateId}/ai`)
+    navigate(`/p/${owner}/${repo}/u/${updateId}/ai`)
   }
 
   const CHECKS = [
@@ -105,7 +104,7 @@ export default function ReviewAIChanges({ auth }) {
 
   return (
     <div className="screen-padded review-screen">
-      <Link to={`/p/${repo}/u/${updateId}`} className="back-link">← {update.title}</Link>
+      <Link to={`/p/${owner}/${repo}/u/${updateId}`} className="back-link">← {update.title}</Link>
       <h1 className="review-title">What {ai} changed</h1>
       <p className="review-intro">
         In plain English first. Nothing here is saved to GitHub until you choose to save it.
@@ -216,7 +215,7 @@ export default function ReviewAIChanges({ auth }) {
                 <div className="review-choice-name">Change it myself first</div>
                 <div className="review-choice-body">Open the files and edit before saving.</div>
               </div>
-              <Link to={`/p/${repo}/files`} className="pl-btn review-choice-cta">Open the files</Link>
+              <Link to={`/p/${owner}/${repo}/files`} className="pl-btn review-choice-cta">Open the files</Link>
             </div>
 
             <div className="review-choice">
@@ -227,7 +226,7 @@ export default function ReviewAIChanges({ auth }) {
                   AI's version stays in your history.
                 </div>
               </div>
-              <Link to={`/p/${repo}/points`} className="pl-btn review-choice-cta">
+              <Link to={`/p/${owner}/${repo}/points`} className="pl-btn review-choice-cta">
                 Restore earlier version
               </Link>
             </div>

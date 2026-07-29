@@ -22,9 +22,8 @@ import { splitCommitMessage, commitAuthor } from '../utils/commitText'
 import { projectName } from '../utils/projectName'
 
 export default function Updates({ auth }) {
-  const { repo } = useParams()
-  const { token } = auth
-  const owner = auth?.user?.login
+  const { owner, repo } = useParams()
+  const { token, user } = auth
   const updates = owner ? getUpdates(owner, repo) : []
   const inProgressCount = updates.filter(u => u.status !== 'saved' && u.status !== 'paused').length
 
@@ -46,11 +45,11 @@ export default function Updates({ auth }) {
   return (
     <div className="screen-padded updates-screen">
       <div>
-        <Link to={`/p/${repo}`} className="back-link">← {projectName(repo)}</Link>
+        <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
 
         <div className="updates-header">
           <h1>Updates</h1>
-          <Link to={`/p/${repo}/new-update`} className="pl-btn-primary">
+          <Link to={`/p/${owner}/${repo}/new-update`} className="pl-btn-primary">
             Make an update
           </Link>
         </div>
@@ -67,7 +66,7 @@ export default function Updates({ auth }) {
               No updates yet — nothing has been followed start to finish inside Plainly. Work
               already saved to GitHub is below.
             </p>
-            <Link to={`/p/${repo}/new-update`} className="pl-btn-primary">
+            <Link to={`/p/${owner}/${repo}/new-update`} className="pl-btn-primary">
               Make an update
             </Link>
           </div>
@@ -78,7 +77,7 @@ export default function Updates({ auth }) {
             {updates.map(u => {
               const hero = heroFor(u, { filesCount: (u.files || []).length })
               return (
-                <Link key={u.id} to={`/p/${repo}/u/${u.id}`} className="updates-row">
+                <Link key={u.id} to={`/p/${owner}/${repo}/u/${u.id}`} className="updates-row">
                   <div className="updates-row-main">
                     <div className="updates-row-header">
                       <h2 className="updates-row-title">{u.title}</h2>
@@ -130,7 +129,7 @@ export default function Updates({ auth }) {
                       <div className="changed-entry-title">{title}</div>
                       {summary && <div className="changed-entry-summary">{summary}</div>}
                       <div className="changed-entry-meta">
-                        {commitAuthor(c, owner)}
+                        {commitAuthor(c, user?.login)}
                         {c.commit?.author?.date && <> · {timeAgo(c.commit.author.date)}</>}
                         {version > 0 ? <> · v{version}</> : null}
                       </div>
@@ -139,7 +138,7 @@ export default function Updates({ auth }) {
                 )
               })}
             </div>
-            <Link to={`/p/${repo}/changed`} className="text-link updates-saved-all">
+            <Link to={`/p/${owner}/${repo}/changed`} className="text-link updates-saved-all">
               See everything that changed →
             </Link>
           </>
