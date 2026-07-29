@@ -19,6 +19,7 @@ import { splitCommitMessage, commitAuthor } from '../utils/commitText'
 import { projectName } from '../utils/projectName'
 import { useShowGithubWords } from '../utils/settings'
 import { aiRouteFor } from '../utils/aiRoute'
+import ProjectSections from '../components/ProjectSections'
 
 export default function ProjectHome({ auth }) {
   const { owner, repo } = useParams()
@@ -232,6 +233,9 @@ export default function ProjectHome({ auth }) {
           <Link to={`/p/${owner}/${repo}/new-update`} className="pl-btn-primary">Make an update</Link>
         </section>
       )}
+
+      {/* Phones only — the sidebar's project list, since there is no sidebar. */}
+      <ProjectSections owner={owner} repo={repo} activeUpdate={activeUpdate} />
 
       {/* Everything else */}
       <h2 className="project-else-title">Or do something else</h2>

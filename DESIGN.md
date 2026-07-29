@@ -82,10 +82,33 @@ important card on a screen. Nothing else casts a shadow.
 `padding: 44px 48px 64px` with a max-width per screen (660–1000px). Use the `.screen-padded`
 class plus a per-screen `max-width`.
 
-**On a phone** (≤720px) the sidebar folds into a menu: a sticky bar with the wordmark and a
-**Menu** button, opening the same nav with the same groups and headings. Still one `<nav>`.
-It used to become a horizontal scrolling strip with the headings hidden, which put up to
-twenty-one items in a sideways swipe — Project Files was genuinely unreachable.
+**On a phone** (≤720px) there is no sidebar. Navigation is the shape of a phone app people
+already use:
+
+- a **bottom tab bar** — Home · My Projects · Recent Activity · Help — pinned, one tap each,
+  purple for where you are (`src/components/TabBar.jsx`);
+- a **top bar** with the avatar on the left, which opens Account, and `+` on the right for a
+  new project;
+- a project's ten sections as a **grouped card** on Project Home, since there is no sidebar
+  to hold them (`src/components/ProjectSections.jsx`).
+
+`projectNavItems()` in `src/utils/projectNav.js` is the single definition of those sections,
+used by both the sidebar and the card — writing the list twice is how the Continue with AI
+link drifted and shipped broken.
+
+**Grouped card rows** (`.card-list` / `.card-row`) are the mobile list idiom: a white rounded
+card, hairlines between rows rather than around them, a chevron on each, **one line per row**.
+A description under every item is what makes a list feel heavy, and these labels are already
+the plain-English names.
+
+Two `<nav>` elements exist, but only one is ever rendered: `display: none` removes the other
+from the accessibility tree as well as the screen, so a screen reader hears one navigation.
+Icons appear **only** on the phone — a tab bar without them doesn't work — and the desktop
+sidebar stays text.
+
+Earlier attempts are worth recording because both failed in use: a horizontal scrolling strip
+put twenty-one items in a sideways swipe with their headings hidden, and a Menu button put
+everything one tap further away with no sense of place.
 
 Controls a thumb aims at are at least **44px** tall on phones. The 12–12.5px sizes above are
 uppercase labels, pills and badges, and they stay — the 13px floor is about prose. Anything
