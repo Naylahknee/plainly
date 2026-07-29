@@ -72,7 +72,7 @@ export const STEPS = [
   },
   {
     title: 'Hand the project to an AI when you want help',
-    body: 'Plainly writes out the context so Claude, ChatGPT, Bob or Codex knows what your project is and what you want changed.',
+    body: 'Plainly writes out the context so Claude, ChatGPT, Gemini, Manus or DeepSeek knows what your project is and what you want changed.',
     detail: [
       'The handoff carries the project, where you left off, the file list, your recent Save Points, your project instructions, and how you want the AI to report back.',
       'When you tell Plainly you sent it, Plainly records the exact version your project was at. That is what lets it tell you what changed while you were away.',
@@ -124,7 +124,7 @@ export const WALKTHROUGHS = [
   },
   {
     id: 'handoff-ai',
-    title: 'I want to give Claude, Bob, or another AI my project',
+    title: 'I want to give Claude, Manus, or another AI my project',
     steps: [
       'Open the project in Plainly',
       'Click Continue with AI',
@@ -227,6 +227,27 @@ export const TROUBLESHOOTING = [
   },
 ]
 
+// ── The browser extension ─────────────────────────────────────────────────────
+// Plainly's sibling: github.com/Naylahknee/plainly-extension. This app explains
+// your own projects; the extension explains the technical web while you browse
+// it — GitHub included, but also Vercel, Netlify, Stripe and others.
+//
+// Everything below is taken from that repository's README and manifest. It is
+// not in the Chrome Web Store yet, so the install is Developer mode + Load
+// unpacked, and this says so rather than implying a one-click install.
+export const EXTENSION = {
+  url: 'https://github.com/Naylahknee/plainly-extension',
+  name: 'Plainly for your browser',
+  tagline: 'Like Google Translate, but for tech jargon.',
+  body: 'A Chrome extension that explains technical words on the sites themselves — GitHub, Vercel, Netlify, Stripe and more. Hover a term for a plain-English tooltip, or open the side panel for what a page is asking you to do.',
+  points: [
+    'Works offline. The glossary ships with the extension; nothing is sent anywhere unless you ask for a deeper explanation.',
+    'AI is optional and off by default. If you turn it on, you bring your own key and it stays on your computer.',
+    'Not in the Chrome Web Store yet — you install it from GitHub with Developer mode turned on.',
+  ],
+  cta: 'Get it on GitHub',
+}
+
 // ── Contact ───────────────────────────────────────────────────────────────────
 // A real destination. Plainly has no support desk, so this opens a GitHub issue
 // on the repository this app is built from — the place a report can actually be
@@ -279,6 +300,13 @@ export function searchIndex() {
     kind: 'Walkthrough', title: w.title, body: w.steps.join(' · '),
     to: `/help/tasks?walk=${w.id}`,
   }))
+  // So searching "extension", "browser" or "tooltip" finds it.
+  rows.push({
+    kind: 'Extension',
+    title: EXTENSION.name,
+    body: `Browser extension. ${EXTENSION.body}`,
+    to: '/help',
+  })
   return rows
 }
 

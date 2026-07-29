@@ -3514,3 +3514,24 @@ a:hover { color: var(--purple-dark); }
 .updates-saved-intro { margin: 0 0 16px; font: 400 14.5px/1.6 var(--font); color: var(--grey); }
 .updates-saved-empty { font: 400 15px/1.6 var(--font); color: var(--grey); }
 .updates-saved-all { display: inline-block; margin-top: 16px; }
+
+/* Plainly's browser extension, offered from Help. An outbound link to a
+   separate product, so it reads as an offer rather than as another screen. */
+.help-extension-card {
+  margin-top: 18px;
+  padding: 24px 26px;
+  background: var(--lilac-bg);
+  border: 1px solid var(--lilac-border);
+  border-radius: var(--radius-hero);
+}
+.help-extension-body { margin: 0; font: 400 15.5px/1.6 var(--font); color: var(--ink-soft); }
+.help-extension-points {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font: 400 14.5px/1.55 var(--font);
+  color: var(--grey);
+}
+.help-extension-cta { display: inline-block; margin-top: 20px; }

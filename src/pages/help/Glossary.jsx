@@ -8,7 +8,7 @@
 
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { GLOSSARY } from '../../help/content'
+import { GLOSSARY, EXTENSION } from '../../help/content'
 
 export default function Glossary() {
   const [params, setParams] = useSearchParams()
@@ -106,6 +106,14 @@ export default function Glossary() {
         Plainly only shows GitHub's words as grey explanation, never on a button. If you
         would rather see them everywhere, turn on <strong>Show technical GitHub words</strong>{' '}
         in Account.
+      </p>
+
+      {/* The obvious next question once someone has read the glossary: what
+          about the jargon on GitHub's own site, and everywhere else? */}
+      <p className="help-gloss-foot">
+        Want these explanations on GitHub itself, and on other technical sites?{' '}
+        <a href={EXTENSION.url} target="_blank" rel="noopener noreferrer">{EXTENSION.name}</a>{' '}
+        does that while you browse.
       </p>
     </section>
   )

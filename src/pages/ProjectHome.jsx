@@ -78,7 +78,7 @@ export default function ProjectHome({ auth }) {
 
   const ACTIONS = [
     { title: 'Make an update',            body: "Describe what you want to change. You don't need to know which file controls it.", cta: 'Describe an update', to: `/p/${repo}/new-update` },
-    { title: 'Continue with AI',          body: 'Hand this project to Claude, ChatGPT, Bob, Codex or another AI — with all the context it needs.', cta: 'Continue with AI', to: aiRoute },
+    { title: 'Continue with AI',          body: 'Hand this project to Claude, ChatGPT, Gemini, Manus, DeepSeek or another AI — with all the context it needs.', cta: 'Continue with AI', to: aiRoute },
     { title: 'Review what changed',       body: 'See recent Save Points and understand what each one changed.', cta: 'View changes', to: `/p/${repo}/changed` },
     { title: 'Browse project files',      body: 'Open and edit the files stored in this GitHub project.', cta: 'Browse files', to: `/p/${repo}/files` },
     { title: 'Restore an earlier version', body: 'Go back to a previous Save Point. Nothing newer is deleted.', cta: 'View Save Points', to: `/p/${repo}/points` },

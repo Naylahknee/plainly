@@ -8,16 +8,26 @@
 
 export const CONTENT_LIMIT = 12000 // characters; truncate file content beyond this
 
+/**
+ * The AI tools Continue with AI offers, and where "Open …" sends you.
+ *
+ * Every url is https. Plainly is served over https, so handing someone a
+ * plaintext hop would be a downgrade for no benefit — if a tool genuinely has
+ * no https address it doesn't belong in this list.
+ *
+ * `generic` is copy-only and never appears as a button; ContinueWithAI filters
+ * it out. It exists so the handoff can be built without a tool chosen.
+ */
 export const AI_TOOLS = [
   {
     id: 'chatgpt',
     label: 'ChatGPT',
-    url: 'https://chat.openai.com/',
+    url: 'https://chatgpt.com/',
   },
   {
     id: 'claude',
     label: 'Claude',
-    url: 'https://claude.ai/new',
+    url: 'https://claude.ai/code',
   },
   {
     id: 'gemini',
@@ -25,9 +35,14 @@ export const AI_TOOLS = [
     url: 'https://gemini.google.com/app',
   },
   {
-    id: 'bob',
-    label: 'Bob',
-    url: 'https://www.ibm.com/products/watsonx-code-assistant',
+    id: 'manus',
+    label: 'Manus',
+    url: 'https://manus.im/app/',
+  },
+  {
+    id: 'deepseek',
+    label: 'DeepSeek',
+    url: 'https://www.deepseek.com/en/',
   },
   {
     id: 'generic',

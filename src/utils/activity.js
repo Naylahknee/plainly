@@ -11,10 +11,15 @@
 import { getMemory } from './projectMemory'
 import { getUpdates } from './updateMemory'
 
+// Keep in step with AI_TOOLS in aiPrompt.js. bob and codex are kept because
+// stored memory from before they were dropped still names them, and a past
+// event must keep reading the way it happened.
 const AI_LABEL = {
   chatgpt: 'ChatGPT',
   claude: 'Claude',
   gemini: 'Gemini',
+  manus: 'Manus',
+  deepseek: 'DeepSeek',
   bob: 'Bob',
   codex: 'Codex',
   generic: 'an AI',

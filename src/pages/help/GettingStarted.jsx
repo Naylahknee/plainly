@@ -6,7 +6,7 @@
  */
 
 import { Link } from 'react-router-dom'
-import { ENTRY_CARDS } from '../../help/content'
+import { ENTRY_CARDS, EXTENSION } from '../../help/content'
 
 export default function GettingStarted() {
   return (
@@ -39,6 +39,27 @@ export default function GettingStarted() {
         <div className="help-next-row">
           <Link to="/help/how-it-works" className="pl-btn-primary">Start with how it works</Link>
           <Link to="/help/glossary" className="pl-btn">Jump to the glossary</Link>
+        </div>
+      </section>
+
+      {/* Plainly's sibling. This app explains your projects; the extension
+          explains the rest of the technical web while you're on it. */}
+      <section className="help-section">
+        <h2 className="help-section-title">{EXTENSION.name}</h2>
+        <p className="help-section-intro">{EXTENSION.tagline}</p>
+        <div className="help-extension-card">
+          <p className="help-extension-body">{EXTENSION.body}</p>
+          <ul className="help-extension-points">
+            {EXTENSION.points.map(p => <li key={p}>{p}</li>)}
+          </ul>
+          <a
+            className="pl-btn-primary help-extension-cta"
+            href={EXTENSION.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {EXTENSION.cta}
+          </a>
         </div>
       </section>
     </>

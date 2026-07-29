@@ -169,7 +169,7 @@ const GOAL_CONTENT = {
             Each AI tool only knows what happened inside its own conversation. Plainly
             is the one place that holds the full story: what you asked each AI to do,
             which files changed, and what is still unfinished. That means you can switch
-            between Claude, ChatGPT, Gemini, or Bob without losing context.
+            between Claude, ChatGPT, Gemini, Manus or DeepSeek without losing context.
           </p>
         </div>
       </>
