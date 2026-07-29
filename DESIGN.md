@@ -173,6 +173,26 @@ These are design rules, not engineering ones. Breaking them makes the product li
 - **Nothing reaches GitHub without the user pressing a button that says so.** Edits are
   drafts on this computer until Review and save.
 
+## 8a-0. What Plainly asks GitHub for, and what it refuses to guess
+
+Four things beyond files and Save Points, all real API calls, all with an honest fallback:
+
+- **Things to do** — Issues. See below.
+- **Stars** — the public count comes with the project; whether *you* starred it is a
+  separate request with three answers, and `null` (couldn't tell) disables the button rather
+  than drawing an empty star that might be wrong.
+- **Separate versions** — branches. Each one says how far it has moved from the main version
+  (`compare`), and *"Plainly couldn't compare this"* when GitHub won't say. Making one happens
+  in Plainly; bringing one back still opens GitHub, because Plainly can't do it yet and
+  shouldn't pretend.
+- **Publishing** — Pages. `building` is its own state, never shown as success: a screen must
+  not say a site is live before GitHub says it is. A private project is warned first, because
+  publishing puts its files on the open web.
+- **The project check** — check runs from Actions. **No checks configured is not a pass**, and
+  renders as "this project has no automatic checks set up". The panel also states what Plainly
+  does *not* look at, which is how the dashed "Requires implementation" badge came off honestly
+  rather than by deletion.
+
 ## 8a-i. Things to do live in GitHub, not in a browser
 
 **Things to do** (`/p/:owner/:repo/todo`) is GitHub Issues in plain words, and it is the

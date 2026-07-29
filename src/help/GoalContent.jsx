@@ -243,11 +243,11 @@ const GOAL_CONTENT = {
         </p>
         <div className="help-callout">
           <p>
-            <strong>Plainly does not publish for you.</strong> There is no publish
-            button in Plainly today, and there is no point pretending otherwise. You
-            can connect your GitHub project to Vercel, Netlify, Cloudflare Pages, or
-            GitHub Pages from those services — point them at your project and they
-            build and publish it themselves.
+            <strong>Plainly can publish for you.</strong> Open a project and choose
+            <strong> Put it on the web</strong>. Plainly asks GitHub to publish it and
+            shows you the address once GitHub says it's live — it never claims a site
+            is up before that. For anything fancier, Vercel, Netlify and Cloudflare
+            Pages all connect to the same GitHub project.
           </p>
         </div>
         <div className="help-section-block">

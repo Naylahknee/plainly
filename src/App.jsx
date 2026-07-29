@@ -28,6 +28,7 @@ import ReviewAndSave  from './pages/ReviewAndSave'
 import WhatChanged    from './pages/WhatChanged'
 import SavePoints     from './pages/SavePoints'
 import Versions       from './pages/Versions'
+import Publish        from './pages/Publish'
 import Share          from './pages/Share'
 import Settings       from './pages/Settings'
 
@@ -62,7 +63,7 @@ function Protected({ auth, children }) {
  */
 const PROJECT_PAGES = new Set([
   'updates', 'todo', 'new-update', 'files', 'f', 'save', 'changed', 'points',
-  'versions', 'share', 'settings', 'ai', 'u', 'h',
+  'versions', 'publish', 'share', 'settings', 'ai', 'u', 'h',
 ])
 
 /**
@@ -104,6 +105,7 @@ function ProjectArea({ auth }) {
       <Route path=":owner/:repo/changed"     element={<Protected auth={auth}><WhatChanged    auth={auth} /></Protected>} />
       <Route path=":owner/:repo/points"      element={<Protected auth={auth}><SavePoints     auth={auth} /></Protected>} />
       <Route path=":owner/:repo/versions"    element={<Protected auth={auth}><Versions       auth={auth} /></Protected>} />
+      <Route path=":owner/:repo/publish"     element={<Protected auth={auth}><Publish        auth={auth} /></Protected>} />
       <Route path=":owner/:repo/share"       element={<Protected auth={auth}><Share          auth={auth} /></Protected>} />
       <Route path=":owner/:repo/settings"    element={<Protected auth={auth}><Settings       auth={auth} /></Protected>} />
       <Route path=":owner/:repo/ai"          element={<Protected auth={auth}><ContinueWithAI auth={auth} /></Protected>} />

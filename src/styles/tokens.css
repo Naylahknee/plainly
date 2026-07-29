@@ -3865,3 +3865,91 @@ a:hover { color: var(--purple-dark); }
   /* A row is a whole tap target; the note can wrap. */
   .card-row { min-height: 56px; padding: 14px 16px; }
 }
+
+/* ═══ Stars ═════════════════════════════════════════════════════════════════ */
+.project-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+.star {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 15px;
+  background: #fff;
+  border: 1px solid var(--grey-border);
+  border-radius: 10px;
+  font: 600 14px/1 var(--font);
+  color: var(--ink);
+  cursor: pointer;
+}
+.star:hover:not(:disabled) { border-color: var(--purple); color: var(--purple); }
+.star:disabled { opacity: .6; cursor: default; }
+/* Amber for a star is GitHub's convention and it isn't a status here, so it
+   doesn't collide with amber meaning "something needs you" (DESIGN.md §2). */
+.star--on { border-color: var(--amber-edge); color: var(--amber); }
+.star-count { font-weight: 500; color: var(--grey); }
+
+/* ═══ Separate versions: making one, and how far it has moved ═══════════════ */
+.versions-make-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.versions-make-input {
+  flex: 1;
+  min-width: 220px;
+  padding: 12px 15px;
+  border: 1px solid var(--grey-border);
+  border-radius: 10px;
+  font: 400 15px/1.4 var(--font);
+  color: var(--ink);
+  background: #fff;
+}
+.versions-make-input:focus { outline: 2px solid var(--lilac-border); border-color: var(--purple); }
+.versions-made {
+  margin: 12px 0 0;
+  padding: 12px 15px;
+  background: var(--green-bg);
+  border-radius: 10px;
+  font: 400 14.5px/1.5 var(--font);
+  color: var(--green-ink);
+}
+
+/* ═══ Publishing ════════════════════════════════════════════════════════════ */
+.publish-screen { max-width: 760px; }
+.publish-title { font: 700 30px/1.2 var(--font); letter-spacing: -.03em; color: var(--ink); margin: 0 0 8px; }
+.publish-intro { font: 400 16px/1.55 var(--font); color: var(--ink-soft); margin: 0 0 26px; max-width: 42em; }
+.publish-live, .publish-offer {
+  padding: 24px 26px;
+  background: #fff;
+  border: 1px solid var(--lilac-border);
+  border-radius: var(--radius-hero);
+}
+.publish-url {
+  display: inline-block;
+  margin: 8px 0 12px;
+  font: 600 17px/1.4 var(--font);
+  overflow-wrap: anywhere;
+}
+.publish-state { font: 400 15px/1.6 var(--font); color: var(--ink-soft); margin: 0 0 10px; }
+.publish-note { font: 400 14px/1.6 var(--font); color: var(--grey); margin: 10px 0 0; }
+.publish-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.publish-field { margin-bottom: 22px; display: flex; flex-direction: column; gap: 8px; }
+.publish-select {
+  align-self: flex-start;
+  min-width: 240px;
+  padding: 12px 14px;
+  border: 1px solid var(--grey-border);
+  border-radius: 10px;
+  font: 400 15px/1.3 var(--font);
+  color: var(--ink);
+  background: #fff;
+}
+/* Amber: something here needs your attention before you press the button. */
+.publish-warning {
+  padding: 16px 18px;
+  background: var(--amber-bg);
+  border-left: 4px solid var(--amber-edge);
+  border-radius: 10px;
+  font: 400 14.5px/1.6 var(--font);
+  color: var(--amber);
+  margin-bottom: 22px;
+}
+
+.review-check-scope { margin: 14px 0 0; font: 400 13.5px/1.6 var(--font); color: var(--grey); }

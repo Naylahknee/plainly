@@ -20,6 +20,7 @@ import { projectName } from '../utils/projectName'
 import { useShowGithubWords } from '../utils/settings'
 import { aiRouteFor } from '../utils/aiRoute'
 import ProjectSections from '../components/ProjectSections'
+import StarButton from '../components/StarButton'
 
 export default function ProjectHome({ auth }) {
   const { owner, repo } = useParams()
@@ -81,6 +82,7 @@ export default function ProjectHome({ auth }) {
     { title: 'Continue with AI',          body: 'Hand this project to Claude, ChatGPT, Gemini, Manus, DeepSeek or another AI — with all the context it needs.', cta: 'Continue with AI', to: aiRoute },
     { title: 'Things to do',              body: "What still needs doing. Kept in GitHub, so it's there on any computer and anyone you share with can see it.", cta: 'Open the list', to: `/p/${owner}/${repo}/todo` },
     { title: 'Review what changed',       body: 'See recent Save Points and understand what each one changed.', cta: 'View changes', to: `/p/${owner}/${repo}/changed` },
+    { title: 'Put it on the web',         body: 'Give this project a web address anyone can open. Every save republishes it.', cta: 'Publish it', to: `/p/${owner}/${repo}/publish` },
     { title: 'Browse project files',      body: 'Open and edit the files stored in this GitHub project.', cta: 'Browse files', to: `/p/${owner}/${repo}/files` },
     { title: 'Restore an earlier version', body: 'Go back to a previous Save Point. Nothing newer is deleted.', cta: 'View Save Points', to: `/p/${owner}/${repo}/points` },
   ]
@@ -105,7 +107,10 @@ export default function ProjectHome({ auth }) {
     <div className="screen-padded project-screen">
       <Link to="/" className="back-link">← Home</Link>
 
-      <h1 className="project-title">{projectTitle}</h1>
+      <div className="project-head">
+        <h1 className="project-title">{projectTitle}</h1>
+        <StarButton auth={auth} owner={owner} repo={repo} count={repoData?.stargazers_count} />
+      </div>
       {repoData?.description && <p className="project-desc">{repoData.description}</p>}
 
       {/* Status row — every value here comes from GitHub or stored memory. */}

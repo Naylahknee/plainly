@@ -11,29 +11,19 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getRepoInfo, getCurrentHeadSha, getCommits } from '../api/github'
+import {
+  getRepoInfo, getCurrentHeadSha, getCommits,
+  getBranches, compareBranches, createBranch,
+} from '../api/github'
 import { getMemory, setMemory } from '../utils/projectMemory'
 import { timeAgo, formatCommitLabel } from '../utils/time'
 import { projectName } from '../utils/projectName'
-
-const API = 'https://api.github.com'
-
-async function getBranches(token, owner, repo) {
-  const r = await fetch(`${API}/repos/${owner}/${repo}/branches`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-  })
-  if (!r.ok) throw new Error('Could not load the versions of this project. Try refreshing.')
-  const data = await r.json()
-  return Array.isArray(data) ? data : []
-}
+import { useShowGithubWords } from '../utils/settings'
 
 export default function Versions({ auth }) {
   const { owner, repo } = useParams()
-  const { token, user } = auth
+  const { token } = auth
+  const [showWords] = useShowGithubWords()
 
   const [branches, setBranches] = useState([])
   const [repoData, setRepoData] = useState(null)
@@ -41,6 +31,10 @@ export default function Versions({ auth }) {
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
   const [checked, setChecked]   = useState(null)   // { at, behind }
+  const [gaps, setGaps]         = useState({})     // branch → { ahead, behind } | null
+  const [newName, setNewName]   = useState('')
+  const [making, setMaking]     = useState(false)
+  const [made, setMade]         = useState(null)
 
   useEffect(() => {
     if (!token || !owner) return
@@ -59,6 +53,38 @@ export default function Versions({ auth }) {
   }, [token, owner, repo])
 
   const mainName = repoData?.default_branch || 'main'
+
+  // How far each separate version has moved. One request each, so it's bounded
+  // — and a version Plainly couldn't compare says so rather than showing 0.
+  useEffect(() => {
+    if (!token || !owner || !mainName || branches.length === 0) return
+    let cancelled = false
+    const others = branches.filter(b => b.name !== mainName).slice(0, 10)
+    Promise.all(others.map(b =>
+      compareBranches(token, owner, repo, mainName, b.name).then(r => [b.name, r])
+    )).then(pairs => { if (!cancelled) setGaps(Object.fromEntries(pairs)) })
+    return () => { cancelled = true }
+  }, [token, owner, repo, mainName, branches])
+
+  async function makeVersion(e) {
+    e.preventDefault()
+    const name = newName.trim().replace(/\s+/g, '-')
+    if (!name) return
+    setMaking(true)
+    setError(null)
+    try {
+      const sha = await getCurrentHeadSha(token, owner, repo)
+      await createBranch(token, owner, repo, name, sha)
+      const fresh = await getBranches(token, owner, repo)
+      setBranches(fresh)
+      setMade(name)
+      setNewName('')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setMaking(false)
+    }
+  }
 
   async function getLatest() {
     try {
@@ -119,8 +145,24 @@ export default function Versions({ auth }) {
                   A safe copy of the project, kept separately from your main version.
                 </div>
                 <div className="versions-branch-meta">
-                  In GitHub words: branch {b.name}
+                  {gaps[b.name] === undefined && 'Checking how far this has moved…'}
+                  {gaps[b.name] === null && "Plainly couldn't compare this with your main version."}
+                  {gaps[b.name] && (
+                    gaps[b.name].ahead === 0 && gaps[b.name].behind === 0
+                      ? 'Exactly the same as your main version.'
+                      : [
+                          gaps[b.name].ahead
+                            ? `${gaps[b.name].ahead} Save ${gaps[b.name].ahead === 1 ? 'Point' : 'Points'} your main version doesn't have`
+                            : null,
+                          gaps[b.name].behind
+                            ? `${gaps[b.name].behind} it's missing from your main version`
+                            : null,
+                        ].filter(Boolean).join(' · ')
+                  )}
                 </div>
+                {showWords && (
+                  <div className="versions-branch-meta">In GitHub words: branch {b.name}</div>
+                )}
               </div>
               <a
                 className="pl-btn"
@@ -134,25 +176,45 @@ export default function Versions({ auth }) {
           ))}
 
           <section className="versions-footer">
-            <div>
+            <div className="versions-make">
               <div className="versions-footer-title">Want to try something without risk?</div>
               <div className="versions-footer-body">
-                Plainly copies your project into a separate version. Your main version stays
-                exactly as it is.
+                Plainly copies your project as it is right now into a separate version. Your
+                main version stays exactly as it is.
               </div>
+              {made && (
+                <p className="versions-made">
+                  Made “{projectName(made)}”. It starts as an exact copy of your main version.
+                </p>
+              )}
+              <form className="versions-make-form" onSubmit={makeVersion}>
+                <input
+                  type="text"
+                  className="versions-make-input"
+                  placeholder="What are you trying? e.g. new welcome screen"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  aria-label="Name for the separate version"
+                />
+                <button className="pl-btn-primary" type="submit" disabled={making || !newName.trim()}>
+                  {making ? 'Making it…' : 'Make a separate version'}
+                </button>
+              </form>
+              <p className="versions-note">
+                Spaces become dashes, because GitHub doesn't allow them in a version name.
+              </p>
             </div>
+          </section>
+          <p className="versions-note">
+            Bringing a separate version back into your main one still happens on GitHub —
+            Plainly opens the right page rather than pretending it can do it here.{' '}
             <a
-              className="pl-btn"
               href={`https://github.com/${owner}/${repo}/branches`}
               target="_blank"
               rel="noreferrer"
             >
-              Make a separate version
+              Open the versions on GitHub
             </a>
-          </section>
-          <p className="versions-note">
-            Making and merging separate versions still happens on GitHub — Plainly opens the
-            right page rather than pretending it can do it here.
           </p>
         </>
       )}

@@ -20,6 +20,7 @@ export function projectNavItems(owner, repo, activeUpdate) {
     { to: at('changed'),   label: 'What Changed' },
     { to: at('points'),    label: 'Save Points' },
     { to: at('versions'),  label: 'Separate Versions' },
+    { to: at('publish'),   label: 'Put It on the Web' },
     { to: at('share'),     label: 'Who Can See It' },
     { to: aiRouteFor(owner, repo, activeUpdate),
                            label: 'Continue with AI' },

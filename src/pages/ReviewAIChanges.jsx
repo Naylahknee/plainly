@@ -9,10 +9,10 @@
  * Nothing here prints "Yes" for a build that was never run.
  */
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getUpdateById, updateUpdate } from '../utils/updateMemory'
-import { getCurrentHeadSha, compareCommits } from '../api/github'
+import { getCurrentHeadSha, compareCommits, getCheckRuns } from '../api/github'
 
 const NOT_CHECKED = 'Not checked — Plainly cannot run this yet.'
 
@@ -87,9 +87,34 @@ export default function ReviewAIChanges({ auth }) {
     navigate(`/p/${owner}/${repo}/u/${updateId}/ai`)
   }
 
+  // What GitHub's own automatic checks say about the newest Save Point.
+  // `{ total: 0 }` means no checks are set up, which is not the same as
+  // passing — it must never draw a tick.
+  const [checks, setChecks] = useState(undefined)
+  useEffect(() => {
+    if (!token || !owner) return
+    let cancelled = false
+    getCurrentHeadSha(token, owner, repo)
+      .then(sha => getCheckRuns(token, owner, repo, sha))
+      .then(r => { if (!cancelled) setChecks(r) })
+      .catch(() => { if (!cancelled) setChecks(null) })
+    return () => { cancelled = true }
+  }, [token, owner, repo])
+
+  const failed = (checks?.runs || []).filter(r =>
+    r.status === 'completed' && !['success', 'neutral', 'skipped'].includes(r.conclusion))
+  const running = (checks?.runs || []).filter(r => r.status !== 'completed')
+
+  const buildCheck =
+    checks === undefined ? { result: 'Asking GitHub…', ok: null }
+    : checks === null     ? { result: "Plainly couldn't ask GitHub.", ok: null }
+    : checks.total === 0  ? { result: 'This project has no automatic checks set up.', ok: null }
+    : running.length      ? { result: `${running.length} still running.`, ok: null }
+    : failed.length       ? { result: `${failed.length} of ${checks.total} failed — ${failed.map(f => f.name).join(', ')}`, ok: false }
+    :                       { result: `All ${checks.total} passed.`, ok: true }
+
   const CHECKS = [
-    { label: 'The project still builds',      result: NOT_CHECKED, ok: null },
-    { label: 'No passwords or keys were added', result: NOT_CHECKED, ok: null },
+    { label: 'GitHub\'s automatic checks', result: buildCheck.result, ok: buildCheck.ok },
     {
       label: 'Files you did not ask about',
       result: asked.size === 0
@@ -99,7 +124,6 @@ export default function ReviewAIChanges({ auth }) {
           : 'None',
       ok: asked.size > 0 ? unexpected.length === 0 : null,
     },
-    { label: 'Links that go nowhere',         result: NOT_CHECKED, ok: null },
   ]
 
   return (
@@ -137,7 +161,6 @@ export default function ReviewAIChanges({ auth }) {
           <div className="review-card">
             <div className="review-card-head">
               <div className="section-label section-label--tight">Project check</div>
-              <span className="pl-todo">Requires implementation</span>
             </div>
             <div className="review-checks">
               {CHECKS.map(c => (
@@ -150,6 +173,11 @@ export default function ReviewAIChanges({ auth }) {
                 </div>
               ))}
             </div>
+            <p className="review-check-scope">
+              Plainly reports what GitHub's own checks say. It does not read the changes
+              itself, so it can't tell you whether a password was added or a link goes
+              nowhere — read the changes above for that.
+            </p>
           </div>
 
           <div className="review-card">

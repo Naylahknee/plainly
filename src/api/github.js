@@ -350,3 +350,116 @@ export async function setIssueState(token, owner, repo, number, state) {
   if (!r.ok) throw new Error('Could not change that. Try again.')
   return r.json()
 }
+
+/* ── Stars ─────────────────────────────────────────────────────────────────
+   GitHub's way of saying "this one matters to me". The count is public; the
+   endpoint below answers only for the signed-in account. */
+
+/** 204 = starred, 404 = not. Anything else means we don't know — say so. */
+export async function isStarred(token, owner, repo) {
+  try {
+    const r = await fetch(`${API}/user/starred/${owner}/${repo}`, { headers: headers(token) })
+    if (r.status === 204) return true
+    if (r.status === 404) return false
+    return null
+  } catch {
+    return null
+  }
+}
+
+export async function setStarred(token, owner, repo, starred) {
+  const r = await fetch(`${API}/user/starred/${owner}/${repo}`, {
+    method: starred ? 'PUT' : 'DELETE',
+    headers: { ...headers(token), 'Content-Length': '0' },
+  })
+  if (!r.ok && r.status !== 204) throw new Error('Could not change that. Try again.')
+  return starred
+}
+
+/* ── Separate versions (branches) ──────────────────────────────────────────── */
+
+export async function getBranches(token, owner, repo) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/branches?per_page=100`, { headers: headers(token) })
+  if (r.status === 404 || r.status === 409) return []
+  if (!r.ok) throw new Error('Could not load the versions of this project. Try refreshing.')
+  const data = await r.json()
+  return Array.isArray(data) ? data : []
+}
+
+/**
+ * How far a separate version has moved from the main one.
+ * `ahead_by` is work in it that main doesn't have; `behind_by` is the reverse.
+ * Returns null when GitHub can't compare them — never guess a number.
+ */
+export async function compareBranches(token, owner, repo, base, head) {
+  try {
+    const r = await fetch(
+      `${API}/repos/${owner}/${repo}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`,
+      { headers: headers(token) }
+    )
+    if (!r.ok) return null
+    const d = await r.json()
+    return { ahead: d.ahead_by, behind: d.behind_by, status: d.status }
+  } catch {
+    return null
+  }
+}
+
+/** Start a separate version from a Save Point. */
+export async function createBranch(token, owner, repo, name, fromSha) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/git/refs`, {
+    method: 'POST',
+    headers: { ...headers(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ref: `refs/heads/${name}`, sha: fromSha }),
+  })
+  if (r.status === 422) throw new Error('A separate version with that name already exists.')
+  if (r.status === 403) throw new Error("You don't have permission to add a version to this project.")
+  if (!r.ok) throw new Error('Could not make that version. Try again.')
+  return r.json()
+}
+
+/* ── Publishing (GitHub Pages) ─────────────────────────────────────────────── */
+
+/** null means this project isn't published. */
+export async function getPagesSite(token, owner, repo) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/pages`, { headers: headers(token) })
+  if (r.status === 404) return null
+  if (!r.ok) throw new Error("Plainly couldn't check whether this project is published.")
+  return r.json()
+}
+
+export async function publishPagesSite(token, owner, repo, branch, path = '/') {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/pages`, {
+    method: 'POST',
+    headers: { ...headers(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source: { branch, path } }),
+  })
+  if (r.status === 409) throw new Error('This project is already published.')
+  if (r.status === 403) throw new Error("You don't have permission to publish this project.")
+  if (r.status === 422) {
+    throw new Error('GitHub would not publish from that version and folder. Try the main version and the top folder.')
+  }
+  if (!r.ok) throw new Error('Could not publish this project. Try again.')
+  return r.json()
+}
+
+/* ── Automatic checks (GitHub Actions) ─────────────────────────────────────── */
+
+/**
+ * What GitHub's automatic checks say about a version of the project.
+ *
+ * `{ total: 0 }` means no checks are set up — which is not the same as passing,
+ * and the screen must not draw a tick for it.
+ */
+export async function getCheckRuns(token, owner, repo, ref) {
+  try {
+    const r = await fetch(`${API}/repos/${owner}/${repo}/commits/${ref}/check-runs`, {
+      headers: headers(token),
+    })
+    if (!r.ok) return null
+    const d = await r.json()
+    return { total: d.total_count || 0, runs: d.check_runs || [] }
+  } catch {
+    return null
+  }
+}
