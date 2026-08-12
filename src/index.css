@@ -330,6 +330,41 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Project groups (org / collab sections) ── */
+.project-group { margin-bottom: 36px; }
+.project-group-header { margin-bottom: 12px; }
+.project-group-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.project-group-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--grey-light);
+  color: var(--grey);
+  line-height: 1.6;
+}
+.project-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+.project-owner {
+  font-size: 12px;
+  color: var(--grey);
+}
+
 /* ── Sign-in page ── */
 .signin-page {
   min-height: 100%;

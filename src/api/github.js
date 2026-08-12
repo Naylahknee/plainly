@@ -27,9 +27,10 @@ export async function getUser(token) {
 }
 
 export async function getRepos(token) {
-  const r = await fetch(`${API}/user/repos?sort=updated&per_page=100&affiliation=owner`, {
-    headers: headers(token)
-  })
+  const r = await fetch(
+    `${API}/user/repos?sort=updated&per_page=100&affiliation=owner,organization_member,collaborator`,
+    { headers: headers(token) }
+  )
   if (!r.ok) throw new Error('Could not load your projects. Try refreshing the page.')
   return r.json()
 }

@@ -15,9 +15,8 @@ function randomPhrase() {
 }
 
 export default function Files({ auth }) {
-  const { repo } = useParams()
+  const { owner, repo } = useParams()
   const navigate = useNavigate()
-  const owner = auth.user?.login
 
   const [files, setFiles] = useState([])
   const [filesLoading, setFilesLoading] = useState(true)
@@ -40,7 +39,6 @@ export default function Files({ auth }) {
   const [newFileSaving, setNewFileSaving] = useState(false)
 
   useEffect(() => {
-    if (!owner) return
     loadFiles()
   }, [owner, repo])
 
@@ -135,7 +133,7 @@ export default function Files({ auth }) {
             <>
               <button
                 className="btn-ghost"
-                onClick={() => navigate(`/p/${repo}/h/${encodeURIComponent(activeFile.path)}`)}
+                onClick={() => navigate(`/p/${owner}/${repo}/h/${encodeURIComponent(activeFile.path)}`)}
               >
                 History
               </button>

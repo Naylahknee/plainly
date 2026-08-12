@@ -4,9 +4,8 @@ import { getFileHistory, getFileAtCommit, getFileContent, saveFile } from '../ap
 import { timeAgo } from '../utils/time'
 
 export default function History({ auth }) {
-  const { repo, '*': encodedPath } = useParams()
+  const { owner, repo, '*': encodedPath } = useParams()
   const navigate = useNavigate()
-  const owner = auth.user?.login
   const filePath = decodeURIComponent(encodedPath)
   const fileName = filePath.split('/').pop()
 
@@ -62,7 +61,7 @@ export default function History({ auth }) {
   return (
     <div className="page">
       <header className="topbar">
-        <button className="back-btn" onClick={() => navigate(`/p/${repo}`)}>
+        <button className="back-btn" onClick={() => navigate(`/p/${owner}/${repo}`)}>
           <span aria-hidden="true">←</span> {repo.replace(/-/g, ' ')}
         </button>
         <div className="topbar-title">History: {fileName}</div>
