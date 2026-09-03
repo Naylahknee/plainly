@@ -33,6 +33,8 @@ export default function Files({ auth }) {
   const [saveToast, setSaveToast] = useState(null)
   const toastTimer = useRef(null)
 
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   const [showNewFile, setShowNewFile] = useState(false)
   const [newFileName, setNewFileName] = useState('')
   const [newFileError, setNewFileError] = useState(null)
@@ -56,7 +58,8 @@ export default function Files({ auth }) {
   }
 
   async function openFile(file) {
-    if (activeFile?.path === file.path) return
+    if (activeFile?.path === file.path) { setSidebarOpen(false); return }
+    setSidebarOpen(false)
     setActiveFile(file)
     setFileLoading(true)
     setFileError(null)
@@ -129,6 +132,13 @@ export default function Files({ auth }) {
         </button>
         <div className="topbar-title">{repo.replace(/-/g, ' ')}</div>
         <div className="topbar-actions">
+          <button
+            className="topbar-files-btn btn-ghost"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Show files"
+          >
+            Files
+          </button>
           {activeFile && (
             <>
               <button
@@ -142,7 +152,7 @@ export default function Files({ auth }) {
                 onClick={handleSave}
                 disabled={saving || !isDirty}
               >
-                {saving ? 'Saving…' : 'Save point'}
+                {saving ? 'Saving…' : 'Save'}
               </button>
             </>
           )}
@@ -156,12 +166,24 @@ export default function Files({ auth }) {
       )}
 
       <div className="files-layout">
-        <aside className="file-sidebar">
+        {sidebarOpen && (
+          <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+        )}
+        <aside className={`file-sidebar${sidebarOpen ? ' is-open' : ''}`}>
           <div className="sidebar-head">
             <span className="sidebar-label">Files</span>
-            <button className="sidebar-new-btn" onClick={() => { setNewFileName(''); setNewFileError(null); setShowNewFile(true) }}>
-              + New file
-            </button>
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+              <button className="sidebar-new-btn" onClick={() => { setNewFileName(''); setNewFileError(null); setShowNewFile(true) }}>
+                + New file
+              </button>
+              <button
+                className="sidebar-close-btn sidebar-new-btn"
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           {filesLoading && <p className="sidebar-state">Loading…</p>}

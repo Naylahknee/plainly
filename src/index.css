@@ -602,32 +602,97 @@ body {
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  .topbar { padding: 0 16px; }
-  .topbar-title { font-size: 14px; }
-  .page-main { padding: 28px 16px 60px; }
+  /* Safe area: notch / home indicator */
+  .topbar {
+    padding: 0 16px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-top: env(safe-area-inset-top);
+    height: calc(60px + env(safe-area-inset-top));
+  }
+  .page-main {
+    padding: 28px 16px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(60px, calc(env(safe-area-inset-bottom) + 40px));
+  }
   .section-header h1 { font-size: 22px; }
+  .topbar-title { font-size: 14px; }
 
+  /* Prevent iOS auto-zoom on input focus (must be ≥ 16px) */
+  .text-input, .editor { font-size: 16px; }
+
+  /* Larger touch targets */
+  .file-item { padding: 12px 16px; min-height: 44px; }
+  .back-btn { padding: 10px 0; min-height: 44px; }
+  .restore-btn { opacity: 1; min-height: 44px; padding: 10px 14px; }
+  .sidebar-new-btn { padding: 8px 10px; min-height: 36px; }
+
+  /* Editor padding */
+  .editor { padding: 20px 16px; }
+
+  /* Show the mobile file drawer toggle */
+  .topbar-files-btn { display: inline-flex; }
+
+  /* File sidebar: slide-up drawer */
   .files-layout { flex-direction: column; }
   .file-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
+    max-height: 72vh;
     border-right: none;
-    border-bottom: 1px solid var(--grey-light);
-    max-height: 200px;
+    border-top: 1px solid var(--grey-light);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -4px 32px rgba(28, 27, 34, 0.14);
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 50;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    overflow-y: auto;
   }
-  .editor { padding: 20px 16px; font-size: 15px; }
+  .file-sidebar.is-open { transform: translateY(0); }
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 27, 34, 0.4);
+    z-index: 40;
+    backdrop-filter: blur(1px);
+  }
+  .sidebar-close-btn { display: inline-flex; }
 
-  .modal { padding: 24px 20px; }
+  /* Bottom-sheet modals */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal {
+    padding: 24px 20px;
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
   .modal-actions { flex-direction: column-reverse; }
   .modal-actions .btn-primary,
-  .modal-actions .btn-ghost { width: 100%; justify-content: center; }
+  .modal-actions .btn-ghost { width: 100%; justify-content: center; min-height: 48px; }
 
   .signin-tagline { font-size: 22px; }
-
-  .restore-btn { opacity: 1; }
-
   .toast { right: 16px; left: 16px; }
 }
 
 @media (max-width: 380px) {
   .project-time { display: none; }
 }
+
+/* Sidebar overlay hidden on desktop */
+.sidebar-overlay { display: none; }
+
+/* Files button: only visible on mobile */
+.topbar-files-btn { display: none; }
+
+/* Sidebar close button: only visible on mobile */
+.sidebar-close-btn { display: none; }
