@@ -30,7 +30,7 @@ export default function Home({ auth }) {
   const { user, token } = auth
   const navigate = useNavigate()
   // Same list, same choice, as My Projects and Recent Activity.
-  const { projects: repos, loading } = useProjects(auth)
+  const { projects: repos, loading, error } = useProjects(auth)
   const [explainerDismissed, setExplainerDismissed] = useState(() => {
     try {
       return localStorage.getItem(EXPLAINER_DISMISSED_KEY) === 'true'
@@ -113,6 +113,56 @@ export default function Home({ auth }) {
       localStorage.setItem(EXPLAINER_DISMISSED_KEY, 'true')
       setExplainerDismissed(true)
     } catch { /* preference just won't persist */ }
+  }
+
+  /* ── First run: nothing in GitHub yet ──────────────────────────────────
+     The dashboard below answers "where did I leave off". Someone signing in
+     for the first time has no answer to that, and four empty panels plus a
+     tick reading "everything is saved in GitHub" is worse than nothing — it
+     reassures them about work that does not exist. One screen, one action.
+
+     An error is not emptiness: if GitHub could not be reached, repos is also
+     empty, and this screen would tell someone with a hundred projects that
+     they have none. So it only appears when the list genuinely came back. */
+  if (!loading && !error && repos.length === 0) {
+    return (
+      <div className="screen-padded firstrun-screen">
+        <h1 className="firstrun-title">Welcome{firstName ? `, ${firstName}` : ''}.</h1>
+        <p className="firstrun-lead">
+          You're signed in, and there's nothing in your account yet. That's the right
+          place to be starting from.
+        </p>
+
+        <section className="firstrun-card">
+          <div className="firstrun-card-label">Start here</div>
+          <h2 className="firstrun-card-title">Make your first project</h2>
+          <p className="firstrun-card-body">
+            A project is one place for everything that belongs together — an app, a book,
+            a client job. From the moment you make one, Plainly keeps every version of it,
+            so you can always go back to how it was.
+          </p>
+          <Link to="/new" className="pl-btn-primary firstrun-cta">Make your first project</Link>
+          <p className="firstrun-card-foot">
+            It asks for a name and one sentence about what it's for. Nothing is visible to
+            anyone else unless you choose that.
+          </p>
+        </section>
+
+        <div className="firstrun-next">
+          <div className="firstrun-next-label">Then what happens</div>
+          <ol className="firstrun-steps">
+            <li>You describe what you want to build, in your own words.</li>
+            <li>You hand that to ChatGPT, Claude, Gemini, Manus or DeepSeek.</li>
+            <li>You bring the work back here, read what changed, and save it.</li>
+          </ol>
+          <p className="firstrun-next-foot">
+            Plainly is the part that remembers all of it — which is the part no single AI
+            tool can do for you.{' '}
+            <Link to="/help/how-it-works" className="text-link">How Plainly works</Link>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -279,7 +329,7 @@ export default function Home({ auth }) {
                       {repo.description || 'No description yet — you can add one in project settings.'}
                     </span>
                     <span className="home-project-action">{lastAction}</span>
-                    <span className="home-project-url">github.com/{owner}/{repo.name}</span>
+                    <span className="home-project-url">github.com/{ownerOf(repo, owner)}/{repo.name}</span>
                   </span>
                   <span className="home-project-chevron" aria-hidden="true">›</span>
                 </Link>

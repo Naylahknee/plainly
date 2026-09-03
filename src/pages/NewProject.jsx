@@ -13,6 +13,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { createRepo, updateRepoSettings } from '../api/github'
+import { ownerOf } from '../utils/useProject'
 
 export default function NewProject({ auth }) {
   const { token, user } = auth
