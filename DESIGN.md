@@ -239,6 +239,22 @@ out of the `Link` header, which GitHub exposes to browsers via
 When the count can't be made it is `null`, and **nothing is rendered** — not `v0`, not `vNaN`.
 Guard with `version > 0 ? … : null`, never `version && …`: JSX renders a bare `0`.
 
+## 8d. An empty account gets one screen, not an empty dashboard
+
+Home answers "where did I leave off". Someone signing in for the first time has no
+answer to that, and the dashboard degrades badly for them: four empty panels, a
+"Make an update" button that dead-ends at My Projects, and a green tick reading
+"Everything is saved in GitHub" — a reassurance about work that does not exist.
+
+So when the projects list comes back genuinely empty, Home returns the first-run
+screen instead: one card, one primary action, and three sentences saying what happens
+after that. Nothing else on the page competes with it.
+
+**Empty is not the same as broken.** If the request to GitHub failed, the list is also
+empty, and this screen would tell someone with a hundred projects that they have none.
+It appears only when the list came back and was genuinely empty — never on an error,
+never while loading.
+
 ## 9. One status, four sentences
 
 `src/utils/heroFor.js` turns an update's status into exactly four fields: *where you left
