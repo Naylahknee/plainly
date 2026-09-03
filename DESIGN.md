@@ -255,6 +255,39 @@ empty, and this screen would tell someone with a hundred projects that they have
 It appears only when the list came back and was genuinely empty — never on an error,
 never while loading.
 
+## 8e. The phone rules, and how they are checked
+
+Four rules, all of them measured by `mobile.js` at 320px, 390px and 768px rather
+than judged by eye:
+
+1. **The page never scrolls sideways.** Content that is genuinely wide — the
+   lifecycle strip — scrolls inside its own container instead. Nothing is ever
+   cut off at the right edge with no way to reach it.
+2. **Anything you press is at least 44px tall.** The two exceptions are written
+   down rather than ignored: a control inside a `<label>` is tapped by the whole
+   label, and a link inside a sentence stays inline — 44px there would push the
+   lines apart, so it gets vertical padding, which widens what a finger hits
+   without moving a word.
+3. **Nothing important hides under the bottom bar.** The last control on the
+   longest screens has to scroll clear of it.
+4. **A scrolling strip opens where you are.** The lifecycle scrolls the current
+   step into view, because opening on "Planned" shows the one step the reader
+   already knows they are past.
+
+**A media query adds no specificity.** A plain rule written later in the file
+beats it silently — which is exactly what a duplicated `.home-columns` did,
+leaving Recent Activity off the right edge of every phone while the mobile rule
+sat there looking correct. Phone rules go at the **end of `tokens.css`**, and a
+selector must never be defined twice.
+
+**Desktop type is not phone type.** 30–34px headlines were written for a 1000px
+column; on a phone they wrap to four lines and push the answer below the fold.
+Home's greeting and hero, and the update title, are set smaller under 720px.
+
+**One navigation, on the phone too.** The bottom bar carries Home, Projects,
+Activity and Help, so Home's "All projects" button is hidden there rather than
+duplicating a tab.
+
 ## 9. One status, four sentences
 
 `src/utils/heroFor.js` turns an update's status into exactly four fields: *where you left

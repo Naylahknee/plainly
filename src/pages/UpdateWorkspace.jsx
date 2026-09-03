@@ -6,7 +6,7 @@
  * details cards, story, and footer actions.
  */
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getUpdateById, updateUpdate, deleteUpdate, STATUS_LABEL, STATUSES } from '../utils/updateMemory'
 import { heroFor } from '../utils/heroFor'
@@ -21,6 +21,14 @@ export default function UpdateWorkspace({ auth }) {
 
   const update = owner ? getUpdateById(owner, repo, updateId) : null
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // The lifecycle strip scrolls sideways on a phone. Left alone it opens on
+  // "Planned" — the one step the reader already knows they are past — so the
+  // step they are actually on is brought into view.
+  const currentStepRef = useRef(null)
+  useEffect(() => {
+    currentStepRef.current?.scrollIntoView({ inline: 'center', block: 'nearest' })
+  }, [update?.status])
   const [deleting, setDeleting] = useState(false)
 
   if (!update) {
@@ -84,7 +92,11 @@ export default function UpdateWorkspace({ auth }) {
               const isCurrent = i === currentStatusIndex
               const isFuture = i > currentStatusIndex
               return (
-                <div key={status} className="update-lifecycle-step">
+                <div
+                  key={status}
+                  ref={isCurrent ? currentStepRef : null}
+                  className="update-lifecycle-step"
+                >
                   <div className={`update-lifecycle-dot ${isDone ? 'done' : isCurrent ? 'current' : 'future'}`} />
                   <p className={`update-lifecycle-step-label ${isCurrent ? 'current' : ''}`}>
                     {STATUS_LABEL[status]}

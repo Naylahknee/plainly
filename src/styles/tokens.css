@@ -324,6 +324,7 @@
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 32px;
+  align-items: start;
 }
 
 .home-column-projects,
@@ -2071,12 +2072,6 @@
   font: 700 14px/1 var(--font);
 }
 
-.home-columns {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 32px;
-  align-items: start;
-}
 
 .home-column-head {
   display: flex;
@@ -2602,7 +2597,7 @@
 }
 .files-row-wrap.is-folder { background: #FCFBFE; }
 
-.files-row { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
+.files-row { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 16px 18px; }
 .files-row-text { flex: 1; min-width: 0; }
 .files-row-top { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .files-name { font: 500 15px/1.4 var(--font-mono); color: var(--ink); }
@@ -4010,4 +4005,108 @@ a:hover { color: var(--purple-dark); }
   .firstrun-card-title{ font-size: 19px; }
   .firstrun-cta       { display: block; text-align: center; }
   .firstrun-next      { padding: 18px 18px 16px; }
+}
+
+/* ── Phone fixes found by measuring, not by eye ─────────────────────────────
+   This block is last in the last stylesheet on purpose: a media query adds no
+   specificity, so a plain rule written later would quietly beat it. That is
+   exactly what a duplicated .home-columns did until it was removed. */
+@media (max-width: 720px) {
+
+  /* A file row is a glyph, a name, and up to five actions. On a phone the
+     actions could not fit beside the name and ran past the right edge, so
+     Download and Delete were unreachable. Name on its own line, actions two
+     across underneath. */
+  .update-workspace-title { font-size: 24px; line-height: 1.25; }
+
+  /* Seven steps across a phone gave every label three cramped lines. They
+     keep their real names and the strip scrolls sideways instead — nothing
+     is hidden, and the current step stays where the eye lands. */
+  .update-lifecycle-steps {
+    justify-content: flex-start;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .update-lifecycle-steps::-webkit-scrollbar { display: none; }
+  .update-lifecycle-step { flex: 0 0 auto; min-width: 96px; }
+  .update-lifecycle-step-label { white-space: nowrap; }
+
+  /* "All projects" is the second tab in the bar at the bottom of every
+     screen. A full-width duplicate of it under the greeting is a second
+     navigation, which DESIGN.md §5 forbids, and it was taking the best
+     space on the page. */
+  .home-all-projects { display: none; }
+
+  /* 34px headlines were written for a 1000px column. On a phone they wrap
+     to four lines and push the answer below the fold. */
+  .home-greeting { font-size: 25px; }
+  .home-hero-title { font-size: 24px; line-height: 1.25; }
+  .home-hero-goal { font-size: 15.5px; }
+
+  /* Wrapped, the glyph should sit beside the name rather than float to the
+     vertical middle of a two-line row. */
+  .files-row { row-gap: 10px; align-items: flex-start; }
+  .files-glyph { margin-top: 2px; }
+  .files-row-text { flex: 1 0 calc(100% - 34px); }
+  .files-action { flex: 1 1 calc(50% - 7px); justify-content: center; }
+
+  /* Sized to its longest branch name, which is longer than a phone. */
+  .publish-select { align-self: stretch; width: 100%; min-width: 0; max-width: 100%; }
+
+  /* ── Tap targets ───────────────────────────────────────────────────────
+     44px is the smallest thing a thumb hits reliably. These were all under
+     it, and the top bar three are on every single screen. */
+  .shell-mobilebar-avatar,
+  .shell-mobilebar-add { width: 44px; height: 44px; }
+  .shell-mobilebar-brand { min-height: 44px; }
+  .star { min-height: 44px; }
+  .update-file-item { min-height: 44px; }
+  .update-workspace-back,
+  .project-status-url,
+  .home-activity-all,
+  .updates-saved-all {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  /* A 22px square that has to stay a 22px square: keep the drawing, widen
+     the area that responds to a finger. */
+  .ai-check { position: relative; }
+  .ai-check::after { content: ''; position: absolute; inset: -11px; }
+
+  /* Standalone actions that happen to be styled as text links. */
+  .home-column-head .text-link,
+  .review-card-head .text-link,
+  .share-address-url {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  /* A link inside a sentence stays inside the sentence — 44px there would
+     push the lines apart. Vertical padding on an *inline* element grows what
+     a finger can hit without moving a single word, which is the most that can
+     honestly be done here. */
+  .shell-content p a,
+  .account-connection a { display: inline; padding-block: 8px; }
+
+  /* "Where you left off" and its answer were a 180px label beside a value.
+     On the narrowest phone the label ate the row and the answer ran off the
+     screen. The label goes above the answer instead. */
+  .home-hero-row { flex-direction: column; gap: 4px; }
+  .home-hero-row-label { min-width: 0; }
+
+  /* A grid item will not shrink below its longest unbroken word unless it is
+     told to, and a file path is one long unbroken word. */
+  .update-cards > * { min-width: 0; }
+  .update-card code,
+  .update-file-item code,
+  .files-name { overflow-wrap: anywhere; }
+}
+
+/* A tablet gets the desktop sidebar — and still has fingers. */
+@media (pointer: coarse) {
+  .shell-nav-item { min-height: 44px; display: flex; align-items: center; }
 }
