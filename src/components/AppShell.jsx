@@ -53,7 +53,7 @@ export default function AppShell({ auth, children }) {
       : pathname.startsWith('/activity') ? 'Timeline'
         : pathname.startsWith('/help') ? 'Help'
           : pathname.startsWith('/account') ? 'Account'
-            : 'yourk'
+            : 'yourkly'
 
   const user = auth?.user
   const avatarUrl = user?.avatar_url
@@ -75,7 +75,7 @@ export default function AppShell({ auth, children }) {
         ) : (
           <button className="shell-mobilebar-back" onClick={() => navigate(-1)} aria-label="Go back" type="button">‹</button>
         )}
-        <Link to={isHome ? '/' : pathname} className="shell-mobilebar-brand" aria-label={isHome ? 'Yourk home' : mobileTitle}>
+        <Link to={isHome ? '/' : pathname} className="shell-mobilebar-brand" aria-label={isHome ? 'Yourkly home' : mobileTitle}>
           <span className={isHome ? 'wordmark' : 'shell-mobilebar-title'}>{mobileTitle}</span>
           {!isHome && <span className="shell-mobilebar-subtitle">Your work, made clear.</span>}
         </Link>
@@ -85,8 +85,8 @@ export default function AppShell({ auth, children }) {
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
       <nav id="plainly-nav" className="shell-sidebar" aria-label="Main navigation">
         {/* Wordmark */}
-        <Link to="/" className="shell-wordmark" aria-label="Yourk home">
-          <span className="wordmark">yourk</span>
+        <Link to="/" className="shell-wordmark" aria-label="Yourkly home">
+          <span className="wordmark">yourkly</span>
           <span className="shell-tagline">Your work, made clear.</span>
         </Link>
 
