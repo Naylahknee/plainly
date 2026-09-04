@@ -17,6 +17,13 @@ handoffs, project timeline, and goal-based help — is complete and deployable.
 
 The build passes cleanly (`npm run build`, 92 modules, zero errors).
 
+### AI Change Inbox (2026-09-03)
+
+Home now collects up to three AI-assisted updates that need a person's decision across
+all projects. Each item says what to do next in plain language and opens directly to
+review, correction, or saving. Updates still waiting on an AI are intentionally left
+out, so the inbox only shows work the person can act on now.
+
 ### Project Connection Health (2026-09-03)
 
 Project Home now shows a plain-language health card. It checks whether Plainly has
