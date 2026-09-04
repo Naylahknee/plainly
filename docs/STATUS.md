@@ -305,6 +305,11 @@ with Plainly's identity as a plain-language interface for GitHub.
 - Kept the handoff local and user-controlled: Yourkly creates the project brief, the user copies it, and no third-party credentials or project data are sent by Yourkly.
 - Updated generated project-brief branding from Plainly to Yourkly and added visible keyboard focus styles to the destination picker.
 
+## Current Update (2026-09-04 — Social preview image)
+
+- Replaced the ultra-wide wordmark in Open Graph and X/Twitter metadata with a dedicated, padded Yourkly social preview image featuring the approved app icon and stork mascot.
+- Added image dimensions and accessible image descriptions. The versioned image URL lets social platforms fetch the new card instead of retaining the previously cropped wordmark preview.
+
 ## In Progress
 
 No tasks are currently in progress. The Project Intelligence Layer is complete.
