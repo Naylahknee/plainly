@@ -10,7 +10,9 @@
  * meta line only prints the parts that exist (HANDOFF §0).
  */
 
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { flushSync } from 'react-dom'
+import LoadingSkeleton from '../components/LoadingSkeleton'
 import { useProjects } from '../hooks/useProjects'
 import { timeAgo } from '../utils/time'
 import { getMemory, setMemory } from '../utils/projectMemory'
@@ -21,6 +23,7 @@ import { ownerOf } from '../utils/useProject'
 
 export default function Projects({ auth }) {
   const owner = auth.user?.login
+  const navigate = useNavigate()
   // Shared with Home and Recent Activity, so all three agree on which
   // projects exist and which of them you asked to see.
   const { projects: repos, allProjects, hiddenCount, loading, error } = useProjects(auth)
@@ -28,6 +31,13 @@ export default function Projects({ auth }) {
   // Remember which project was opened last — this is what feeds "where you left off".
   function rememberOpen(repoName) {
     if (owner) setMemory(owner, repoName, { lastOpenedAt: new Date().toISOString() })
+  }
+
+  function openProject(event, repo) {
+    rememberOpen(repo.name)
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !document.startViewTransition) return
+    event.preventDefault()
+    document.startViewTransition(() => flushSync(() => navigate(`/p/${ownerOf(repo, owner)}/${repo.name}`)))
   }
 
   return (
@@ -52,7 +62,7 @@ export default function Projects({ auth }) {
         </p>
       )}
 
-      {loading && <p className="state-loading">Getting your projects from GitHub…</p>}
+      {loading && <LoadingSkeleton label="Getting your projects from GitHub" />}
 
       {!loading && error && <p className="error-box">{error}</p>}
 
@@ -84,7 +94,8 @@ export default function Projects({ auth }) {
                 key={repo.id || repo.name}
                 to={`/p/${ownerOf(repo, owner)}/${repo.name}`}
                 className="projects-card"
-                onClick={() => rememberOpen(repo.name)}
+                style={{ viewTransitionName: `project-${repo.name.replace(/[^a-zA-Z0-9_-]/g, '-')}` }}
+                onClick={event => openProject(event, repo)}
               >
                 <span className="projects-card-body">
                   <span className="projects-card-top">

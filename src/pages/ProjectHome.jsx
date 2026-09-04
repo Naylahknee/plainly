@@ -108,7 +108,7 @@ export default function ProjectHome({ auth }) {
     <div className="screen-padded project-screen">
       <Link to="/" className="back-link">← Home</Link>
 
-      <div className="project-head">
+      <div className="project-head" style={{ viewTransitionName: `project-${repo.replace(/[^a-zA-Z0-9_-]/g, '-')}` }}>
         <h1 className="project-title">{projectTitle}</h1>
         <StarButton auth={auth} owner={owner} repo={repo} count={repoData?.stargazers_count} />
       </div>

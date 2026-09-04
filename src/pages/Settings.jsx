@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRepoInfo, updateRepoSettings, deleteRepo } from '../api/github'
 import { projectName } from '../utils/projectName'
+import MobileSheet from '../components/MobileSheet'
 
 export default function Settings({ auth }) {
   const { owner, repo } = useParams()
@@ -28,6 +29,7 @@ export default function Settings({ auth }) {
   const [error, setError]       = useState(null)
   const [typedName, setTypedName]     = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [visibilityHelpOpen, setVisibilityHelpOpen] = useState(false)
 
   useEffect(() => {
     if (!token || !owner) return
@@ -141,7 +143,13 @@ export default function Settings({ auth }) {
           <span className="settings-switch" aria-hidden="true" />
         </label>
         <p className="settings-hint">Save changes above to apply this setting.</p>
+        <button className="pl-btn settings-visibility-help" onClick={() => setVisibilityHelpOpen(true)} type="button">How visibility works</button>
       </div>
+
+      <MobileSheet open={visibilityHelpOpen} onClose={() => setVisibilityHelpOpen(false)} title="Who can see this project">
+        <p>Private projects are visible only to you and people you invite. Public projects can be opened by anyone on GitHub.</p>
+        <p>Your choice is applied when you save changes. You can return here later to change it again.</p>
+      </MobileSheet>
 
       {error && <p className="error-box">{error}</p>}
 
