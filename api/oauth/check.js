@@ -15,7 +15,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' })
   }
 
-  if (!originIsSameSite(req) || !requireJson(req, res) || !limit(req, res, { max: 30, windowMs: 60_000 })) return
+  if (!originIsSameSite(req)) return res.status(403).json({ error: 'forbidden' })
+  if (!requireJson(req, res) || !limit(req, res, { max: 30, windowMs: 60_000 })) return
   const session = readSession(req)
   if (!session || req.headers?.['x-csrf-token'] !== session.csrf) return res.status(401).json({ error: 'not_signed_in' })
 

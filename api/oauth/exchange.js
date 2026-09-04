@@ -7,7 +7,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' })
   }
 
-  if (!originIsSameSite(req) || !requireJson(req, res) || !limit(req, res, { max: 10, windowMs: 60_000 })) return
+  if (!originIsSameSite(req)) return res.status(403).json({ error: 'forbidden' })
+  if (!requireJson(req, res) || !limit(req, res, { max: 10, windowMs: 60_000 })) return
   const { code, state } = req.body || {}
   const transaction = readOAuthTransaction(req)
   if (!hasSafeSize(code, 2048) || !hasSafeSize(state, 256) || !transaction || state !== transaction.state) {

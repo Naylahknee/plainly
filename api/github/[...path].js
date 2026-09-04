@@ -6,7 +6,8 @@ const SAFE_PATH = /^\/(?:user(?:\/|\?|$)|repos\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+
 
 export default async function handler(req, res) {
   if (!METHODS.has(req.method)) return res.status(405).json({ error: 'method_not_allowed' })
-  if (!originIsSameSite(req) || !limit(req, res, { max: req.method === 'GET' ? 180 : 45, windowMs: 60_000 })) return
+  if (!originIsSameSite(req)) return res.status(403).json({ error: 'forbidden' })
+  if (!limit(req, res, { max: req.method === 'GET' ? 180 : 45, windowMs: 60_000 })) return
   const session = readSession(req)
   if (!session || req.headers?.['x-csrf-token'] !== session.csrf) return res.status(401).json({ error: 'not_signed_in' })
 
