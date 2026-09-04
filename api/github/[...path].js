@@ -4,6 +4,17 @@ import { limit } from '../../lib/security.js'
 const METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 const SAFE_PATH = /^\/(?:user(?:\/|\?|$)|repos\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/|\?|$))/
 
+function requestedPath(req) {
+  const forwardedPath = req.query?.path
+  if (!forwardedPath) return String(req.url || '').replace(/^\/api\/github/, '')
+
+  const path = Array.isArray(forwardedPath) ? forwardedPath[0] : forwardedPath
+  const query = new URLSearchParams(req.query)
+  query.delete('path')
+  const suffix = query.toString()
+  return `/${path}${suffix ? `?${suffix}` : ''}`
+}
+
 export default async function handler(req, res) {
   if (!METHODS.has(req.method)) return res.status(405).json({ error: 'method_not_allowed' })
   // Same-site GETs may not carry an Origin header. An explicit foreign Origin
@@ -13,7 +24,7 @@ export default async function handler(req, res) {
   const session = readSession(req)
   if (!session || req.headers?.['x-csrf-token'] !== session.csrf) return res.status(401).json({ error: 'not_signed_in' })
 
-  const path = String(req.url || '').replace(/^\/api\/github/, '')
+  const path = requestedPath(req)
   if (!SAFE_PATH.test(path) || path.includes('..') || path.includes('://')) return res.status(400).json({ error: 'invalid_github_path' })
 
   try {
