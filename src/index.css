@@ -52,9 +52,9 @@ body {
 }
 
 .brand-wordmark { display: block; width: auto; height: 25px; }
-.brand-wordmark--loading { height: 35px; }
-.brand-wordmark--sidebar { height: 33px; }
-.brand-wordmark--mobile { height: 28px; }
+.brand-wordmark--loading { height: 45px; }
+.brand-wordmark--sidebar { height: 38px; }
+.brand-wordmark--mobile { height: 32px; }
 
 /* ── Buttons ── */
 .btn-primary {
