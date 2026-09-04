@@ -39,7 +39,7 @@ const TABS = [
     d: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z' },
   { to: '/projects',            label: 'Projects',
     d: 'M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
-  { to: '/activity',            label: 'Activity',
+  { to: '/activity',            label: 'Timeline',
     d: 'M3 12h4l2.5-7 4 14L16 12h5' },
   { to: '/help',                label: 'Help',
     d: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M9.5 9.2A2.6 2.6 0 0 1 14.5 10c0 1.7-2.5 2-2.5 3.6M12 17h.01' },

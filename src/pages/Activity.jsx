@@ -38,8 +38,8 @@ export default function Activity({ auth }) {
 
   return (
     <div className="screen-padded changed-screen">
-      <h1 className="changed-title">Recent Activity</h1>
-      <p className="changed-intro">Everything you and your AI tools have done, newest first.</p>
+      <h1 className="changed-title">Timeline</h1>
+      <p className="changed-intro">Your Save Points and recent work, newest first.</p>
 
       {loading && <p className="state-loading">Getting your activity from GitHub…</p>}
 

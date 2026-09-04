@@ -17,7 +17,7 @@
  * This is the only navigation in the app. No page renders one of its own.
  */
 
-import { NavLink, useParams, useLocation, Link } from 'react-router-dom'
+import { NavLink, useParams, useLocation, Link, useNavigate } from 'react-router-dom'
 import { getActiveUpdate } from '../utils/updateMemory'
 import { projectName } from '../utils/projectName'
 import { projectNavItems } from '../utils/projectNav'
@@ -41,10 +41,19 @@ function NavItem({ to, label, end }) {
 export default function AppShell({ auth, children }) {
   const { owner, repo } = useParams()
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   // If the :repo param is present, we're inside a project
   const inProject = Boolean(owner && repo)
   // Help opens its own topic list, the same way a project opens its own nav.
   const inHelp = pathname === '/help' || pathname.startsWith('/help/')
+  const isHome = pathname === '/'
+  const mobileTitle = inProject
+    ? projectName(repo)
+    : pathname.startsWith('/projects') ? 'Projects'
+      : pathname.startsWith('/activity') ? 'Timeline'
+        : pathname.startsWith('/help') ? 'Help'
+          : pathname.startsWith('/account') ? 'Account'
+            : 'plainly'
 
   const user = auth?.user
   const avatarUrl = user?.avatar_url
@@ -57,13 +66,18 @@ export default function AppShell({ auth, children }) {
       {/* Phones only. Avatar to Account on the left, the way every phone app
           people already use puts an account there; add a project on the right. */}
       <div className="shell-mobilebar">
-        <Link to="/account" className="shell-mobilebar-avatar" aria-label="Account">
-          {avatarUrl
-            ? <img src={avatarUrl} alt="" width={34} height={34} />
-            : <span className="shell-mobilebar-initial">{(login || '?')[0].toUpperCase()}</span>}
-        </Link>
-        <Link to="/" className="shell-mobilebar-brand" aria-label="Plainly home">
-          <span className="wordmark">plainly</span>
+        {isHome ? (
+          <Link to="/account" className="shell-mobilebar-avatar" aria-label="Account">
+            {avatarUrl
+              ? <img src={avatarUrl} alt="" width={34} height={34} />
+              : <span className="shell-mobilebar-initial">{(login || '?')[0].toUpperCase()}</span>}
+          </Link>
+        ) : (
+          <button className="shell-mobilebar-back" onClick={() => navigate(-1)} aria-label="Go back" type="button">‹</button>
+        )}
+        <Link to={isHome ? '/' : pathname} className="shell-mobilebar-brand" aria-label={isHome ? 'Plainly home' : mobileTitle}>
+          <span className={isHome ? 'wordmark' : 'shell-mobilebar-title'}>{mobileTitle}</span>
+          {!isHome && <span className="shell-mobilebar-subtitle">GitHub in plain English</span>}
         </Link>
         <Link to="/new" className="shell-mobilebar-add" aria-label="Start a new project">+</Link>
       </div>

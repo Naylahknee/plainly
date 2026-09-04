@@ -14,6 +14,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useShowGithubWords } from '../utils/settings'
 import { getCsrfToken } from '../api/github'
+import InteractiveProfile from '../components/InteractiveProfile'
 
 export default function Account({ auth }) {
   const { user, token, signOut } = auth
@@ -52,16 +53,20 @@ export default function Account({ auth }) {
     <div className="screen-padded account-screen">
       <h1 className="account-title">Account</h1>
 
+      <InteractiveProfile
+        embedded
+        variant="plainly"
+        profile={{
+          name: user?.name || user?.login || 'Your profile',
+          image: user?.avatar_url,
+          links: user?.login
+            ? [{ label: 'Open GitHub profile', href: user.html_url || `https://github.com/${user.login}`, icon: 'github' }]
+            : undefined,
+        }}
+      />
+
       <div className="account-card">
-        <div className="account-identity">
-          {user?.avatar_url
-            ? <img src={user.avatar_url} alt="" className="account-avatar" width={52} height={52} />
-            : <div className="account-avatar account-avatar--blank" aria-hidden="true" />}
-          <div>
-            <div className="account-login">{user?.login || '—'}</div>
-            <div className="account-sub">Signed in with GitHub</div>
-          </div>
-        </div>
+        <div className="account-sub">Signed in with GitHub as {user?.login || '—'}</div>
 
         <div className="account-permission">
           <div className="account-tick" aria-hidden="true">✓</div>

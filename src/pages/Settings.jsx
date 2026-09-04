@@ -21,6 +21,7 @@ export default function Settings({ auth }) {
   const [repoData, setRepoData] = useState(null)
   const [name, setName]         = useState(repo)
   const [description, setDesc]  = useState('')
+  const [privateProject, setPrivateProject] = useState(true)
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState(false)
   const [saved, setSaved]       = useState(false)
@@ -35,6 +36,7 @@ export default function Settings({ auth }) {
         setRepoData(r)
         setName(r?.name || repo)
         setDesc(r?.description || '')
+        setPrivateProject(Boolean(r?.private))
       })
       .catch(e => setError(e?.message || 'Could not load project settings.'))
       .finally(() => setLoading(false))
@@ -50,6 +52,7 @@ export default function Settings({ auth }) {
       const updated = await updateRepoSettings(token, owner, repo, {
         name: slug || repo,
         description: description.trim(),
+        private: privateProject,
       })
       setSaved(true)
       if (updated?.name && updated.name !== repo) {
@@ -127,9 +130,17 @@ export default function Settings({ auth }) {
       <div className="settings-card">
         <div className="settings-label">Who can see this project</div>
         <div className="settings-body">
-          Right now: {repoData?.private ? 'only you. Anyone you add as a collaborator in GitHub can also see it.' : 'anyone with the link — this project is public.'}
+          {privateProject ? 'Only you and people you invite can see it.' : 'Anyone can see this project on GitHub.'}
         </div>
-        <Link to={`/p/${owner}/${repo}/share`} className="pl-btn">Change who can see it</Link>
+        <label className="settings-switch-row" htmlFor="project-private">
+          <span>
+            <strong>Keep this project private</strong>
+            <small>Turn this off only when you want the project visible to anyone.</small>
+          </span>
+          <input id="project-private" type="checkbox" checked={privateProject} onChange={e => setPrivateProject(e.target.checked)} disabled={saving} />
+          <span className="settings-switch" aria-hidden="true" />
+        </label>
+        <p className="settings-hint">Save changes above to apply this setting.</p>
       </div>
 
       {error && <p className="error-box">{error}</p>}

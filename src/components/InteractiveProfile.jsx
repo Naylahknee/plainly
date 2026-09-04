@@ -31,8 +31,11 @@ function Icon({ name }) {
  * A fully self-contained, click-only profile control.
  * Pass a partial `profile` object to replace any default content.
  */
-export default function InteractiveProfile({ profile = {} }) {
-  const data = useMemo(() => ({ ...DEFAULT_PROFILE, ...profile, links: profile.links || DEFAULT_PROFILE.links }), [profile])
+export default function InteractiveProfile({ profile = {}, embedded = false, variant = 'premium' }) {
+  const data = useMemo(() => {
+    const supplied = Object.fromEntries(Object.entries(profile).filter(([, value]) => value !== undefined && value !== null))
+    return { ...DEFAULT_PROFILE, ...supplied, links: Array.isArray(supplied.links) ? supplied.links : DEFAULT_PROFILE.links }
+  }, [profile])
   const [state, setState] = useState('collapsed')
   const [showContent, setShowContent] = useState(true)
   const [transitioning, setTransitioning] = useState(false)
@@ -54,9 +57,8 @@ export default function InteractiveProfile({ profile = {} }) {
     </button>
   )
 
-  return (
-    <main className="interactive-profile-page">
-      <section className={`interactive-profile interactive-profile--${state}${showContent ? ' is-content-visible' : ''}`} aria-label={`${data.name} profile`}>
+  const control = (
+    <section className={`interactive-profile interactive-profile--${variant} interactive-profile--${state}${showContent ? ' is-content-visible' : ''}`} aria-label={`${data.name} profile`}>
         {state === 'collapsed' && (
           <div className="interactive-profile__content interactive-profile__collapsed">
             {profileImage}
@@ -91,7 +93,8 @@ export default function InteractiveProfile({ profile = {} }) {
             </div>
           </div>
         )}
-      </section>
-    </main>
+    </section>
   )
+
+  return embedded ? control : <main className="interactive-profile-page">{control}</main>
 }
