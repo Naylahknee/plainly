@@ -31,7 +31,7 @@ function Icon({ name }) {
  * A fully self-contained, click-only profile control.
  * Pass a partial `profile` object to replace any default content.
  */
-export default function InteractiveProfile({ profile = {}, embedded = false, variant = 'premium' }) {
+export default function InteractiveProfile({ profile = {}, embedded = false, variant = 'premium', isOwner = false }) {
   const data = useMemo(() => {
     const supplied = Object.fromEntries(Object.entries(profile).filter(([, value]) => value !== undefined && value !== null))
     return { ...DEFAULT_PROFILE, ...supplied, links: Array.isArray(supplied.links) ? supplied.links : DEFAULT_PROFILE.links }
@@ -39,6 +39,8 @@ export default function InteractiveProfile({ profile = {}, embedded = false, var
   const [state, setState] = useState('collapsed')
   const [showContent, setShowContent] = useState(true)
   const [transitioning, setTransitioning] = useState(false)
+  const profileName = data.username || data.name
+  const eyebrow = isOwner ? 'Hi' : data.eyebrow
 
   function changeState(nextState) {
     if (transitioning || nextState === state) return
@@ -62,6 +64,10 @@ export default function InteractiveProfile({ profile = {}, embedded = false, var
         {state === 'collapsed' && (
           <div className="interactive-profile__content interactive-profile__collapsed">
             {profileImage}
+            <button className="interactive-profile__collapsed-copy" onClick={() => changeState('profile')} aria-label={`Open ${profileName}'s profile`} type="button">
+              <span>{isOwner ? 'Hi' : data.eyebrow}</span>
+              <strong>{profileName}</strong>
+            </button>
             <button className="interactive-profile__button interactive-profile__button--green" onClick={() => changeState('profile')} aria-label={`Open ${data.name}'s profile`} type="button"><Icon name="plus" /></button>
           </div>
         )}
@@ -69,7 +75,7 @@ export default function InteractiveProfile({ profile = {}, embedded = false, var
         {state === 'profile' && (
           <div className="interactive-profile__content interactive-profile__summary">
             {profileImage}
-            <div className="interactive-profile__identity"><p>{data.eyebrow}</p><h1>{data.name}</h1></div>
+            <div className="interactive-profile__identity"><p>{eyebrow}</p><h1>{profileName}</h1></div>
             <div className="interactive-profile__actions">
               <button className="interactive-profile__button interactive-profile__button--orange" onClick={() => changeState('bio')} aria-label={`Read ${data.name}'s biography`} type="button"><Icon name="bio" /></button>
               <button className="interactive-profile__button interactive-profile__button--blue" onClick={() => changeState('socials')} aria-label={`Open ${data.name}'s social links`} type="button"><Icon name="social" /></button>
@@ -80,7 +86,7 @@ export default function InteractiveProfile({ profile = {}, embedded = false, var
         {state === 'bio' && (
           <div className="interactive-profile__content interactive-profile__bio" onClick={() => changeState('profile')} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); changeState('profile') } }}>
             <button className="interactive-profile__back" onClick={event => { event.stopPropagation(); changeState('profile') }} aria-label="Back to profile" type="button"><Icon name="back" /></button>
-            <div className="interactive-profile__bio-head">{profileImage}<div><p>{data.eyebrow}</p><h1>{data.name}</h1></div></div>
+            <div className="interactive-profile__bio-head">{profileImage}<div><p>{eyebrow}</p><h1>{profileName}</h1></div></div>
             <p className="interactive-profile__bio-copy">{data.bio}</p>
           </div>
         )}

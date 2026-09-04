@@ -58,11 +58,13 @@ export default function Account({ auth }) {
         variant="plainly"
         profile={{
           name: user?.name || user?.login || 'Your profile',
+          username: user?.login,
           image: user?.avatar_url,
           links: user?.login
             ? [{ label: 'Open GitHub profile', href: user.html_url || `https://github.com/${user.login}`, icon: 'github' }]
             : undefined,
         }}
+        isOwner
       />
 
       <div className="account-card">
