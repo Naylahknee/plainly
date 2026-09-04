@@ -1912,13 +1912,17 @@
     padding-left: max(20px, env(safe-area-inset-left, 0px));
     padding-right: max(20px, env(safe-area-inset-right, 0px));
     align-items: flex-start;
+    overflow-x: hidden;
   }
 
   .welcome-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 100%;
     gap: 32px;
     align-items: start;
   }
+
+  .welcome-card { min-width: 0; }
 
   .welcome-title { font-size: 32px; }
   .welcome-lead  { font-size: 17px; }
