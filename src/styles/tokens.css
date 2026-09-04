@@ -2460,6 +2460,9 @@
 .ai-tool:hover { border-color: var(--purple); color: var(--purple); }
 .ai-tool--on,
 .ai-tool--on:hover { background: var(--purple); border-color: var(--purple); color: #fff; }
+.ai-tool:focus-visible,
+.ai-check:focus-visible { outline: 3px solid var(--purple); outline-offset: 3px; }
+.ai-tool-hint { font: 400 14px/1.5 var(--font); color: var(--ink-soft); margin: 12px 0 0; }
 
 .ai-context {
   background: #fff;

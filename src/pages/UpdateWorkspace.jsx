@@ -178,7 +178,7 @@ export default function UpdateWorkspace({ auth }) {
         {/* Footer actions */}
         <div className="update-workspace-footer">
           <Link to={`/p/${owner}/${repo}/u/${updateId}/ai`} className="pl-btn-primary">
-            Continue with AI
+            Continue in…
           </Link>
           <Link to={`/p/${owner}/${repo}/u/${updateId}/review`} className="pl-btn">
             Review the changes

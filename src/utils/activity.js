@@ -15,8 +15,11 @@ import { getUpdates } from './updateMemory'
 // stored memory from before they were dropped still names them, and a past
 // event must keep reading the way it happened.
 const AI_LABEL = {
+  lovable: 'Lovable',
   chatgpt: 'ChatGPT',
   claude: 'Claude',
+  cursor: 'Cursor',
+  vscode: 'VS Code',
   gemini: 'Gemini',
   manus: 'Manus',
   deepseek: 'DeepSeek',

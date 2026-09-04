@@ -84,7 +84,7 @@ export default function NewUpdate({ auth }) {
 
           <div className="newupdate-summary-actions">
             <Link to={`/p/${owner}/${repo}/u/${created.id}/ai`} className="pl-btn-primary">
-              Continue with AI
+              Continue in…
             </Link>
             <Link to={`/p/${owner}/${repo}/files`} className="pl-btn">Browse project files</Link>
             <Link to={`/p/${owner}/${repo}`} className="pl-btn">Save task for later</Link>

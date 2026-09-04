@@ -222,7 +222,7 @@ export default function ReturnFromAI({ auth }) {
             exactly what changed.
           </p>
           <div className="return-actions">
-            <Link to={`/p/${owner}/${repo}/u/${updateId}/ai`} className="pl-btn-primary">Continue with AI</Link>
+            <Link to={`/p/${owner}/${repo}/u/${updateId}/ai`} className="pl-btn-primary">Continue in…</Link>
             <Link to={`/p/${owner}/${repo}/u/${updateId}`} className="pl-btn">Back to the update</Link>
           </div>
         </section>

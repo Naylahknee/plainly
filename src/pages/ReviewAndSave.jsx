@@ -124,7 +124,7 @@ export default function ReviewAndSave({ auth }) {
           <Link to={`/p/${owner}/${repo}`} className="pl-btn-primary">Back to {projectName(repo)}</Link>
           <Link to={`/p/${owner}/${repo}/changed`} className="pl-btn">See what changed</Link>
           {update && (
-            <Link to={`/p/${owner}/${repo}/u/${update.id}/ai`} className="pl-btn">Continue with AI</Link>
+            <Link to={`/p/${owner}/${repo}/u/${update.id}/ai`} className="pl-btn">Continue in…</Link>
           )}
         </div>
       </div>

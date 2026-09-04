@@ -43,7 +43,7 @@ export function heroFor(update, { filesCount = 0, activity = 'recently' } = {}) 
         left:  'This update is ready to be handed to an AI.',
         since: `Prepared ${activity} — not sent yet.`,
         next:  'Choose an AI and send it the context.',
-        cta:   'Continue with AI',
+        cta:   'Continue in…',
         route: 'ai',
       }
 
@@ -82,7 +82,7 @@ export function heroFor(update, { filesCount = 0, activity = 'recently' } = {}) 
         left:  `${ai} made changes but something was not right.`,
         since: `Marked as needing correction ${activity}.`,
         next:  `Ask ${ai} to fix what it got wrong.`,
-        cta:   'Continue with AI',
+        cta:   'Continue in…',
         route: 'ai',
       }
 

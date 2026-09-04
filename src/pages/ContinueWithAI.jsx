@@ -179,10 +179,10 @@ export default function ContinueWithAI({ auth }) {
   return (
     <div className="screen-padded ai-screen">
       <Link to={`/p/${owner}/${repo}`} className="back-link">← {projectName(repo)}</Link>
-      <h1 className="ai-title">Continue with AI</h1>
+      <h1 className="ai-title">Continue in…</h1>
       <p className="ai-intro">
-        Yourk writes a handoff with everything the AI needs to pick up where you left off.
-        Copy it, paste it into your AI, then come back and save what it produced.
+        Pick where you want to continue. Yourkly writes a project brief with everything it
+        needs to pick up where you left off.
       </p>
 
       {stored?.handoff?.sentAt && (
@@ -192,7 +192,7 @@ export default function ContinueWithAI({ auth }) {
               You continued this project with {update.ai || 'an AI'} {timeAgo(update.handoff.sentAt)}.
             </div>
             <div className="ai-previous-body">
-              Did you make changes? Yourk can only see them once they're in your files.
+              Did you make changes? Yourkly can only see them once they're in your files.
             </div>
           </div>
           <Link to={`/p/${owner}/${repo}/u/${stored.id}/return`} className="pl-btn">Review project changes</Link>
@@ -200,25 +200,28 @@ export default function ContinueWithAI({ auth }) {
       )}
 
       {/* 1 */}
-      <h2 className="ai-step-title">1. Which AI are you using?</h2>
+      <h2 className="ai-step-title">1. Where do you want to continue?</h2>
       <div className="ai-tools">
         {AI_TOOLS.filter(t => t.id !== 'generic').map(t => (
           <button
             key={t.id}
+            type="button"
             className={`ai-tool${tool?.id === t.id ? ' ai-tool--on' : ''}`}
-            onClick={() => { setTool(t); setCopied(false) }}
+            onClick={() => { setTool(t); setCopied(false); setOpened(false) }}
+            aria-pressed={tool?.id === t.id}
           >
             {t.label}
           </button>
         ))}
       </div>
+      {tool && <p className="ai-tool-hint">{tool.pasteHint}</p>}
 
       {/* Without an update, this is where the AI's instruction comes from. */}
       {!stored && !created && (
         <>
           <h2 className="ai-step-title">2. What do you want the AI to do?</h2>
           <p className="ai-step-sub">
-            One sentence in your words. Yourk keeps it as an update once you mark this as
+            One sentence in your words. Yourkly keeps it as an update once you mark this as
             sent, so it can tell you what changed when you come back.
           </p>
           <textarea
@@ -232,7 +235,7 @@ export default function ContinueWithAI({ auth }) {
 
       {/* 2 */}
       <h2 className="ai-step-title">
-        {stored || created ? '2. What Yourk is packing' : '3. What Yourk is packing'}
+        {stored || created ? '2. What Yourkly is packing' : '3. What Yourkly is packing'}
       </h2>
       <p className="ai-step-sub">
         This is the context the AI gets. You don't have to remember any of it — but you can
@@ -273,7 +276,7 @@ export default function ContinueWithAI({ auth }) {
       <pre className="ai-preview">{loading ? 'Reading your project from GitHub…' : handoff}</pre>
       {sensitiveText.length > 0 && !loading && (
         <div className="ai-secret-warning" role="alert">
-          <strong>Check this before copying.</strong> Yourk found what looks like {sensitiveText.join(' and ')}.
+          <strong>Check this before copying.</strong> Yourkly found what looks like {sensitiveText.join(' and ')}.
           External AI services may keep what you paste. Remove it from the handoff, or confirm that
           you are allowed to share it.
           <label className="ai-secret-confirm">
@@ -295,9 +298,9 @@ export default function ContinueWithAI({ auth }) {
         </button>
         <span className="ai-actions-note">
           {copied
-            ? `Copied. Paste it into ${toolLabel} as your first message.`
+            ? `Copied. ${tool?.pasteHint || `Paste it into ${toolLabel} as your first message.`}`
             : opened
-              ? `Yourk remembered this handoff for ${projectName(repo)}.`
+              ? `${toolLabel} opened in a new tab. Copy the brief, then paste it there.`
               : ''}
         </span>
       </div>
@@ -306,12 +309,12 @@ export default function ContinueWithAI({ auth }) {
       <div className="ai-sent">
         <div>
           <div className="ai-sent-title">
-            {stored || created ? "4. Tell Yourk you've sent it" : "5. Tell Yourk you've sent it"}
+            {stored || created ? "4. Tell Yourkly you've sent it" : "5. Tell Yourkly you've sent it"}
           </div>
           <div className="ai-sent-note">
             {marked
-              ? 'Yourk is now watching this project for changes. Come back when the AI is done.'
-              : 'Do this so Yourk knows to watch for changes when you come back.'}
+              ? 'Yourkly is now watching this project for changes. Come back when you are done.'
+              : 'Do this so Yourkly knows to watch for changes when you come back.'}
           </div>
         </div>
         <button className="pl-btn-primary" onClick={handleMarkSent} disabled={!tool || marked}>

@@ -23,7 +23,7 @@ export function projectNavItems(owner, repo, activeUpdate) {
     { to: at('publish'),   label: 'Put It on the Web' },
     { to: at('share'),     label: 'Who Can See It' },
     { to: aiRouteFor(owner, repo, activeUpdate),
-                           label: 'Continue with AI' },
+                           label: 'Continue in…' },
     { to: at('settings'),  label: 'Settings' },
   ]
 }

@@ -7,8 +7,8 @@ every substantial task. See `AGENTS.md` for the update protocol.
 
 ## Current State
 
-**Date of last update:** 2026-09-03
-**Updated by:** Project Connection Health
+**Date of last update:** 2026-09-04
+**Updated by:** Continue-in handoff
 **Branch:** main
 
 Plainly is a working application. The core feature set — GitHub OAuth sign-in, project
@@ -297,6 +297,13 @@ with Plainly's identity as a plain-language interface for GitHub.
 - Added a canonical URL, concise product description, Open Graph/Twitter metadata, and accurate JSON-LD for the organization, website, and web application.
 - Added `robots.txt` and `sitemap.xml`. Public search crawlers and `OAI-SearchBot` may crawl the landing page; authenticated and API routes are excluded. `GPTBot` is blocked, so public content is eligible for ChatGPT Search without opting into GPTBot training.
 - Build passed. The remaining external step is DNS verification for `yourkly.com`, then submitting the sitemap to Google Search Console and Bing Webmaster Tools.
+
+## Current Update (2026-09-04 — Continue in handoff)
+
+- Renamed the project handoff entry point to **Continue in…** throughout the project.
+- Added Lovable, Cursor, and VS Code alongside the existing AI choices. Each choice opens its official service and shows a clear, tool-specific copy-and-paste next step.
+- Kept the handoff local and user-controlled: Yourkly creates the project brief, the user copies it, and no third-party credentials or project data are sent by Yourkly.
+- Updated generated project-brief branding from Plainly to Yourkly and added visible keyboard focus styles to the destination picker.
 
 ## In Progress
 
