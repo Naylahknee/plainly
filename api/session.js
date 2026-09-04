@@ -3,7 +3,10 @@ import { limit } from '../lib/security.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' })
-  if (!originIsSameSite(req)) return res.status(403).json({ error: 'forbidden' })
+  // Browsers often omit Origin on a same-site GET. This endpoint only returns
+  // session state; cross-site scripts cannot read it without CORS permission,
+  // so accept an absent Origin but still reject an explicit foreign one.
+  if (req.headers?.origin && !originIsSameSite(req)) return res.status(403).json({ error: 'forbidden' })
   if (!limit(req, res, { max: 60, windowMs: 60_000 })) return
   const session = readSession(req)
   if (!session) return res.status(401).json({ error: 'not_signed_in' })
