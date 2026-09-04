@@ -21,6 +21,7 @@ import { useShowGithubWords } from '../utils/settings'
 import { aiRouteFor } from '../utils/aiRoute'
 import ProjectSections from '../components/ProjectSections'
 import StarButton from '../components/StarButton'
+import ProjectHealth from '../components/ProjectHealth'
 
 export default function ProjectHome({ auth }) {
   const { owner, repo } = useParams()
@@ -146,6 +147,14 @@ export default function ProjectHome({ auth }) {
           ? <span className="project-status-unsaved">Changes not saved yet</span>
           : <span className="project-status-ok">Everything saved</span>}
       </div>
+
+      <ProjectHealth
+        auth={auth}
+        owner={owner}
+        repo={repo}
+        updates={allUpdates}
+        unsaved={unsaved}
+      />
 
       {/* Current update */}
       {activeUpdate && hero ? (
