@@ -1,0 +1,39 @@
+.interactive-profile-page { min-height: 100dvh; width: 100%; display: grid; place-items: center; overflow: hidden; background: #fff; padding: 20px; box-sizing: border-box; font-family: var(--font, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif); }
+.interactive-profile { --ease: cubic-bezier(.22, 1, .36, 1); width: 160px; height: 80px; background: #0a0a0b; border-radius: 999px; color: #fff; box-shadow: 0 22px 48px rgba(12, 12, 18, .19), 0 4px 12px rgba(12, 12, 18, .12); overflow: hidden; transition: width 560ms var(--ease), height 560ms var(--ease), border-radius 560ms var(--ease), transform 560ms var(--ease); }
+.interactive-profile--profile { width: min(470px, calc(100vw - 40px)); height: 96px; }
+.interactive-profile--bio { width: min(500px, calc(100vw - 40px)); height: 310px; border-radius: 32px; }
+.interactive-profile--socials { width: min(530px, calc(100vw - 40px)); height: 108px; }
+.interactive-profile__content { height: 100%; box-sizing: border-box; opacity: 0; filter: blur(5px); transform: scale(.96); transition: opacity 210ms ease, filter 210ms ease, transform 360ms var(--ease); pointer-events: none; }
+.is-content-visible .interactive-profile__content { opacity: 1; filter: blur(0); transform: scale(1); pointer-events: auto; }
+.interactive-profile__collapsed, .interactive-profile__summary, .interactive-profile__socials { display: flex; align-items: center; }
+.interactive-profile__collapsed { justify-content: space-between; padding: 7px; }
+.interactive-profile__summary { padding: 10px 12px; gap: 13px; }
+.interactive-profile__image-button { border: 1.5px solid rgba(255,255,255,.94); border-radius: 50%; padding: 0; width: 66px; height: 66px; flex: 0 0 auto; overflow: hidden; background: #222; cursor: pointer; transition: transform 180ms ease; }
+.interactive-profile__image-button:active { transform: scale(.94); }
+.interactive-profile__image { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.interactive-profile__button, .interactive-profile__back, .interactive-profile__social { border: 0; display: inline-grid; place-items: center; color: #fff; cursor: pointer; flex: 0 0 auto; transition: transform 180ms ease, filter 180ms ease; }
+.interactive-profile__button:active, .interactive-profile__back:active, .interactive-profile__social:active { transform: scale(.92); }
+.interactive-profile__button { width: 62px; height: 62px; border-radius: 50%; }
+.interactive-profile__button--green { background: #34e76c; box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+.interactive-profile__button--orange { background: #f17832; }
+.interactive-profile__button--blue { background: #2588ef; }
+.interactive-profile__identity { min-width: 0; flex: 1; }
+.interactive-profile__identity p, .interactive-profile__bio-head p { margin: 0 0 3px; color: #a2a2aa; font-size: 12px; font-weight: 600; letter-spacing: .01em; }
+.interactive-profile__identity h1, .interactive-profile__bio-head h1 { margin: 0; color: #fff; font-size: 22px; line-height: 1.1; letter-spacing: -.035em; }
+.interactive-profile__actions { display: flex; gap: 9px; }
+.interactive-profile__actions .interactive-profile__button { width: 54px; height: 54px; }
+.interactive-profile__bio { position: relative; padding: 32px; cursor: pointer; outline: none; }
+.interactive-profile__bio-head { display: flex; align-items: center; gap: 15px; padding-right: 38px; }
+.interactive-profile__bio-head .interactive-profile__image-button { width: 68px; height: 68px; }
+.interactive-profile__bio-copy { margin: 28px 0 0; max-width: 36ch; color: #b1b1b9; font-size: 15px; line-height: 1.55; }
+.interactive-profile__back { width: 36px; height: 36px; border-radius: 50%; background: #242428; position: absolute; top: 22px; right: 22px; }
+.interactive-profile__back svg { width: 19px; height: 19px; }
+.interactive-profile__socials { position: relative; padding: 16px 23px; gap: 24px; }
+.interactive-profile__socials .interactive-profile__back { position: static; }
+.interactive-profile__social-list { display: flex; align-items: center; justify-content: space-between; flex: 1; gap: 11px; }
+.interactive-profile__social { width: 56px; height: 56px; border-radius: 50%; background: #222226; animation: interactive-social-in 400ms var(--ease) both; animation-delay: var(--social-delay); }
+.interactive-profile__social:hover { filter: brightness(1.28); }
+.interactive-profile button:focus-visible, .interactive-profile a:focus-visible, .interactive-profile__bio:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+@keyframes interactive-social-in { from { opacity: 0; transform: translateY(8px) scale(.84); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 470px) { .interactive-profile-page { padding: 14px; } .interactive-profile--profile { height: 88px; } .interactive-profile--bio { height: auto; min-height: 286px; } .interactive-profile__summary { gap: 9px; padding: 9px; } .interactive-profile__image-button { width: 58px; height: 58px; } .interactive-profile__actions { gap: 6px; } .interactive-profile__actions .interactive-profile__button { width: 47px; height: 47px; } .interactive-profile__bio { padding: 26px 24px; } .interactive-profile__socials { padding: 14px; gap: 14px; } .interactive-profile__social-list { gap: 7px; } .interactive-profile__social { width: 43px; height: 43px; } .interactive-profile__social svg { width: 19px; height: 19px; } }
+@media (prefers-reduced-motion: reduce) { .interactive-profile, .interactive-profile__content, .interactive-profile__button, .interactive-profile__back, .interactive-profile__social, .interactive-profile__image-button { transition-duration: 1ms; animation-duration: 1ms; animation-delay: 0ms; } }

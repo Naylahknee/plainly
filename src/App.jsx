@@ -31,6 +31,7 @@ import Versions       from './pages/Versions'
 import Publish        from './pages/Publish'
 import Share          from './pages/Share'
 import Settings       from './pages/Settings'
+import ProfilePreview from './pages/ProfilePreview'
 
 // Update pages
 import UpdateWorkspace  from './pages/UpdateWorkspace'
@@ -139,6 +140,7 @@ export default function App() {
       <Routes>
         {/* ── Auth (no shell) ─────────────────────────────────────── */}
         <Route path="/auth/callback" element={<AuthCallback onSignIn={auth.signIn} />} />
+        <Route path="/profile-preview" element={<ProfilePreview auth={auth} />} />
 
         {/* ── Root ───────────────────────────────────────────────── */}
         <Route
