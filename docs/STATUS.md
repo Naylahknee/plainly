@@ -7,15 +7,25 @@ every substantial task. See `AGENTS.md` for the update protocol.
 
 ## Current State
 
-**Date of last update:** 2025-07-11
-**Updated by:** Help page redesign + HANDOFF.md
+**Date of last update:** 2026-09-03
+**Updated by:** Project Connection Health
 **Branch:** main
 
 Plainly is a working application. The core feature set — GitHub OAuth sign-in, project
 list, file editor, save points, history, restore, project memory, task system, AI
 handoffs, project timeline, and goal-based help — is complete and deployable.
 
-The build passes cleanly (`npm run build`, 70 modules, zero errors).
+The build passes cleanly (`npm run build`, 92 modules, zero errors).
+
+### Project Connection Health (2026-09-03)
+
+Project Home now shows a plain-language health card. It checks whether Plainly has
+unsaved work, whether GitHub's latest automatic checks are passing, whether a GitHub
+Pages site is ready, and whether an AI update is waiting. It never invents a result:
+hosting systems that do not report through GitHub are shown as unknown rather than healthy.
+
+**Known limitation:** Direct health data from Vercel, Netlify, and other hosting providers
+is not connected yet. Their GitHub-reported checks are shown when available.
 
 ---
 
