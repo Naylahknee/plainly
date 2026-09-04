@@ -1,17 +1,17 @@
-# Agent Instructions for Plainly
+# Agent Instructions for Yourkly
 
 Read this file before making any change to this repository.
 
 ---
 
-## What Plainly Is
+## What Yourkly Is
 
-Plainly is an existing, deployed product. It is a **plain-language interface for GitHub**
+Yourkly is an existing, deployed product. It is a **plain-language interface for GitHub**
 built for nontechnical users. It translates GitHub concepts — repositories, commits, file
 contents, history — into ordinary words that non-developers can understand and act on.
 
 The current writing editor (create file, edit, save point, history, restore) is **one
-workflow** within Plainly. It is not the full definition of the product. Plainly's intended
+workflow** within Yourkly. It is not the full definition of the product. Yourkly's intended
 scope includes project creation, editing, saving, history, restoring, collaboration,
 publishing, and AI-assisted project work — all surfaced in plain language.
 
@@ -57,7 +57,7 @@ publishing, and AI-assisted project work — all surfaced in plain language.
 GitHub terminology must be translated into plain language wherever it appears in the
 user interface. The following translations are already established in the product:
 
-| GitHub term | Plainly equivalent |
+| GitHub term | Yourkly equivalent |
 |---|---|
 | Repository | Project |
 | Commit | Save point |
