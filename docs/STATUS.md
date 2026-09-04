@@ -293,6 +293,7 @@ with Plainly's identity as a plain-language interface for GitHub.
 ## Current Update (2026-09-04 — Yourkly favicon and search discoverability)
 
 - Added the approved Yourkly favicon, a canonical public logo asset, and share-card metadata.
+- Restored the clean wordmark across the app. The stork is now a separate, sidebar-only brand mark rather than part of the wordmark.
 - Added a canonical URL, concise product description, Open Graph/Twitter metadata, and accurate JSON-LD for the organization, website, and web application.
 - Added `robots.txt` and `sitemap.xml`. Public search crawlers and `OAI-SearchBot` may crawl the landing page; authenticated and API routes are excluded. `GPTBot` is blocked, so public content is eligible for ChatGPT Search without opting into GPTBot training.
 - Build passed. The remaining external step is DNS verification for `yourkly.com`, then submitting the sitemap to Google Search Console and Bing Webmaster Tools.
