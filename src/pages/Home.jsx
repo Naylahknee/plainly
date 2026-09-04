@@ -5,7 +5,7 @@
  * happened since, what should I do next (HANDOFF §7.3).
  *
  * Order: greeting → explainer → CONTINUE WHERE YOU LEFT OFF → WHAT NEEDS YOUR
- * ATTENTION → recent projects + recent activity.
+ * CHANGE INBOX → recent projects + recent activity.
  *
  * The three hero sentences come from heroFor() — never computed here.
  */
@@ -102,9 +102,13 @@ export default function Home({ auth }) {
 
   const updateCount = allUpdates.filter(u => u.status !== 'saved' && u.status !== 'paused').length
 
-  // What needs your attention: only real items. An update that has been
-  // reviewed but not saved is the one thing Plainly can say for certain.
-  const unsavedUpdate = allUpdates.find(u => u.status === 'ready_to_save')
+  // The inbox is deliberately narrow: only work that needs a human decision
+  // belongs here. "Sent to AI" is waiting on somebody else, not an action the
+  // person can take now. This keeps a dashboard from becoming a noisy list of
+  // every update that happens to exist.
+  const inboxUpdates = allUpdates
+    .filter(u => ['changes_detected', 'waiting_for_review', 'ready_to_save', 'needs_correction'].includes(u.status))
+    .slice(0, 3)
 
   const events = activityEvents({ owner, repos, commitsByRepo })
 
@@ -263,33 +267,46 @@ export default function Home({ auth }) {
         </section>
       )}
 
-      {/* 4. What needs your attention */}
-      <div className="section-label">What needs your attention</div>
-      {unsavedUpdate ? (
-        <div className="home-attention-card">
-          <div className="home-attention-text">
-            <div className="home-attention-title">
-              {projectName(unsavedUpdate.repoName)} has changes that aren't saved yet
+      {/* 4. AI Change Inbox */}
+      <div className="section-label">AI change inbox</div>
+      {inboxUpdates.length ? (
+        <section className="home-inbox">
+          <div className="home-inbox-head">
+            <div>
+              <h2>Work is waiting on you</h2>
+              <p>Review it, ask for a correction, or save it. Nothing moves forward without you.</p>
             </div>
-            <div className="home-attention-body">
-              Edits to{' '}
-              <strong>
-                {(unsavedUpdate.files || []).length
-                  ? unsavedUpdate.files.join(', ')
-                  : 'this update'}
-              </strong>{' '}
-              only exist on this computer. Until you save them to GitHub, they aren't backed up
-              and you can't go back to them later.
-            </div>
+            {inboxUpdates.length > 1 && <Link to="/activity" className="text-link">See all activity</Link>}
           </div>
-          <Link to={`/p/${unsavedUpdate.repoOwner || owner}/${unsavedUpdate.repoName}/save`} className="pl-btn-primary home-attention-cta">
-            Review and save
-          </Link>
-        </div>
+          <div className="home-inbox-list">
+            {inboxUpdates.map(update => {
+              const next = heroFor(update, { filesCount: (update.files || []).length })
+              return (
+                <div className="home-inbox-row" key={`${update.repoOwner}/${update.repoName}/${update.id}`}>
+                  <div className="home-inbox-copy">
+                    <div className="home-inbox-meta">
+                      <span>{projectName(update.repoName)}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{timeAgo(update.lastActivityAt)}</span>
+                    </div>
+                    <div className="home-inbox-title">{update.title}</div>
+                    <div className="home-inbox-next">{next.next}</div>
+                  </div>
+                  <Link
+                    to={`/p/${update.repoOwner}/${update.repoName}/u/${update.id}/${next.route}`}
+                    className="pl-btn-primary home-inbox-cta"
+                  >
+                    {next.cta}
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
+        </section>
       ) : (
         <div className="home-attention-none">
           <span className="home-attention-tick" aria-hidden="true">✓</span>
-          <span>Nothing needs you right now. Everything is saved in GitHub.</span>
+          <span>Nothing is waiting on you right now. Everything Plainly knows about is saved or in progress.</span>
         </div>
       )}
 
