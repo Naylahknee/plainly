@@ -162,3 +162,18 @@ boundary.
 **Alternatives considered:**
 - Relay as a separate Vite app in a monorepo — rejected; unnecessary complexity
 - Relay as a separate repository — rejected; out of scope and not authorized
+
+---
+
+## D-008 — Yourkly is the public product brand and search crawlers may index the landing page
+
+**Date:** 2026-09-04  
+**Status:** Active
+
+**Decision:** Use Yourkly as the public product identity. The public landing page is discoverable through normal search crawlers and OpenAI's `OAI-SearchBot`; `GPTBot` remains blocked.
+
+**Reason:** Yourkly has an owned primary domain and approved brand artwork. Search discovery and citation eligibility require accurate public metadata, a sitemap, and crawler access. Allowing `OAI-SearchBot` supports ChatGPT Search discovery while blocking `GPTBot` preserves the owner's preference not to opt public site content into that training crawler.
+
+**Alternatives considered:**
+- Allowing all OpenAI crawlers — rejected because it provides no additional search-discovery requirement and changes the training preference.
+- Blocking all AI crawlers — rejected because it would reduce eligibility for search discovery and citations.
