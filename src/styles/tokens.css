@@ -1829,6 +1829,8 @@
   margin-bottom: 28px;
 }
 
+.brand-wordmark--welcome { height: 31px; }
+
 .welcome-title {
   font: 700 46px/1.08 var(--font);
   letter-spacing: -.03em;

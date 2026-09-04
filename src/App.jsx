@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth'
 
 // Layout
 import AppShell from './components/AppShell'
+import BrandWordmark from './components/BrandWordmark'
 
 // Auth pages (no shell)
 import AuthCallback from './pages/AuthCallback'
@@ -130,7 +131,7 @@ export default function App() {
   if (auth.loading) {
     return (
       <div className="loading-screen">
-        <div className="wordmark">yourkly</div>
+        <BrandWordmark className="brand-wordmark--loading" />
       </div>
     )
   }

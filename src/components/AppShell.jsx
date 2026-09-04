@@ -23,6 +23,7 @@ import { projectName } from '../utils/projectName'
 import { projectNavItems } from '../utils/projectNav'
 import { SECTIONS as HELP_SECTIONS } from '../help/content'
 import TabBar from './TabBar'
+import BrandWordmark from './BrandWordmark'
 
 function NavItem({ to, label, end }) {
   return (
@@ -76,7 +77,9 @@ export default function AppShell({ auth, children }) {
           <button className="shell-mobilebar-back" onClick={() => navigate(-1)} aria-label="Go back" type="button">‹</button>
         )}
         <Link to={isHome ? '/' : pathname} className="shell-mobilebar-brand" aria-label={isHome ? 'Yourkly home' : mobileTitle}>
-          <span className={isHome ? 'wordmark' : 'shell-mobilebar-title'}>{mobileTitle}</span>
+          {isHome
+            ? <BrandWordmark className="brand-wordmark--mobile" />
+            : <span className="shell-mobilebar-title">{mobileTitle}</span>}
           {!isHome && <span className="shell-mobilebar-subtitle">Your work, made clear.</span>}
         </Link>
         <Link to="/new" className="shell-mobilebar-add" aria-label="Start a new project">+</Link>
@@ -86,7 +89,7 @@ export default function AppShell({ auth, children }) {
       <nav id="plainly-nav" className="shell-sidebar" aria-label="Main navigation">
         {/* Wordmark */}
         <Link to="/" className="shell-wordmark" aria-label="Yourkly home">
-          <span className="wordmark">yourkly</span>
+          <BrandWordmark className="brand-wordmark--sidebar" />
           <span className="shell-tagline">Your work, made clear.</span>
         </Link>
 

@@ -9,6 +9,7 @@
 
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import BrandWordmark from '../components/BrandWordmark'
 
 export default function AuthCallback({ onSignIn }) {
   const navigate = useNavigate()
@@ -43,7 +44,7 @@ export default function AuthCallback({ onSignIn }) {
 
   return (
     <div className="loading-screen">
-      <div className="wordmark">yourkly</div>
+      <BrandWordmark className="brand-wordmark--loading" />
       <p className="loading-text">Signing you in…</p>
     </div>
   )

@@ -51,6 +51,11 @@ body {
   color: var(--purple);
 }
 
+.brand-wordmark { display: block; width: auto; height: 25px; }
+.brand-wordmark--loading { height: 29px; }
+.brand-wordmark--sidebar { height: 25px; }
+.brand-wordmark--mobile { height: 23px; }
+
 /* ── Buttons ── */
 .btn-primary {
   display: inline-flex;
@@ -3032,5 +3037,4 @@ body {
 /* ═══════════════════════════════════════════════════════════════════════════
    Responsive — collapse sidebar on small screens
    ═══════════════════════════════════════════════════════════════════════════ */
-
 

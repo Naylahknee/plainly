@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 530 104" role="img" aria-label="yourkly">
+  <g fill="#1C1B22">
+    <path d="M18 29h18v31c0 10 5 15 13 15 9 0 14-5 14-15V29h18v33c0 19-13 30-31 30-19 0-32-12-32-31V29Z"/>
+    <path d="M71 29h18l18 44 17-44h18l-27 63c-4 9-10 12-19 12h-9V89h7c3 0 5-1 6-4l2-5-23-51Z"/>
+    <text x="151" y="77" font-family="Inter, Arial, sans-serif" font-size="66" font-weight="700" letter-spacing="-4">ourkly</text>
+  </g>
+</svg>
