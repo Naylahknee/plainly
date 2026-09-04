@@ -7,7 +7,12 @@
 
 import express from 'express'
 import cors from 'cors'
-import { exchangeCode, revokeGrant, checkToken } from './lib/oauth.js'
+import startOAuth from './api/oauth/start.js'
+import exchangeOAuth from './api/oauth/exchange.js'
+import session from './api/session.js'
+import logout from './api/logout.js'
+import github from './api/github/[...path].js'
+import checkOAuth from './api/oauth/check.js'
 
 const app = express()
 const FRONTEND = process.env.FRONTEND_URL || 'http://localhost:5173'
@@ -15,44 +20,12 @@ const FRONTEND = process.env.FRONTEND_URL || 'http://localhost:5173'
 app.use(cors({ origin: FRONTEND }))
 app.use(express.json())
 
-app.post('/api/oauth/exchange', async (req, res) => {
-  const { code } = req.body || {}
-  if (!code) return res.status(400).json({ error: 'no_code' })
-
-  try {
-    const token = await exchangeCode(code)
-    res.json({ token })
-  } catch (err) {
-    if (err.message === 'missing_oauth_config') {
-      return res.status(500).json({ error: 'server_error' })
-    }
-    res.status(400).json({ error: err.message || 'no_token' })
-  }
-})
-
-app.post('/api/oauth/revoke', async (req, res) => {
-  const { token } = req.body || {}
-  if (!token) return res.status(400).json({ error: 'no_token' })
-
-  try {
-    const { revoked, status } = await revokeGrant(token)
-    if (!revoked) return res.status(502).json({ error: 'revoke_failed', github_status: status })
-    res.status(204).end()
-  } catch {
-    res.status(500).json({ error: 'server_error' })
-  }
-})
-
-app.post('/api/oauth/check', async (req, res) => {
-  const { token } = req.body || {}
-  if (!token) return res.status(400).json({ error: 'no_token' })
-
-  try {
-    res.json(await checkToken(token))
-  } catch {
-    res.json({ connected: null })
-  }
-})
+app.post('/api/oauth/start', startOAuth)
+app.post('/api/oauth/exchange', exchangeOAuth)
+app.post('/api/oauth/check', checkOAuth)
+app.get('/api/session', session)
+app.post('/api/logout', logout)
+app.all('/api/github/*', github)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => console.log(`OAuth server on http://localhost:${PORT}`))

@@ -1,21 +1,29 @@
 import { exchangeCode } from '../../lib/oauth.js'
+import { readOAuthTransaction, setSession, clearAuthCookies, clearOAuthTransaction, originIsSameSite } from '../../lib/session.js'
+import { hasSafeSize, limit, requireJson } from '../../lib/security.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'method_not_allowed' })
   }
 
-  const { code } = req.body || {}
-  if (!code) return res.status(400).json({ error: 'no_code' })
+  if (!originIsSameSite(req) || !requireJson(req, res) || !limit(req, res, { max: 10, windowMs: 60_000 })) return
+  const { code, state } = req.body || {}
+  const transaction = readOAuthTransaction(req)
+  if (!hasSafeSize(code, 2048) || !hasSafeSize(state, 256) || !transaction || state !== transaction.state) {
+    clearAuthCookies(res)
+    return res.status(400).json({ error: 'invalid_oauth_callback' })
+  }
 
   try {
-    const token = await exchangeCode(code)
-    res.json({ token })
+    const token = await exchangeCode(code, transaction.verifier)
+    setSession(res, token)
+    clearOAuthTransaction(res)
+    res.setHeader('Cache-Control', 'no-store')
+    res.status(204).end()
   } catch (err) {
-    // GitHub refusing the code is the user's problem to retry; anything else is ours.
-    if (err.message === 'missing_oauth_config') {
-      return res.status(500).json({ error: 'server_error' })
-    }
-    res.status(400).json({ error: err.message || 'no_token' })
+    clearAuthCookies(res)
+    return res.status(err.message === 'missing_oauth_config' ? 500 : 400)
+      .json({ error: err.message === 'missing_oauth_config' ? 'server_error' : 'oauth_exchange_failed' })
   }
 }

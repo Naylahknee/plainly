@@ -23,6 +23,7 @@ import { CONTEXT_ITEMS, buildHandoff } from '../utils/handoff'
 import { getRepoInfo, getContents, getCommits, getFileContent, getCurrentHeadSha } from '../api/github'
 import { timeAgo } from '../utils/time'
 import { projectName } from '../utils/projectName'
+import { findSensitiveText } from '../utils/secretWarning'
 
 const LOCKED = CONTEXT_ITEMS.filter(c => c.locked).map(c => c.id)
 
@@ -52,6 +53,7 @@ export default function ContinueWithAI({ auth }) {
   const [copied, setCopied]     = useState(false)
   const [opened, setOpened]     = useState(false)
   const [marked, setMarked]     = useState(Boolean(stored?.handoff?.sentAt))
+  const [sensitiveConfirmed, setSensitiveConfirmed] = useState(false)
 
   // Everything the handoff is built from.
   const [repoInfo, setRepoInfo]         = useState(null)
@@ -117,6 +119,8 @@ export default function ContinueWithAI({ auth }) {
     })
   }, [checked, update, owner, repo, repoInfo, tree, savePoints, instructions, memory.lastOpenedFile, memory.lastSaveLabel])
 
+  const sensitiveText = useMemo(() => findSensitiveText(handoff), [handoff])
+
   if (updateId && !stored) {
     return (
       <div className="screen-padded ai-screen">
@@ -139,6 +143,7 @@ export default function ContinueWithAI({ auth }) {
   }
 
   async function handleCopy() {
+    if (sensitiveText.length && !sensitiveConfirmed) return
     try {
       await navigator.clipboard.writeText(handoff)
       setCopied(true)
@@ -266,8 +271,23 @@ export default function ContinueWithAI({ auth }) {
       </h2>
       <p className="ai-step-sub">Copy this and paste it in as your first message.</p>
       <pre className="ai-preview">{loading ? 'Reading your project from GitHub…' : handoff}</pre>
+      {sensitiveText.length > 0 && !loading && (
+        <div className="ai-secret-warning" role="alert">
+          <strong>Check this before copying.</strong> Plainly found what looks like {sensitiveText.join(' and ')}.
+          External AI services may keep what you paste. Remove it from the handoff, or confirm that
+          you are allowed to share it.
+          <label className="ai-secret-confirm">
+            <input
+              type="checkbox"
+              checked={sensitiveConfirmed}
+              onChange={e => setSensitiveConfirmed(e.target.checked)}
+            />
+            I checked this and am allowed to share it.
+          </label>
+        </div>
+      )}
       <div className="ai-actions">
-        <button className="pl-btn-primary" onClick={handleCopy} disabled={loading}>
+        <button className="pl-btn-primary" onClick={handleCopy} disabled={loading || (sensitiveText.length > 0 && !sensitiveConfirmed)}>
           {copied ? 'Copied ✓' : 'Copy handoff'}
         </button>
         <button className="pl-btn" onClick={handleOpen} disabled={!tool}>

@@ -15,7 +15,20 @@ Plainly is a working application. The core feature set — GitHub OAuth sign-in,
 list, file editor, save points, history, restore, project memory, task system, AI
 handoffs, project timeline, and goal-based help — is complete and deployable.
 
-The build passes cleanly (`npm run build`, 92 modules, zero errors).
+The build passes cleanly (`npm run build`, 101 modules, zero errors).
+
+### Security Hardening (2026-09-03)
+
+GitHub credentials no longer reach browser storage. Plainly now starts OAuth with PKCE,
+keeps the OAuth transaction and encrypted session in `HttpOnly` cookies, and sends all
+GitHub API calls through a same-origin proxy protected by a session CSRF token. OAuth and
+proxy endpoints validate their request shape and apply per-instance rate limits. Production
+now sends CSP, clickjacking, MIME, referrer, and permissions-policy headers. The AI handoff
+warns and requires acknowledgement when common secret patterns are detected before copying.
+
+**Required deployment setting:** `GITHUB_SESSION_SECRET` must be a unique random 32-byte
+base64url value in each Vercel environment where sign-in is enabled. Existing users must
+sign in again after release.
 
 ### AI Change Inbox (2026-09-03)
 
@@ -184,7 +197,7 @@ It can be deleted or archived in a future cleanup task.
 
 | Risk | Severity | Notes |
 |---|---|---|
-| Raw OAuth token in localStorage | High | Full `repo`-scope token accessible to any page-level JS. Mitigated only by HTTPS and absence of known XSS vectors. |
+| Broad OAuth `repo` scope | High | The encrypted session limits theft, but the OAuth App still receives broad account-wide repository access. Moving to a GitHub App remains the long-term fix. |
 | Unsanitised Markdown rendering | High | `dangerouslySetInnerHTML` without DOMPurify. Risk is only from the user's own content (they are both attacker and victim), but should still be fixed. |
 | GitHub API rate limits | Medium | All API calls are client-side. A heavy session (many file opens, history views, renames) could hit GitHub's 5,000 requests/hour unauthenticated limit per token. No rate-limit handling is implemented. |
 | OAuth scope too broad | Medium | `repo` scope grants full repository access. If the token is stolen, all of the user's repositories are at risk. |

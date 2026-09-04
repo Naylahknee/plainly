@@ -13,6 +13,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useShowGithubWords } from '../utils/settings'
+import { getCsrfToken } from '../api/github'
 
 export default function Account({ auth }) {
   const { user, token, signOut } = auth
@@ -30,8 +31,8 @@ export default function Account({ auth }) {
     let cancelled = false
     fetch('/api/oauth/check', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+      body: JSON.stringify({}),
     })
       .then(r => (r.ok ? r.json() : { connected: null }))
       .then(d => { if (!cancelled) setConnected(d.connected) })

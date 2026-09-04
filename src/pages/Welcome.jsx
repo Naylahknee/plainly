@@ -10,7 +10,7 @@
  * happened and what to do, never a silent bounce.
  */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 // Repository → Project, and the rest. The whole product in six rows.
 const TRANSLATIONS = [
@@ -26,29 +26,27 @@ export default function Welcome() {
   const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
   const missingConfig = !clientId
 
-  // One-time value proving the browser that comes back is the one that left.
-  // AuthCallback refuses to exchange a code without it, so a crafted callback
-  // link can't sign someone into an account they didn't choose.
-  const [oauthState] = useState(() => crypto.randomUUID())
-  // Written in an effect, not in the useState initializer: StrictMode renders
-  // twice, and the discarded render's write would leave a value in storage that
-  // doesn't match the one in the link below.
-  useEffect(() => {
-    try {
-      sessionStorage.setItem('plainly_oauth_state', oauthState)
-    } catch { /* storage blocked — the callback will say sign-in can't be verified */ }
-  }, [oauthState])
+  const [signingIn, setSigningIn] = useState(false)
+  const [startFailed, setStartFailed] = useState(false)
 
-  // prompt=select_account forces GitHub's account picker every time, so signing
-  // in is a choice rather than whichever account the browser happens to hold.
-  //
-  // It does not bring back the authorize screen: GitHub skips that for anyone
-  // who has already approved these scopes, and the only thing that undoes it is
-  // deleting the authorization — which is what signing out now does.
-  const authUrl = missingConfig
-    ? null
-    : `https://github.com/login/oauth/authorize?client_id=${clientId}` +
-      `&scope=repo&prompt=select_account&state=${encodeURIComponent(oauthState)}`
+  async function startSignIn() {
+    if (missingConfig || signingIn) return
+    setSigningIn(true)
+    setStartFailed(false)
+    try {
+      const response = await fetch('/api/oauth/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.authorizeUrl) throw new Error('could_not_start')
+      window.location.assign(data.authorizeUrl)
+    } catch {
+      setStartFailed(true)
+      setSigningIn(false)
+    }
+  }
 
   // GitHub sends people back here with ?auth_error when sign-in doesn't finish.
   const params = new URLSearchParams(window.location.search)
@@ -80,6 +78,12 @@ export default function Welcome() {
             </p>
           ) : null}
 
+          {startFailed && (
+            <p className="error-box welcome-error">
+              Plainly could not start the secure sign-in check. Please try again.
+            </p>
+          )}
+
           {disconnectFailed && (
             <p className="error-box welcome-error">
               You're signed out on this computer, but Plainly couldn't reach GitHub to
@@ -96,7 +100,9 @@ export default function Welcome() {
             </p>
           ) : (
             <div className="welcome-cta-stack">
-              <a href={authUrl} className="welcome-cta">Sign in with GitHub</a>
+              <button type="button" onClick={startSignIn} className="welcome-cta" disabled={signingIn}>
+                {signingIn ? 'Opening GitHub…' : 'Sign in with GitHub'}
+              </button>
               <span className="welcome-hint">
                 No new password. Your GitHub account is your login.
               </span>

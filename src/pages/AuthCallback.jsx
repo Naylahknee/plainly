@@ -19,22 +19,12 @@ export default function AuthCallback({ onSignIn }) {
     const error = params.get('error')
     const returnedState = params.get('state')
 
-    // One use only: read it, then clear it whatever happens next. A replayed
-    // callback URL has to fail the second time.
-    let expectedState = null
-    try {
-      expectedState = sessionStorage.getItem('plainly_oauth_state')
-      sessionStorage.removeItem('plainly_oauth_state')
-    } catch { /* storage blocked — treated as no match below */ }
-
     if (error || !code) {
       navigate('/?auth_error=' + (error || 'no_code'), { replace: true })
       return
     }
 
-    // Checked before the exchange, never after: without this, anyone can hand
-    // someone a callback link and sign them into an account they didn't pick.
-    if (!expectedState || returnedState !== expectedState) {
+    if (!returnedState) {
       navigate('/?auth_error=state_mismatch', { replace: true })
       return
     }
@@ -42,13 +32,11 @@ export default function AuthCallback({ onSignIn }) {
     fetch('/api/oauth/exchange', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code })
+      body: JSON.stringify({ code, state: returnedState })
     })
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) throw new Error(data.error)
-        onSignIn(data.token)
-        navigate('/', { replace: true })
+      .then(r => {
+        if (!r.ok) throw new Error('exchange_failed')
+        onSignIn()
       })
       .catch(() => navigate('/?auth_error=exchange_failed', { replace: true }))
   }, [])

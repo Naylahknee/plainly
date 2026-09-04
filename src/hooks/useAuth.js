@@ -1,25 +1,30 @@
 import { useState, useEffect } from 'react'
-import { getUser } from '../api/github'
+import { getCsrfToken, setCsrfToken } from '../api/github'
 
 export function useAuth() {
-  const [token, setToken] = useState(() => localStorage.getItem('plainly_token'))
+  const [token, setToken] = useState(null)
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(!!localStorage.getItem('plainly_token'))
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) { setLoading(false); return }
-    getUser(token)
-      .then(setUser)
-      .catch(() => {
-        localStorage.removeItem('plainly_token')
-        setToken(null)
+    let cancelled = false
+    fetch('/api/session')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !data?.user || !data?.csrf) return
+        setCsrfToken(data.csrf)
+        setUser(data.user)
+        setToken('session')
       })
-      .finally(() => setLoading(false))
-  }, [token])
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
 
-  function signIn(newToken) {
-    localStorage.setItem('plainly_token', newToken)
-    setToken(newToken)
+  function signIn() {
+    // The OAuth callback has already set the HttpOnly session cookie. Reloading
+    // is the safest way to begin with a fresh server-verified session.
+    window.location.assign('/')
   }
 
   /**
@@ -40,16 +45,13 @@ export function useAuth() {
    * store that holds work GitHub doesn't have yet.
    */
   async function signOut() {
-    const current = token
-    localStorage.removeItem('plainly_token')
-
     let revoked = true
-    if (current) {
+    if (token) {
       try {
-        const r = await fetch('/api/oauth/revoke', {
+        const r = await fetch('/api/logout', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: current }),
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+          body: JSON.stringify({}),
           // A hanging request must not leave someone staring at "Signing out…".
           signal: AbortSignal.timeout(8000),
         })
@@ -61,6 +63,7 @@ export function useAuth() {
 
     setToken(null)
     setUser(null)
+    setCsrfToken('')
     return { revoked }
   }
 

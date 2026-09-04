@@ -11,14 +11,14 @@ resolved with a date.**
 
 ## SEC-001 — GitHub OAuth Token Stored in Browser localStorage
 
-**Status:** Open — mitigated but not resolved  
+**Status:** Resolved — 2026-09-03  
 **Severity:** High  
 **First documented:** 2025-07-11
 
 ### What is happening
 
-After a successful GitHub OAuth sign-in, `useAuth.js` stores the raw GitHub access token
-in the browser's `localStorage` under the key `plainly_token`:
+Previously, after a successful GitHub OAuth sign-in, `useAuth.js` stored the raw GitHub
+access token in browser `localStorage` under the key `plainly_token`.
 
 ```js
 // src/hooks/useAuth.js
@@ -50,9 +50,16 @@ stored token. Signing out removes the item from `localStorage` in the current br
 but does not call GitHub's token-revocation endpoint. If the token was already copied,
 sign-out provides no protection.
 
-### Existing Mitigations
+### Fix Applied
 
-The following mitigations reduce but do not eliminate the risk:
+The browser now receives an encrypted, `HttpOnly`, `Secure`, `SameSite=Lax` session
+cookie instead of the GitHub token. The session holds the token only after AES-256-GCM
+encryption with `GITHUB_SESSION_SECRET`; every GitHub operation is forwarded through the
+same-origin server endpoint after a per-session CSRF check. A stolen browser script can no
+longer read a reusable GitHub credential. Signing out clears the cookie and revokes the
+GitHub authorization server-side.
+
+The following defenses remain important:
 
 - **HTTPS in production:** The token is only transmitted over encrypted connections in
   a properly deployed instance. It cannot be intercepted in transit.
@@ -66,45 +73,24 @@ The following mitigations reduce but do not eliminate the risk:
 - **Dependency count is low:** The number of runtime npm dependencies is small,
   reducing the supply-chain risk compared to typical React applications.
 
-These mitigations reduce the practical risk substantially. They do not make
-`localStorage` token storage architecturally safe.
+These mitigations now protect the session design as well as the browser surface.
 
-### Preferred Future Architecture
+### Future Improvement
 
-The preferred direction is to move the token entirely off the client:
-
-1. **Exchange code for token server-side** — the current OAuth exchange already happens
-   server-side (in `server.js` / `api/oauth/exchange.js`). The improvement is to not
-   return the raw token to the browser at all.
-
-2. **Issue an encrypted, HttpOnly session cookie** — after the token exchange, the
-   server sets a session cookie with `HttpOnly` (inaccessible to JavaScript),
-   `Secure` (HTTPS only), and `SameSite=Strict` or `SameSite=Lax`. The cookie holds
-   the GitHub token encrypted with a server-held key.
-
-3. **Proxy GitHub API calls through the server** — instead of calling
-   `api.github.com` directly from the browser, all GitHub operations go through a
-   thin Plainly server layer. The server decrypts the session cookie, attaches the
-   GitHub token, and forwards the request. The browser never sees the token.
-
-4. **Add a sign-out endpoint** — the server deletes the session cookie on sign-out
-   and optionally calls GitHub's token-revocation endpoint.
+Move from an OAuth App's broad account-wide permission model to a GitHub App with
+fine-grained, selected-repository permissions and short-lived installation tokens.
 
 ### Files Involved in a Future Migration
 
 | File | Change required |
 |---|---|
-| `server.js` | Add session middleware, replace token-return with cookie-set, add GitHub API proxy routes |
-| `api/oauth/exchange.js` | Same pattern for Vercel; may need a different session approach (e.g. encrypted JWT in cookie) |
-| `src/hooks/useAuth.js` | Remove all `localStorage` reads/writes; replace with a session-check endpoint call (`GET /api/session`) |
-| `src/api/github.js` | Change base URL from `https://api.github.com` to `/api/github` (proxied); remove manual `Authorization` header construction |
-| `src/pages/AuthCallback.jsx` | Remove token extraction from JSON response; rely on cookie being set by server |
-| `vite.config.js` | Expand proxy to forward `/api/github/*` to the Express server in development |
+| `server.js` | Runs the secure session, OAuth, and GitHub proxy endpoints in development |
+| `api/oauth/exchange.js` | Validates the server-held OAuth transaction and creates the session |
+| `src/hooks/useAuth.js` | Reads only server-verified session state; has no token storage |
+| `src/api/github.js` | Calls the same-origin GitHub proxy with CSRF protection |
 
-**Estimated scope:** Medium. This is a significant architectural change to authentication
-and data flow but does not require changes to any UI components, page layout, or the
-GitHub API call signatures beyond the base URL. It should be done as a dedicated,
-focused task after the product is otherwise stable.
+**Remaining scope:** Large — changing to a GitHub App requires a new authorization model
+and a migration path for connected users.
 
 ---
 

@@ -1,10 +1,23 @@
-const API = 'https://api.github.com'
+// GitHub credentials stay in the encrypted server-side session. Every request
+// goes through the same-origin proxy, which only forwards the narrow GitHub
+// API surface this app uses.
+const API = '/api/github'
+
+let csrfToken = ''
+
+export function setCsrfToken(value) {
+  csrfToken = value || ''
+}
+
+export function getCsrfToken() {
+  return csrfToken
+}
 
 function headers(token) {
   return {
-    Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28'
+    'X-GitHub-Api-Version': '2022-11-28',
+    'X-CSRF-Token': csrfToken,
   }
 }
 
