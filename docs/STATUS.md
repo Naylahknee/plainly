@@ -25,6 +25,7 @@ GitHub API calls through a same-origin proxy protected by a session CSRF token. 
 proxy endpoints validate their request shape and apply per-instance rate limits. Production
 now sends CSP, clickjacking, MIME, referrer, and permissions-policy headers. The AI handoff
 warns and requires acknowledgement when common secret patterns are detected before copying.
+An old `plainly_token` browser-storage value is removed on first load after upgrading.
 
 **Required deployment setting:** `GITHUB_SESSION_SECRET` must be a unique random 32-byte
 base64url value in each Vercel environment where sign-in is enabled. Existing users must

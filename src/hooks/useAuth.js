@@ -8,6 +8,10 @@ export function useAuth() {
 
   useEffect(() => {
     let cancelled = false
+    // A version before 2026-09-03 stored the raw GitHub credential here. It is
+    // no longer read or needed, so remove it as soon as the secure session
+    // version loads instead of leaving a usable credential in the browser.
+    try { localStorage.removeItem('plainly_token') } catch { /* storage may be blocked */ }
     fetch('/api/session')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
