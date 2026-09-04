@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /account
+Disallow: /projects
+Disallow: /activity
+Disallow: /new
+Disallow: /p/
+Disallow: /profile-preview
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /account
+Disallow: /projects
+Disallow: /activity
+Disallow: /new
+Disallow: /p/
+Disallow: /profile-preview
+
+User-agent: GPTBot
+Disallow: /
+
+Sitemap: https://yourkly.com/sitemap.xml
