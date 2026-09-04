@@ -130,7 +130,7 @@ export default function App() {
   if (auth.loading) {
     return (
       <div className="loading-screen">
-        <div className="wordmark">plainly</div>
+        <div className="wordmark">yourk</div>
       </div>
     )
   }

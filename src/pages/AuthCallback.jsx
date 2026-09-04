@@ -43,7 +43,7 @@ export default function AuthCallback({ onSignIn }) {
 
   return (
     <div className="loading-screen">
-      <div className="wordmark">plainly</div>
+      <div className="wordmark">yourk</div>
       <p className="loading-text">Signing you in…</p>
     </div>
   )

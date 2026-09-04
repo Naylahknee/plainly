@@ -39,7 +39,7 @@ export default function NewProject({ auth }) {
       // createRepo makes a private repository; only open it up if asked.
       if (!isPrivate && owner) {
         await updateRepoSettings(token, owner, repo.name, { private: false }).catch(() => {
-          setError('The project was created, but Plainly could not make it public. You can change that in Who Can See It.')
+          setError('The project was created, but Yourk could not make it public. You can change that in Who Can See It.')
         })
       }
       setCreated(repo)
@@ -69,7 +69,7 @@ export default function NewProject({ auth }) {
           <div className="newproject-empty-title">There's nothing in here yet</div>
           <p className="newproject-empty-body">
             Two good first moves: write down what you want to build, or add the files you already
-            have. Either way Plainly keeps every version from here on.
+            have. Either way Yourk keeps every version from here on.
           </p>
           <div className="newproject-empty-actions">
             <Link to={`/p/${ownerOf(created, owner)}/${created.name}/new-update`} className="pl-btn-primary">
@@ -88,7 +88,7 @@ export default function NewProject({ auth }) {
       <h1 className="newproject-title">Start a new project</h1>
       <p className="newproject-intro">
         A project is one place for everything that belongs together — an app, a book, a class.
-        Plainly creates it as a real GitHub repository on your account.
+        Yourk creates it as a real GitHub repository on your account.
       </p>
 
       <form onSubmit={handleCreate} className="newproject-card">

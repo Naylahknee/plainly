@@ -57,10 +57,10 @@ export default function Welcome() {
     <div className="welcome-page">
       <div className="welcome-grid">
         <div>
-          <div className="welcome-wordmark">plainly</div>
-          <h1 className="welcome-title">Your GitHub projects, in plain English.</h1>
+          <div className="welcome-wordmark">yourk</div>
+          <h1 className="welcome-title">Your work, made clear.</h1>
           <p className="welcome-lead">
-            Plainly sits on top of the GitHub account you already have and does one job:
+            Yourk sits on top of the GitHub account you already have and does one job:
             tell you where you left off, what changed, and what to do next — without the jargon.
           </p>
           <p className="welcome-note">
@@ -69,7 +69,7 @@ export default function Welcome() {
 
           {authError === 'state_mismatch' ? (
             <p className="error-box welcome-error">
-              Plainly couldn't confirm that sign-in started here, so it stopped. Nothing was
+              Yourk couldn't confirm that sign-in started here, so it stopped. Nothing was
               lost — press the button below to start again.
             </p>
           ) : authError ? (
@@ -80,14 +80,14 @@ export default function Welcome() {
 
           {startFailed && (
             <p className="error-box welcome-error">
-              Plainly could not start the secure sign-in check. Please try again.
+              Yourk could not start the secure sign-in check. Please try again.
             </p>
           )}
 
           {disconnectFailed && (
             <p className="error-box welcome-error">
-              You're signed out on this computer, but Plainly couldn't reach GitHub to
-              disconnect. GitHub may still list Plainly as connected — you can remove it at{' '}
+              You're signed out on this computer, but Yourk couldn't reach GitHub to
+              disconnect. GitHub may still list Yourk as connected — you can remove it at{' '}
               <a href="https://github.com/settings/applications" target="_blank" rel="noopener noreferrer">
                 github.com/settings/applications
               </a>.
@@ -111,7 +111,7 @@ export default function Welcome() {
         </div>
 
         <div className="welcome-card">
-          <div className="welcome-card-label">What Plainly calls things</div>
+          <div className="welcome-card-label">What Yourk calls things</div>
           <div className="welcome-rows">
             {TRANSLATIONS.map(([github, plain], i) => (
               <div key={github}>

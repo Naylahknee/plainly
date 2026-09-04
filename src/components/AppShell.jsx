@@ -53,7 +53,7 @@ export default function AppShell({ auth, children }) {
       : pathname.startsWith('/activity') ? 'Timeline'
         : pathname.startsWith('/help') ? 'Help'
           : pathname.startsWith('/account') ? 'Account'
-            : 'plainly'
+            : 'yourk'
 
   const user = auth?.user
   const avatarUrl = user?.avatar_url
@@ -75,9 +75,9 @@ export default function AppShell({ auth, children }) {
         ) : (
           <button className="shell-mobilebar-back" onClick={() => navigate(-1)} aria-label="Go back" type="button">‹</button>
         )}
-        <Link to={isHome ? '/' : pathname} className="shell-mobilebar-brand" aria-label={isHome ? 'Plainly home' : mobileTitle}>
+        <Link to={isHome ? '/' : pathname} className="shell-mobilebar-brand" aria-label={isHome ? 'Yourk home' : mobileTitle}>
           <span className={isHome ? 'wordmark' : 'shell-mobilebar-title'}>{mobileTitle}</span>
-          {!isHome && <span className="shell-mobilebar-subtitle">GitHub in plain English</span>}
+          {!isHome && <span className="shell-mobilebar-subtitle">Your work, made clear.</span>}
         </Link>
         <Link to="/new" className="shell-mobilebar-add" aria-label="Start a new project">+</Link>
       </div>
@@ -85,9 +85,9 @@ export default function AppShell({ auth, children }) {
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
       <nav id="plainly-nav" className="shell-sidebar" aria-label="Main navigation">
         {/* Wordmark */}
-        <Link to="/" className="shell-wordmark" aria-label="Plainly home">
-          <span className="wordmark">plainly</span>
-          <span className="shell-tagline">GitHub in plain English</span>
+        <Link to="/" className="shell-wordmark" aria-label="Yourk home">
+          <span className="wordmark">yourk</span>
+          <span className="shell-tagline">Your work, made clear.</span>
         </Link>
 
         {/* Global nav */}

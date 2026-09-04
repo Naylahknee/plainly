@@ -142,7 +142,7 @@ export default function Home({ auth }) {
           <h2 className="firstrun-card-title">Make your first project</h2>
           <p className="firstrun-card-body">
             A project is one place for everything that belongs together — an app, a book,
-            a client job. From the moment you make one, Plainly keeps every version of it,
+            a client job. From the moment you make one, Yourk keeps every version of it,
             so you can always go back to how it was.
           </p>
           <Link to="/new" className="pl-btn-primary firstrun-cta">Make your first project</Link>
@@ -160,9 +160,9 @@ export default function Home({ auth }) {
             <li>You bring the work back here, read what changed, and save it.</li>
           </ol>
           <p className="firstrun-next-foot">
-            Plainly is the part that remembers all of it — which is the part no single AI
+            Yourk is the part that remembers all of it — which is the part no single AI
             tool can do for you.{' '}
-            <Link to="/help/how-it-works" className="text-link">How Plainly works</Link>
+            <Link to="/help/how-it-works" className="text-link">How Yourk works</Link>
           </p>
         </div>
       </div>
@@ -188,9 +188,9 @@ export default function Home({ auth }) {
       {!explainerDismissed && (
         <section className="home-explainer">
           <div>
-            <p className="home-explainer-title">New here? This is what Plainly does.</p>
+            <p className="home-explainer-title">New here? This is what Yourk does.</p>
             <p className="home-explainer-body">
-              Your work lives in GitHub. Plainly is the front door: it remembers where you stopped,
+              Your work lives in GitHub. Yourk is the front door: it remembers where you stopped,
               explains what changed in normal words, and keeps a Save Point every time you save so
               you can always go back.
             </p>
@@ -306,7 +306,7 @@ export default function Home({ auth }) {
       ) : (
         <div className="home-attention-none">
           <span className="home-attention-tick" aria-hidden="true">✓</span>
-          <span>Nothing is waiting on you right now. Everything Plainly knows about is saved or in progress.</span>
+          <span>Nothing is waiting on you right now. Everything Yourk knows about is saved or in progress.</span>
         </div>
       )}
 
