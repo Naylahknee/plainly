@@ -1826,10 +1826,12 @@
   font: 700 26px/1 var(--font);
   letter-spacing: -.02em;
   color: var(--purple);
-  margin-bottom: 28px;
+  margin: 0;
 }
 
-.brand-wordmark--welcome { height: 31px; }
+.welcome-brand-row { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+.brand-wordmark--welcome { height: 40px; }
+.welcome-stork { width: 54px; height: 54px; object-fit: contain; }
 
 .welcome-title {
   font: 700 46px/1.08 var(--font);

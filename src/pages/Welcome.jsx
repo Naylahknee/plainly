@@ -12,6 +12,7 @@
 
 import { useState } from 'react'
 import BrandWordmark from '../components/BrandWordmark'
+import storkUrl from '../assets/brand/yourkly-stork.png'
 
 // Repository → Project, and the rest. The whole product in six rows.
 const TRANSLATIONS = [
@@ -58,7 +59,10 @@ export default function Welcome() {
     <div className="welcome-page">
       <div className="welcome-grid">
         <div>
-          <div className="welcome-wordmark"><BrandWordmark className="brand-wordmark--welcome" /></div>
+          <div className="welcome-brand-row">
+            <div className="welcome-wordmark"><BrandWordmark className="brand-wordmark--welcome" /></div>
+            <img className="welcome-stork" src={storkUrl} alt="" />
+          </div>
           <h1 className="welcome-title">Your work, made clear.</h1>
           <p className="welcome-lead">
             Yourkly sits on top of the GitHub account you already have and does one job:
