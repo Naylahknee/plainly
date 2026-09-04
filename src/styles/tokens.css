@@ -2196,6 +2196,40 @@
 .project-status-unsaved { color: var(--amber); font-weight: 600; }
 .project-status-github { color: var(--grey); }
 
+/* Project health — GitHub's signals in words, not build-system labels. */
+.project-health {
+  background: #fff;
+  border: 1px solid var(--lilac-border);
+  border-radius: var(--radius-hero);
+  box-shadow: var(--shadow-card);
+  padding: 22px 24px;
+  margin: 0 0 34px;
+}
+.project-health--attention { border-left: 4px solid var(--amber-edge); }
+.project-health-head { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; }
+.project-health-head h2 { font: 700 20px/1.3 var(--font); letter-spacing: -.02em; color: var(--ink); margin: 2px 0 0; }
+.project-health-refresh { flex: none; min-height: 38px; padding: 10px 14px; font-size: 13px; }
+.project-health-intro { font: 400 14px/1.5 var(--font); color: var(--grey); margin: 8px 0 18px; }
+.project-health-list { border-top: 1px solid var(--lilac-bg); }
+.project-health-row { display: flex; align-items: flex-start; gap: 10px; padding: 13px 0; border-bottom: 1px solid var(--lilac-bg); }
+.project-health-row:last-child { border-bottom: none; padding-bottom: 0; }
+.project-health-mark { width: 20px; height: 20px; flex: none; display: grid; place-items: center; border-radius: 50%; font: 700 13px/1 var(--font); margin-top: 1px; }
+.project-health-mark--good { background: var(--green-bg); color: var(--green-deep); }
+.project-health-mark--problem { background: var(--amber-bg); color: var(--amber); }
+.project-health-mark--waiting, .project-health-mark--unknown { background: var(--lilac-bg); color: var(--purple); }
+.project-health-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.project-health-title { font: 500 14.5px/1.4 var(--font); color: var(--ink); }
+.project-health-detail { font: 400 13px/1.45 var(--font); color: var(--grey); margin-top: 2px; overflow-wrap: anywhere; }
+.project-health-row > .text-link { flex: none; font-size: 13px; }
+
+@media (max-width: 720px) {
+  .project-health { padding: 20px 18px; }
+  .project-health-head { flex-direction: column; gap: 10px; }
+  .project-health-refresh { width: 100%; }
+  .project-health-row { flex-wrap: wrap; }
+  .project-health-row > .text-link { width: 100%; margin-left: 30px; }
+}
+
 .project-update-card {
   background: #fff;
   border: 1px solid var(--lilac-border);
