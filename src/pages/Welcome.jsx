@@ -3,7 +3,8 @@
  *
  * The signed-out landing page introduces what Yourkly does through an
  * animated product preview, then gives people one clear path into GitHub
- * sign-in.
+ * sign-in. People who do not have GitHub yet can create a free account there
+ * first, then return and continue through the same secure sign-in flow.
  *
  * It also starts the OAuth flow, and it is where people land when something
  * about that flow didn't work — so every failure gets a sentence saying what
@@ -106,6 +107,13 @@ export default function Welcome() {
                     {signingIn ? 'Opening GitHub…' : 'Continue with GitHub'}
                   </button>
                   <span>No new password. Your GitHub account is your login.</span>
+                  <span>
+                    Don't have GitHub yet?{' '}
+                    <a href="https://github.com/signup" target="_blank" rel="noopener noreferrer" className="text-link">
+                      Create a free GitHub account
+                    </a>
+                  </span>
+                  <span>Your projects stay in your GitHub account. Yourkly makes them easier to understand.</span>
                 </div>
               )}
             </div>
@@ -147,7 +155,7 @@ export default function Welcome() {
           <section className="landing-steps">
             <h2>Three steps, then you're working.</h2>
             <div className="landing-step-grid">
-              <article><span>01</span><h3>Connect GitHub</h3><p>One click. No new account, nothing to move.</p></article>
+              <article><span>01</span><h3>Connect GitHub</h3><p>Already have GitHub? Connect it. New to GitHub? Create a free account there first, then come right back.</p></article>
               <article><span>02</span><h3>Yourkly explains your project</h3><p>Where you left off, what changed, and what to do next — in plain words.</p></article>
               <article><span>03</span><h3>Continue anywhere</h3><p>Pick up the work in Yourkly, Lovable, ChatGPT, or Cursor.</p></article>
             </div>
