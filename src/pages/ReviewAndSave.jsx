@@ -8,12 +8,16 @@
  * as it currently stands in GitHub. If GitHub rejects a save because the file
  * changed underneath, the conflict screen from §7.10 takes over — nothing is
  * thrown away without asking.
+ *
+ * Changes are committed to a new branch and proposed as a pull request, which
+ * is then auto-merged to main. This gives a clean history and allows for
+ * future review workflows.
  */
 
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getActiveUpdate, updateUpdate } from '../utils/updateMemory'
-import { getFileContent, saveFile } from '../api/github'
+import { getFileContent, saveFile, createBranch, getCurrentHeadSha, createPullRequest, mergePullRequest } from '../api/github'
 import { recordSave } from '../utils/projectMemory'
 import { getDrafts, clearDraft, lineChanges } from '../utils/drafts'
 import { projectName } from '../utils/projectName'
@@ -66,15 +70,36 @@ export default function ReviewAndSave({ auth }) {
     if (!owner || files.length === 0) return
     setSaving(true)
     setError(null)
-    const message = label.trim() || 'Made the project description clearer'
+    const message = label.trim() || 'Made updates to the project'
 
     try {
+      // Generate a unique branch name: yourkly-update-{timestamp}
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')
+      const branchName = `yourkly-update-${timestamp}`
+
+      // Get current main branch head SHA to base the new branch from
+      const headSha = await getCurrentHeadSha(token, owner, repo)
+
+      // Create the new branch
+      await createBranch(token, owner, repo, branchName, headSha)
+
+      // Commit all files to the new branch
       let lastSha = null
       for (const file of files) {
         const result = await saveFile(token, owner, repo, file.path, file.draft, file.sha, message)
         lastSha = result.commit?.sha || lastSha
         clearDraft(owner, repo, file.path)
       }
+
+      // Create a pull request with the user's message as title
+      const pr = await createPullRequest(token, owner, repo, branchName, message, 
+        `Yourkly update: ${message}\n\n${files.length} file${files.length === 1 ? '' : 's'} changed.`)
+
+      // Auto-merge the pull request
+      if (pr && pr.number) {
+        await mergePullRequest(token, owner, repo, pr.number)
+      }
+
       recordSave(owner, repo, message, lastSha)
       if (update) {
         updateUpdate(owner, repo, update.id, {
@@ -83,7 +108,7 @@ export default function ReviewAndSave({ auth }) {
           storyEntry: `Saved to GitHub as "${message}"`,
         })
       }
-      setSaved({ label: message, files: files.map(f => f.path) })
+      setSaved({ label: message, files: files.map(f => f.path), prUrl: pr?.html_url })
     } catch (err) {
       if (/409|conflict|sha|changed/i.test(err.message || '')) {
         setConflict({ path: files[0]?.path })
@@ -100,13 +125,13 @@ export default function ReviewAndSave({ auth }) {
     return (
       <div className="screen-padded save-screen">
         <div className="save-done-tick" aria-hidden="true">✓</div>
-        <h1 className="save-done-title">Your work is saved in GitHub.</h1>
+        <h1 className="save-done-title">Your work is saved as a proposal.</h1>
         <p className="save-done-body">
-          Nice — that version is kept forever. You can come back to it any time from Save Points.
+          Your changes are ready to merge to your main version. They can be reviewed and merged anytime.
         </p>
         <div className="save-done-card">
           <div className="save-done-row">
-            <span className="save-done-label">Save Point</span>
+            <span className="save-done-label">Proposed update</span>
             <span className="save-done-value">{saved.label}</span>
           </div>
           <div className="save-done-rule" />
@@ -116,13 +141,18 @@ export default function ReviewAndSave({ auth }) {
           </div>
           <div className="save-done-rule" />
           <div className="save-done-row">
-            <span className="save-done-label">Files saved</span>
+            <span className="save-done-label">Files changed</span>
             <span className="save-done-value">{saved.files.join(', ')}</span>
           </div>
         </div>
         <div className="save-done-actions">
           <Link to={`/p/${owner}/${repo}`} className="pl-btn-primary">Back to {projectName(repo)}</Link>
           <Link to={`/p/${owner}/${repo}/changed`} className="pl-btn">See what changed</Link>
+          {saved.prUrl && (
+            <a href={saved.prUrl} target="_blank" rel="noopener noreferrer" className="pl-btn">
+              View on GitHub
+            </a>
+          )}
           {update && (
             <Link to={`/p/${owner}/${repo}/u/${update.id}/ai`} className="pl-btn">Continue in…</Link>
           )}
