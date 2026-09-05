@@ -75,7 +75,7 @@ export default function Welcome() {
         <main>
           <section className="landing-hero">
             <div className="landing-hero-copy">
-              <h1>Yourkly translates GitHub into plain English for people who shouldn't need to learn developer language.</h1>
+              <h1>Know exactly what to do next in your GitHub project.</h1>
               <p>
                 No developer language. No learning curve. Just clear explanations of your projects.
               </p>
