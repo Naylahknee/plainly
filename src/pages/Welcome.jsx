@@ -75,9 +75,9 @@ export default function Welcome() {
         <main>
           <section className="landing-hero">
             <div className="landing-hero-copy">
-              <h1>Know exactly what to do next in your GitHub project.</h1>
+              <h1>Yourkly — GitHub projects, made clear</h1>
               <p>
-                No developer language. No learning curve. Just clear explanations of your projects.
+                Know what changed, what it means, and exactly what to do next — without having to understand developer language.
               </p>
 
               {authError === 'state_mismatch' ? (
