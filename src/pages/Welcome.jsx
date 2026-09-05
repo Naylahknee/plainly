@@ -75,10 +75,9 @@ export default function Welcome() {
         <main>
           <section className="landing-hero">
             <div className="landing-hero-copy">
-              <h1>Know exactly what to do next in your GitHub project.</h1>
+              <h1>Yourkly translates GitHub into plain English for people who shouldn't need to learn developer language.</h1>
               <p>
-                Yourkly reads the GitHub account you already have and tells you where you left
-                off, what changed, and what to do next.
+                No developer language. No learning curve. Just clear explanations of your projects.
               </p>
 
               {authError === 'state_mismatch' ? (
@@ -143,10 +142,10 @@ export default function Welcome() {
             </div>
           </section>
 
-          <section className="landing-trust">Your files stay in GitHub. Yourkly doesn’t copy your projects.</section>
+          <section className="landing-trust">Your files stay in GitHub. Yourkly doesn't copy your projects.</section>
 
           <section className="landing-steps">
-            <h2>Three steps, then you’re working.</h2>
+            <h2>Three steps, then you're working.</h2>
             <div className="landing-step-grid">
               <article><span>01</span><h3>Connect GitHub</h3><p>One click. No new account, nothing to move.</p></article>
               <article><span>02</span><h3>Yourkly explains your project</h3><p>Where you left off, what changed, and what to do next — in plain words.</p></article>
