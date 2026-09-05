@@ -310,6 +310,13 @@ with Plainly's identity as a plain-language interface for GitHub.
 - Replaced the ultra-wide wordmark in Open Graph and X/Twitter metadata with a dedicated, padded Yourkly social preview image featuring the approved app icon and stork mascot.
 - Added image dimensions and accessible image descriptions. The versioned image URL lets social platforms fetch the new card instead of retaining the previously cropped wordmark preview.
 
+## Current Update (2026-09-04 — Landing page and stork)
+
+- Rebuilt the signed-out landing page around the Yourkly value proposition: where you left off, what changed, and what to do next.
+- Added a short, reduced-motion-aware product-preview animation and a responsive three-step explanation of the workflow.
+- Restored the approved stork to the landing hero, beside the product preview. It remains in the signed-in sidebar and social share image, and is deliberately not repeated through working screens.
+- Added a functional support link in the landing footer. Privacy and terms links still require the owner’s business/contact details before they can be written accurately.
+
 ## In Progress
 
 No tasks are currently in progress. The Project Intelligence Layer is complete.
