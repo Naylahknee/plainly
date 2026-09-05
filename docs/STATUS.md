@@ -317,6 +317,12 @@ with Plainly's identity as a plain-language interface for GitHub.
 - Restored the approved stork to the landing hero, beside the product preview. It remains in the signed-in sidebar and social share image, and is deliberately not repeated through working screens.
 - Added a functional support link in the landing footer. Privacy and terms links still require the owner’s business/contact details before they can be written accurately.
 
+## Current Update (2026-09-04 — First sign-in fix)
+
+- Fixed the OAuth start request when a visitor opens `yourkly.com` and Vercel redirects that request to `www.yourkly.com`.
+- The request origin check now accepts only the matching apex/www pair over the same protocol. Other cross-origin requests remain blocked.
+- Production verification before the fix showed the apex request returning `308 → www`, followed by `403 forbidden`; the www endpoint itself returned `200` and set the secure OAuth transaction cookie.
+
 ## In Progress
 
 No tasks are currently in progress. The Project Intelligence Layer is complete.
