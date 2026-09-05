@@ -433,6 +433,48 @@ export async function createBranch(token, owner, repo, name, fromSha) {
   return r.json()
 }
 
+/* ── Pull Requests (Yourkly Updates) ────────────────────────────────────────── */
+
+/**
+ * Create a pull request to propose changes.
+ * Branch must already exist with the commits. This links it to main.
+ */
+export async function createPullRequest(token, owner, repo, branchName, title, body) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/pulls`, {
+    method: 'POST',
+    headers: { ...headers(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title,
+      body: body || '',
+      head: branchName,
+      base: 'main', // or detect default_branch
+    }),
+  })
+  if (r.status === 422) throw new Error('A pull request with that branch already exists.')
+  if (r.status === 403) throw new Error("You don't have permission to create a pull request.")
+  if (!r.ok) throw new Error('Could not create the proposal. Try again.')
+  return r.json()
+}
+
+/**
+ * Merge a pull request.
+ * pr_number is the PR number (not OID).
+ */
+export async function mergePullRequest(token, owner, repo, prNumber) {
+  const r = await fetch(`${API}/repos/${owner}/${repo}/pulls/${prNumber}/merge`, {
+    method: 'PUT',
+    headers: { ...headers(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      commit_title: 'Merge Yourkly update',
+      merge_method: 'squash', // squash for a cleaner history
+    }),
+  })
+  if (r.status === 405) throw new Error('This proposal is not ready to merge yet.')
+  if (r.status === 409) throw new Error('This proposal has merge conflicts.')
+  if (!r.ok) throw new Error('Could not merge the proposal. Try again.')
+  return r.json()
+}
+
 /* ── Publishing (GitHub Pages) ─────────────────────────────────────────────── */
 
 /** null means this project isn't published. */
