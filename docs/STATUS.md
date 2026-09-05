@@ -323,6 +323,11 @@ with Plainly's identity as a plain-language interface for GitHub.
 - The request origin check now accepts only the matching apex/www pair over the same protocol. Other cross-origin requests remain blocked.
 - Production verification before the fix showed the apex request returning `308 → www`, followed by `403 forbidden`; the www endpoint itself returned `200` and set the secure OAuth transaction cookie.
 
+## Current Update (2026-09-04 — Vercel Web Analytics)
+
+- Added the official `@vercel/analytics` package and mounted its React component once at the application root.
+- Analytics will collect anonymized production page views after Web Analytics is enabled in the Yourkly Vercel project. No custom events or personal data have been added.
+
 ## In Progress
 
 No tasks are currently in progress. The Project Intelligence Layer is complete.
