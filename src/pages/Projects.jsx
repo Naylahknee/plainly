@@ -44,11 +44,10 @@ export default function Projects({ auth }) {
     <div className="screen-padded projects-screen">
       <div className="projects-header">
         <h1 className="projects-title">My Projects</h1>
-        <Link to="/new" className="pl-btn-primary projects-new">Start a new project</Link>
+        <Link to="/new" className="pl-btn-primary projects-new">Add a project</Link>
       </div>
       <p className="projects-subtitle">
-        Every project here is a real GitHub repository — yours, plus anything shared with you
-        or belonging to an organisation you're in.
+        Your projects live in GitHub. Yourkly makes them easier to understand and continue.
       </p>
 
       {/* A filtered list presented as the whole list is a false statement. */}
@@ -68,12 +67,11 @@ export default function Projects({ auth }) {
 
       {!loading && !error && repos.length === 0 && (
         <div className="projects-empty">
-          <p className="projects-empty-title">There are no projects in your GitHub account yet.</p>
+          <p className="projects-empty-title">Let's add your first project.</p>
           <p className="projects-empty-body">
-            A project is one place for everything that belongs together — an app, a book,
-            a client job.
+            Yourkly uses GitHub to keep your project's files and history. We'll handle the GitHub part in plain language.
           </p>
-          <Link to="/new" className="pl-btn-primary">Start a new project</Link>
+          <Link to="/new" className="pl-btn-primary">Add my first project</Link>
         </div>
       )}
 
